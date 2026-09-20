@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jak jedy působí — Přednáška 2</title>
+<style>
+  :root{
+    --paper:#F4F5EF;
+    --ink:#1E2019;
+    --ink-soft:#5A5D51;
+    --amber:#B9791E;
+    --amber-deep:#8F5D14;
+    --tox-green:#3E5C42;
+    --tox-green-deep:#2A3F2D;
+    --danger:#9C3B2E;
+    --blue:#3A5A72;
+    --line:#D6D6C6;
+    --card:#FFFFFE;
+    --serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', 'Book Antiqua', serif;
+    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --mono: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0; background:var(--paper); color:var(--ink); font-family:var(--sans);
+    overflow:hidden; font-size:18px;
+  }
+  ::selection{ background: var(--amber); color:#fff; }
+
+  #topbar{
+    position:fixed; top:0; left:0; right:0; height:54px;
+    display:flex; align-items:center; gap:16px; padding:0 20px; z-index:50;
+    background:linear-gradient(to bottom, rgba(244,245,239,0.97), rgba(244,245,239,0.85));
+    border-bottom:1px solid var(--line);
+  }
+  #topbar .brand{ font-family:var(--serif); font-size:16px; font-style:italic; color:var(--ink-soft); white-space:nowrap; }
+  #progress-track{ flex:1; height:3px; background:var(--line); border-radius:2px; overflow:hidden; }
+  #progress-fill{ height:100%; width:0%; background:var(--amber); transition:width .35s ease; }
+  #counter{ font-family:var(--mono); font-size:13px; color:var(--ink-soft); white-space:nowrap; }
+  #menu-btn{
+    font-family:var(--sans); font-size:14px; color:var(--ink); background:var(--card);
+    border:1px solid var(--line); border-radius:6px; padding:6px 12px; cursor:pointer;
+  }
+  #menu-btn:hover{ border-color:var(--amber); }
+
+  #deck{ position:relative; width:100%; height:100%; padding-top:54px; }
+  .slide{
+    position:absolute; inset:0; top:54px; display:flex; align-items:center; justify-content:center;
+    padding:36px 7vw 90px 7vw; opacity:0; visibility:hidden; transform:translateY(14px);
+    transition:opacity .4s ease, transform .4s ease; overflow-y:auto;
+  }
+  .slide.active{ opacity:1; visibility:visible; transform:translateY(0); }
+  .slide-inner{ width:100%; max-width:980px; }
+  .eyebrow{ font-family:var(--mono); font-size:13px; letter-spacing:.02em; color:var(--amber-deep); margin:0 0 10px 0; }
+  h1.headline{ font-family:var(--serif); font-weight:400; font-size:clamp(30px,4.6vw,50px); line-height:1.1; margin:0 0 16px 0; }
+  h2.headline{ font-family:var(--serif); font-weight:400; font-size:clamp(24px,3.2vw,34px); line-height:1.18; margin:0 0 16px 0; }
+  p.lede{ font-size:19px; line-height:1.55; color:var(--ink-soft); max-width:680px; }
+  .body-text{ font-size:18px; line-height:1.6; color:var(--ink); max-width:720px; }
+  .body-text + .body-text{ margin-top:10px; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:10px; padding:20px 22px; }
+  .grid-2{ display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+  .grid-3{ display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+  @media (max-width:800px){ .grid-2,.grid-3{ grid-template-columns:1fr; } }
+  .tag{ display:inline-block; font-family:var(--mono); font-size:12px; padding:3px 9px; border-radius:20px; border:1px solid var(--line); color:var(--ink-soft); margin-bottom:10px; }
+  .tag.new{ border-color:var(--danger); color:var(--danger); }
+  ul.plain{ margin:0; padding-left:22px; font-size:18px; }
+  ul.plain li{ margin-bottom:9px; line-height:1.5; }
+  blockquote.quote{ font-family:var(--serif); font-style:italic; font-size:26px; line-height:1.4; color:var(--tox-green-deep); border-left:3px solid var(--amber); padding-left:22px; margin:22px 0; }
+  blockquote.quote cite{ display:block; font-size:15px; font-style:normal; color:var(--ink-soft); margin-top:8px; }
+  #navbtns{ position:fixed; bottom:22px; right:28px; display:flex; gap:10px; z-index:50; }
+  .navbtn{ width:46px; height:46px; border-radius:50%; border:1px solid var(--line); background:var(--card); color:var(--ink); font-size:19px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .navbtn:hover{ border-color:var(--amber); color:var(--amber-deep); }
+  .navbtn:disabled{ opacity:.3; cursor:default; }
+  #overlay{ position:fixed; inset:0; background:rgba(30,32,25,.94); z-index:100; display:none; padding:56px 8vw; overflow-y:auto; }
+  #overlay.show{ display:block; }
+  #overlay h3{ font-family:var(--serif); color:#fff; font-weight:400; font-size:23px; margin-bottom:20px; }
+  #overlay-list{ list-style:none; margin:0; padding:0; columns:2; column-gap:40px; }
+  @media (max-width:800px){ #overlay-list{ columns:1; } }
+  #overlay-list li{ color:#EDEEE6; font-size:16px; padding:9px 0; border-bottom:1px solid rgba(255,255,255,.12); cursor:pointer; break-inside:avoid; }
+  #overlay-list li span{ font-family:var(--mono); color:var(--amber); margin-right:10px; font-size:13px; }
+  #overlay-list li:hover{ color:var(--amber); }
+  #overlay-close{ position:absolute; top:22px; right:30px; color:#fff; font-size:28px; background:none; border:none; cursor:pointer; }
+
+  .quiz-card{ background:var(--card); border:1px solid var(--line); border-radius:12px; padding:24px 26px; margin-top:10px; }
+  .quiz-q{ font-size:19px; font-weight:600; margin-bottom:16px; line-height:1.45; }
+  .quiz-opt{ display:block; width:100%; text-align:left; padding:13px 16px; margin-bottom:10px; border:1px solid var(--line); border-radius:8px; background:#fff; cursor:pointer; font-size:17px; font-family:var(--sans); color:var(--ink); }
+  .quiz-opt:hover{ border-color:var(--amber); }
+  .quiz-opt.correct{ border-color:var(--tox-green); background:#EAF1EA; color:var(--tox-green-deep); font-weight:600; }
+  .quiz-opt.wrong{ border-color:var(--danger); background:#F7EAE7; color:var(--danger); }
+  .quiz-opt[disabled]{ cursor:default; }
+  .quiz-feedback{ margin-top:14px; font-size:16px; line-height:1.55; color:var(--ink-soft); display:none; }
+  .quiz-feedback.show{ display:block; }
+
+  table.data-table{ width:100%; border-collapse:collapse; font-size:16px; margin-top:10px; }
+  table.data-table th{ text-align:left; font-family:var(--mono); font-size:12.5px; color:var(--ink-soft); padding:9px 10px; border-bottom:1px solid var(--ink); }
+  table.data-table td{ padding:10px 10px; border-bottom:1px solid var(--line); }
+  table.data-table tr.highlight td{ background:#FBF0DD; font-weight:600; }
+
+  .tl-item{ min-width:200px; background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px 16px; cursor:pointer; flex-shrink:0; }
+  .tl-item .tl-year{ font-family:var(--mono); font-size:13px; color:var(--amber-deep); }
+  .tl-item .tl-title{ font-family:var(--serif); font-size:17px; margin:4px 0 8px 0; }
+  .tl-item .tl-detail{ font-size:15.5px; color:var(--ink-soft); line-height:1.5; display:none; }
+  .tl-item.open .tl-detail{ display:block; }
+  .tl-item.open{ border-color:var(--amber); }
+
+  .footer-note{ margin-top:20px; font-size:14px; color:var(--ink-soft); font-family:var(--mono); line-height:1.5; }
+  .two-col-story{ display:grid; grid-template-columns:1.15fr .85fr; gap:34px; align-items:start; }
+  @media (max-width:820px){ .two-col-story{ grid-template-columns:1fr; } }
+  .ricin-box{ background:var(--tox-green-deep); color:#EFEFE6; border-radius:12px; padding:22px 24px; }
+  .ricin-box h3{ font-family:var(--serif); font-weight:400; font-size:21px; margin:0 0 10px 0; color:#fff; }
+  .ricin-box p{ font-size:16px; line-height:1.6; margin:0 0 10px 0; }
+  .ricin-box .stat{ font-family:var(--mono); font-size:14px; color:#D9C58F; }
+  .novichok-box{ background:var(--blue); color:#EAF0F4; border-radius:12px; padding:20px 22px; margin-top:16px; }
+  .novichok-box h4{ font-family:var(--serif); font-weight:400; font-size:19px; margin:0 0 8px 0; color:#fff; }
+  .novichok-box p{ font-size:15.5px; line-height:1.6; margin:0; }
+
+  .sources{ font-size:14px; color:var(--ink-soft); line-height:1.7; }
+
+  /* expert cards for group work */
+  .expert-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-top:14px; }
+  @media (max-width:900px){ .expert-grid{ grid-template-columns:repeat(2,1fr); } }
+  @media (max-width:560px){ .expert-grid{ grid-template-columns:1fr; } }
+  .expert-card{ background:var(--card); border:1px solid var(--line); border-radius:8px; padding:12px 14px; cursor:pointer; }
+  .expert-card:hover{ border-color:var(--amber); }
+  .expert-card .grp{ font-family:var(--mono); font-size:11.5px; color:var(--amber-deep); }
+  .expert-card .name{ font-family:var(--serif); font-size:16.5px; margin:3px 0 0 0; }
+  .expert-detail{ display:none; margin-top:8px; font-size:14.5px; color:var(--ink-soft); line-height:1.55; }
+  .expert-card.open .expert-detail{ display:block; }
+  .expert-card.open{ border-color:var(--amber); grid-column: span 2; }
+  @media (max-width:560px){ .expert-card.open{ grid-column: span 1; } }
+
+  .diagram-box{ background:#fff; border:1px solid var(--line); border-radius:10px; padding:14px; margin-top:12px; }
+
+  /* matching quiz */
+  .match-wrap{ display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-top:14px; }
+  @media (max-width:760px){ .match-wrap{ grid-template-columns:1fr; } }
+  .match-col-title{ font-family:var(--mono); font-size:13px; color:var(--ink-soft); margin-bottom:8px; }
+  .match-item{ background:var(--card); border:1px solid var(--line); border-radius:8px; padding:11px 14px; margin-bottom:8px; font-size:16px; cursor:pointer; }
+  .match-item.selected{ border-color:var(--amber); background:#FBF0DD; }
+  .match-item.correct{ border-color:var(--tox-green); background:#EAF1EA; }
+  .match-item.wrong{ border-color:var(--danger); background:#F7EAE7; }
+  .match-result{ margin-top:14px; font-size:16px; color:var(--ink-soft); min-height:24px; }
+
+  .why-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:14px; }
+  @media (max-width:760px){ .why-grid{ grid-template-columns:1fr; } }
+
+  @media (prefers-reduced-motion: reduce){ .slide, .navbtn, #progress-fill{ transition:none !important; } }
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <div class="brand">Jak jedy působí · Přednáška 2</div>
+  <div id="progress-track"><div id="progress-fill"></div></div>
+  <div id="counter">1 / 1</div>
+  <button id="menu-btn" onclick="toggleOverlay(true)">Obsah</button>
+</div>
+
+<div id="deck"></div>
+
+<div id="navbtns">
+  <button class="navbtn" id="prevBtn" onclick="prevSlide()">←</button>
+  <button class="navbtn" id="nextBtn" onclick="nextSlide()">→</button>
+</div>
+
+<div id="overlay">
+  <button id="overlay-close" onclick="toggleOverlay(false)">×</button>
+  <h3>Přeskočit na</h3>
+  <ul id="overlay-list"></ul>
+</div>
+
+<script>
+const slides = [];
+function slide(id, title, html){ slides.push({id, title, html}); }
+
+/* ================= 0. TITLE ================= */
+slide('title','Titulní strana', `
+  <div class="slide-inner">
+    <p class="eyebrow">Ing. Pavla Fojtíková, Ph.D. · Přírodovědecká fakulta JČU · Katedra chemie</p>
+    <h1 class="headline">Jak jedy působí?</h1>
+    <p class="lede">Přednáška 2 — toxikodynamika: biologicky významné molekuly, mechanismy účinku, chemické reakce xenobiotik a jejich cíle na molekulární, subcelulární i buněčné úrovni.</p>
+    <p class="footer-note">Laboratoř analytické a environmentální chemie</p>
+  </div>
+`);
+
+/* ================= 1. OUTLINE ================= */
+slide('outline','Osnova přednášky 2', `
+  <div class="slide-inner">
+    <p class="eyebrow">Dnes</p>
+    <h2 class="headline">Osnova přednášky 2</h2>
+    <ul class="plain">
+      <li>Toxikodynamika — co se děje při otravě</li>
+      <li>Biologicky významné molekuly: proteiny, nukleové kyseliny, glutathion</li>
+      <li>Úrovně účinku: od molekuly po celý organismus</li>
+      <li>Mechanismy účinku — receptorová teorie, agonisté a antagonisté</li>
+      <li>Chemické reakce xenobiotik: elektrofily, nukleofily, volné radikály</li>
+      <li>Skutečný případ: „deštníková vražda" a mechanismus ricinu</li>
+      <li>Cíle na subcelulární a buněčné úrovni</li>
+      <li>Skupinová práce — toxicita vybraných látek</li>
+    </ul>
+    <p class="body-text" style="margin-top:18px;">Cestou budou čtyři kontrolní zastávky — krátký úkol nebo kvíz k opakování.</p>
+  </div>
+`);
+
+/* ================= 2. TOXICODYNAMICS DEF ================= */
+slide('toxdyn-def','Co se děje při otravě?', `
+  <div class="slide-inner">
+    <p class="eyebrow">Toxikodynamika</p>
+    <h2 class="headline">Co se děje při otravě?</h2>
+    <p class="body-text">K jakým změnám dochází v těle, v jednotlivých orgánech, tkáních nebo buňkách po vniknutí toxické látky do organismu?</p>
+    <div class="card" style="margin-top:16px;">
+      <ul class="plain" style="margin-top:0;">
+        <li><strong>Toxikodynamika</strong> — studium účinků xenobiotik na organismus</li>
+        <li>cizorodá látka (xenobiotikum) zasahuje do fyziologických a biochemických procesů</li>
+        <li>interakce s biologicky významnými molekulami</li>
+        <li>interakce → kompenzační homeostatické děje, nebo porušení homeostáze</li>
+        <li>mechanismus účinku = molekulární cíl + navázání xenobiotika na cílovou strukturu + další děje a projevený účinek</li>
+      </ul>
+    </div>
+  </div>
+`);
+
+/* ================= 3. PROTEINS ================= */
+slide('biomol-proteins','Proteiny', `
+  <div class="slide-inner">
+    <p class="eyebrow">Biologicky významné molekuly</p>
+    <h2 class="headline">Proteiny neboli bílkoviny</h2>
+    <div class="grid-2">
+      <div>
+        <ul class="plain">
+          <li>stavební jednotka — L-α-aminokyseliny (AMK)</li>
+          <li>biopolymery — jeden nebo více polypeptidových řetězců (100 až tisíce AMK zbytků)</li>
+          <li>AMK mají dipolární charakter — podle pH prostředí se chovají jako slabé kyseliny nebo zásady</li>
+          <li>proteiny jsou <strong>amfolyty</strong> — dovedou „pufrovat" roztoky</li>
+        </ul>
+      </div>
+      <div class="diagram-box">
+        <svg viewBox="0 0 320 220" style="width:100%;">
+          <text x="160" y="24" font-size="13" text-anchor="middle" fill="#5A5D51" font-family="monospace">aminokyselina — zwitterion (pH 7)</text>
+          <text x="160" y="110" font-size="26" text-anchor="middle" fill="#1E2019" font-family="monospace">H₃N⁺–CH(R)–COO⁻</text>
+          <line x1="90" y1="130" x2="90" y2="160" stroke="#9C3B2E" stroke-width="1.5"/>
+          <text x="90" y="178" font-size="12" text-anchor="middle" fill="#9C3B2E">kladný náboj (–NH₃⁺)</text>
+          <line x1="235" y1="130" x2="235" y2="160" stroke="#3E5C42" stroke-width="1.5"/>
+          <text x="235" y="178" font-size="12" text-anchor="middle" fill="#3E5C42">záporný náboj (–COO⁻)</text>
+          <text x="160" y="205" font-size="12" text-anchor="middle" fill="#5A5D51">R = postranní řetězec (např. –SH u cysteinu)</text>
+        </svg>
+      </div>
+    </div>
+  </div>
+`);
+
+/* ================= 4. NUCLEIC ACIDS ================= */
+slide('biomol-nucleic','Nukleové kyseliny', `
+  <div class="slide-inner">
+    <p class="eyebrow">Biologicky významné molekuly</p>
+    <h2 class="headline">Nukleové kyseliny</h2>
+    <div class="grid-2">
+      <div>
+        <ul class="plain">
+          <li>biopolymery</li>
+          <li>stavební jednotka — nukleotid</li>
+          <li>nukleotid = fosforečný ester nukleosidu (cukr ribóza/deoxyribóza + purinová/pyrimidinová báze)</li>
+          <li>báze obsahují nukleofilní centra (N, O) — cíl pro elektrofilní xenobiotika (viz dále)</li>
+        </ul>
+      </div>
+      <div class="diagram-box">
+        <svg viewBox="0 0 320 200" style="width:100%;">
+          <rect x="30" y="80" width="55" height="40" rx="6" fill="#EDE7D9" stroke="#B9791E"/>
+          <text x="57" y="104" font-size="12" text-anchor="middle">fosfát</text>
+          <line x1="85" y1="100" x2="115" y2="100" stroke="#5A5D51" stroke-width="2"/>
+          <circle cx="150" cy="100" r="35" fill="#EAF1EA" stroke="#3E5C42"/>
+          <text x="150" y="104" font-size="12" text-anchor="middle">cukr (ribóza)</text>
+          <line x1="185" y1="100" x2="215" y2="100" stroke="#5A5D51" stroke-width="2"/>
+          <rect x="220" y="75" width="80" height="50" rx="6" fill="#F7EAE7" stroke="#9C3B2E"/>
+          <text x="260" y="97" font-size="12" text-anchor="middle">dusíkatá báze</text>
+          <text x="260" y="113" font-size="11" text-anchor="middle" fill="#5A5D51">(purin/pyrimidin)</text>
+          <text x="160" y="30" font-size="13" text-anchor="middle" fill="#5A5D51" font-family="monospace">nukleotid</text>
+        </svg>
+      </div>
+    </div>
+  </div>
+`);
+
+/* ================= 5. GLUTATHIONE ================= */
+slide('glutathione','Glutathion (GSH)', `
+  <div class="slide-inner">
+    <p class="eyebrow">Biologicky významné molekuly</p>
+    <h2 class="headline">Tripeptid glutathion (GSH)</h2>
+    <div class="grid-2">
+      <div class="diagram-box">
+        <svg viewBox="0 0 340 140" style="width:100%;">
+          <rect x="10" y="45" width="90" height="50" rx="8" fill="#EAF1EA" stroke="#3E5C42"/>
+          <text x="55" y="66" font-size="12" text-anchor="middle">kyselina</text>
+          <text x="55" y="80" font-size="12" text-anchor="middle">glutamová</text>
+          <line x1="100" y1="70" x2="125" y2="70" stroke="#5A5D51" stroke-width="2"/>
+          <rect x="128" y="45" width="80" height="50" rx="8" fill="#FBF0DD" stroke="#B9791E"/>
+          <text x="168" y="74" font-size="12" text-anchor="middle">cystein</text>
+          <line x1="208" y1="70" x2="233" y2="70" stroke="#5A5D51" stroke-width="2"/>
+          <rect x="236" y="45" width="90" height="50" rx="8" fill="#F7EAE7" stroke="#9C3B2E"/>
+          <text x="281" y="74" font-size="12" text-anchor="middle">glycin</text>
+          <text x="168" y="115" font-size="12" text-anchor="middle" fill="#5A5D51" font-family="monospace">γ-Glu–Cys–Gly</text>
+          <text x="168" y="130" font-size="11" text-anchor="middle" fill="#9C3B2E">reaktivní –SH skupina cysteinu</text>
+        </svg>
+      </div>
+      <ul class="plain">
+        <li>kofaktor důležitých oxidoreduktáz</li>
+        <li>oxidovaný glutathion — disulfidový můstek (GSSG)</li>
+        <li>odstraňování peroxidu vodíku i volných radikálů</li>
+        <li>ochrana biomolekul (DNA, proteiny, lipidy) proti oxidačnímu stresu</li>
+        <li><strong>detoxikace</strong> — konjugace s elektrofilními (reaktivními) toxickými molekulami ve fázi II metabolismu → vyšší rozpustnost ve vodě → snazší vylučování</li>
+      </ul>
+    </div>
+  </div>
+`);
+
+/* ================= 6. LEVELS OF ACTION ================= */
+slide('levels','Úrovně účinku', `
+  <div class="slide-inner">
+    <p class="eyebrow">Jak jedy působí?</p>
+    <h2 class="headline">Od molekuly po celý organismus</h2>
+    <div class="grid-2">
+      <svg viewBox="0 0 320 260" style="width:100%;">
+        <polygon points="160,10 300,240 20,240" fill="none" stroke="#B9791E" stroke-width="1.5"/>
+        <line x1="60" y1="200" x2="260" y2="200" stroke="#D6D6C6"/>
+        <line x1="80" y1="160" x2="240" y2="160" stroke="#D6D6C6"/>
+        <line x1="100" y1="120" x2="220" y2="120" stroke="#D6D6C6"/>
+        <line x1="120" y1="80" x2="200" y2="80" stroke="#D6D6C6"/>
+        <text x="160" y="30" font-size="12" text-anchor="middle">molekulární</text>
+        <text x="160" y="65" font-size="12" text-anchor="middle">subcelulární</text>
+        <text x="160" y="105" font-size="12" text-anchor="middle">buněčná</text>
+        <text x="160" y="145" font-size="12" text-anchor="middle">tkáně</text>
+        <text x="160" y="185" font-size="12" text-anchor="middle">orgány</text>
+        <text x="160" y="225" font-size="13" text-anchor="middle" font-weight="bold">lidské tělo</text>
+      </svg>
+      <div class="body-text">
+        <p>Účinek xenobiotika lze sledovat na několika hierarchických úrovních — a co se stane na té nejnižší (molekulární), určuje vše, co následuje výš.</p>
+        <p>Dnes projdeme molekulární cíle (proteiny, DNA), subcelulární organely (membrány, mitochondrie, lysozomy, jádro, endoplazmatické retikulum) a buněčné důsledky (nekróza, apoptóza).</p>
+      </div>
+    </div>
+  </div>
+`);
+
+/* ================= 7. MECHANISMS SPECIFIC/NONSPECIFIC ================= */
+slide('mechanisms','Mechanismy účinku', `
+  <div class="slide-inner">
+    <p class="eyebrow">Mechanismy účinku</p>
+    <h2 class="headline">Specifické a nespecifické mechanismy</h2>
+    <div class="grid-2">
+      <div class="card">
+        <div class="tag">méně časté</div>
+        <p class="body-text" style="margin-top:6px;"><strong>Nespecifické mechanismy</strong> — účinek daný obecnými fyzikálně-chemickými vlastnostmi xenobiotik.</p>
+        <ul class="plain">
+          <li>adsorpce (aktivní uhlí)</li>
+          <li>oxidoredukční vlastnosti (fenol, H₂O₂)</li>
+          <li>osmotická aktivita (projímadla)</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="tag">většina případů</div>
+        <p class="body-text" style="margin-top:6px;"><strong>Specifické interakce</strong> — xenobiotikum s receptorem (molekulárním cílem); rozhodující je chemická struktura.</p>
+        <svg viewBox="0 0 260 100" style="width:100%;margin-top:8px;">
+          <circle cx="60" cy="50" r="35" fill="#FBF0DD" stroke="#B9791E"/>
+          <text x="60" y="55" font-size="12" text-anchor="middle">ruka</text>
+          <text x="60" y="90" font-size="11" text-anchor="middle" fill="#5A5D51">= receptor</text>
+          <line x1="100" y1="50" x2="150" y2="50" stroke="#5A5D51" stroke-width="1.5" marker-end="url(#arrow2)"/>
+          <rect x="160" y="30" width="80" height="40" rx="6" fill="#EAF1EA" stroke="#3E5C42"/>
+          <text x="200" y="53" font-size="12" text-anchor="middle">klika</text>
+          <text x="200" y="88" font-size="11" text-anchor="middle" fill="#5A5D51">= xenobiotikum (ligand)</text>
+          <defs><marker id="arrow2" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#5A5D51"/></marker></defs>
+        </svg>
+      </div>
+    </div>
+  </div>
+`);
+
+/* ================= 8. RECEPTOR THEORY ================= */
+slide('receptor-theory','Interakce xenobiotikum–receptor', `
+  <div class="slide-inner">
+    <p class="eyebrow">Molekulární úroveň</p>
+    <h2 class="headline">Okupační teorie a dávka–účinek</h2>
+    <p class="body-text">Vztah mezi koncentrací ligandu v místě účinku a buněčnou odpovědí popisuje S-křivka (log dávka). Klíčové pojmy:</p>
+    <div class="grid-2" style="margin-top:10px;">
+      <ul class="plain">
+        <li><strong>afinita</strong> — schopnost ligandu navázat se na receptor; vysoká afinita = stačí malá dávka</li>
+        <li><strong>vnitřní aktivita</strong> — schopnost komplexu ligand-receptor vyvolat odpověď</li>
+        <li><strong>agonista</strong> — váže se a aktivuje receptor (max. odpověď = plný agonista)</li>
+        <li><strong>antagonista</strong> — váže se, ale neaktivuje (nulová vnitřní aktivita)</li>
+      </ul>
+      <div class="diagram-box">
+        <svg viewBox="0 0 260 160" style="width:100%;">
+          <line x1="30" y1="140" x2="230" y2="140" stroke="#5A5D51" stroke-width="1.5"/>
+          <line x1="30" y1="140" x2="30" y2="20" stroke="#5A5D51" stroke-width="1.5"/>
+          <path d="M 45 130 C 90 128, 110 128, 130 80 C 150 30, 180 20, 220 18" fill="none" stroke="#3E5C42" stroke-width="3"/>
+          <text x="10" y="80" font-size="11" fill="#5A5D51" transform="rotate(-90 20 80)">odpověď</text>
+          <text x="200" y="155" font-size="11" fill="#5A5D51">log D</text>
+        </svg>
+      </div>
+    </div>
+    <div class="card" style="margin-top:14px;">
+      <p class="body-text" style="margin:0;"><strong>Kompetitivní antagonista</strong> soutěží s agonistou o stejné vazebné místo (např. atropin). <strong>Nekompetitivní antagonista</strong> vazbou mimo aktivní místo způsobí konformační změny, které naruší funkci receptoru.</p>
+    </div>
+  </div>
+`);
+
+/* ================= 9. QUIZ RECEPTORS ================= */
+slide('quiz-receptors','Kontrolní kvíz 1', `
+  <div class="slide-inner">
+    <p class="eyebrow">Kontrolní zastávka · kvíz</p>
+    <h2 class="headline">Kompetitivní, nebo nekompetitivní?</h2>
+    <div class="quiz-card" id="qr1">
+      <div class="quiz-q">Oxid uhelnatý se váže na aktivní místo hemoglobinu (na místo kyslíku). Jaký je to typ inhibice?</div>
+      <button class="quiz-opt" data-correct="true">Kompetitivní — CO soutěží s O₂ o stejné vazebné místo (hem)</button>
+      <button class="quiz-opt" data-correct="false">Nekompetitivní — CO mění tvar celé molekuly hemoglobinu</button>
+      <div class="quiz-feedback" id="qr1-fb"></div>
+    </div>
+    <div class="quiz-card" id="qr2" style="margin-top:16px;">
+      <div class="quiz-q">Kationty těžkých kovů se váží na sulfanylové (–SH) skupiny v proteinech a mění tak prostorové uspořádání enzymu. Jaký je to typ inhibice?</div>
+      <button class="quiz-opt" data-correct="false">Kompetitivní — kov soutěží se substrátem o aktivní místo</button>
+      <button class="quiz-opt" data-correct="true">Nekompetitivní — vazba mimo aktivní místo mění konformaci enzymu</button>
+      <div class="quiz-feedback" id="qr2-fb"></div>
+    </div>
+    <div class="quiz-card" id="qr3" style="margin-top:16px;">
+      <div class="quiz-q">Uhličitan lithný (léčba bipolární poruchy) — ion Li⁺ je velmi podobný iontu Mg²⁺ a jeho účinek souvisí s kompeticí o vazebné místo pro Mg²⁺. Jaký je Li⁺ typ inhibitoru?</div>
+      <button class="quiz-opt" data-correct="true">Kompetitivní — soutěží s Mg²⁺ o stejné vazebné místo</button>
+      <button class="quiz-opt" data-correct="false">Nekompetitivní — Li⁺ se váže jinam než Mg²⁺</button>
+      <div class="quiz-feedback" id="qr3-fb"></div>
+    </div>
+    <p class="footer-note">Proto má lithium úzké terapeutické okno (index) — malý rozdíl mezi účinnou a toxickou koncentrací.</p>
+  </div>
+`);
+
+/* ================= 10. XENOBIOTIC REACTIONS OVERVIEW ================= */
+slide('reactions-overview','Chemické reakce xenobiotik', `
+  <div class="slide-inner">
+    <p class="eyebrow">Molekulární úroveň</p>
+    <h2 class="headline">Chemické reakce xenobiotik</h2>
+    <p class="body-text">Reaktivní částice — xenobiotika nebo jejich metabolity — reagují s makromolekulami. Reakce mohou vést ke vzniku kovalentních vazeb, poškození biomolekul a narušení energetického hospodaření buňky. Dělíme je podle chemické povahy:</p>
+    <div class="grid-3" style="margin-top:14px;">
+      <div class="card"><div class="tag">1</div><p class="body-text" style="margin:0;"><strong>Elektrofily</strong> — alkylační činidla, kationty těžkých kovů</p></div>
+      <div class="card"><div class="tag">2</div><p class="body-text" style="margin:0;"><strong>Nukleofily</strong> — CO, kyanidový ion</p></div>
+      <div class="card"><div class="tag">3</div><p class="body-text" style="margin:0;"><strong>Volné radikály</strong> — HO•, Cl•, RO•…</p></div>
+    </div>
+  </div>
+`);
+
+/* ================= 11. ELECTROPHILE BASICS ================= */
+slide('electrophile-basics','Reakce elektrofilů', `
+  <div class="slide-inner">
+    <p class="eyebrow">Molekulární úroveň — reakce elektrofilů</p>
+    <h2 class="headline">Alkylační činidla a nukleofilní centra</h2>
+    <p class="body-text">Elektrofily (alkylační činidla, kationty těžkých kovů) se vážou na nukleofilní centra — místa s parciálním záporným nábojem lokalizovaná na heteroatomech (S, N) v biomolekulách. Nejčastěji jde o sulfanylové skupiny (–SH) cysteinu a nukleofilní koncové aminoskupiny.</p>
+    <div class="diagram-box">
+      <svg viewBox="0 0 420 130" style="width:100%;max-width:480px;">
+        <rect x="10" y="45" width="110" height="40" rx="8" fill="#EAF1EA" stroke="#3E5C42"/>
+        <text x="65" y="70" font-size="13" text-anchor="middle">protein–Cys–SH</text>
+        <line x1="120" y1="65" x2="165" y2="65" stroke="#5A5D51" stroke-width="2" marker-end="url(#arrow3)"/>
+        <text x="142" y="55" font-size="11" text-anchor="middle" fill="#9C3B2E">+ E⁺</text>
+        <rect x="170" y="45" width="140" height="40" rx="8" fill="#F7EAE7" stroke="#9C3B2E"/>
+        <text x="240" y="70" font-size="13" text-anchor="middle">protein–Cys–S–E</text>
+        <text x="240" y="105" font-size="12" text-anchor="middle" fill="#5A5D51">strukturní a funkční změna proteinu</text>
+        <defs><marker id="arrow3" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#5A5D51"/></marker></defs>
+      </svg>
+    </div>
+    <p class="body-text" style="margin-top:10px;">Výsledkem je vliv např. na biokatalytickou aktivitu (enzymy) nebo signální funkce proteinů (receptory).</p>
+  </div>
+`);
+
+/* ================= 12. STORY: MARKOV/RICIN ================= */
+slide('story','Příběh: deštníková vražda', `
+  <div class="slide-inner">
+    <p class="eyebrow">Toxikologický příběh</p>
+    <h2 class="headline">Georgi Markov a „deštníková vražda"</h2>
+    <div class="two-col-story">
+      <div>
+        <p class="body-text">7. září 1978 čekal bulharský disident a novinář Georgi Markov na autobus na Waterloo Bridge v Londýně. Ucítil bodavou bolest v stehně — muž s deštníkem se omluvil a odešel. Markov zemřel o čtyři dny později. Pitva odhalila v ráně platino-iridiovou kuličku (1,7 mm) se dvěma dutinkami — nosič mikroskopické dávky jedu.</p>
+        <p class="body-text">Forenzní analýza identifikovala obsah jako <strong>ricin</strong>, bílkovinný toxin ze semen skočce obecného.</p>
+      </div>
+      <div class="ricin-box">
+        <h3>Ricin — jak funguje</h3>
+        <p>Ribozom-inaktivující protein typu II. Řetězec B se váže na buněčný povrch a umožní vstup; řetězec A (RTA) v cytosolu odštěpí jediný adenin ze specifického místa 28S ribozomální RNA (sarcin-ricinová smyčka).</p>
+        <p class="stat">letální dávka u člověka odhadována již od stovek µg</p>
+        <p>Jde o <strong>katalytickou, nikoli stechiometrickou</strong> reakci — jedna molekula RTA inaktivuje tisíce ribozomů za minutu. Translace bílkovin se nevratně zastaví. Specifické antidotum neexistuje.</p>
+      </div>
+    </div>
+    <div class="novichok-box">
+      <h4>Kontrapunkt: Novičok a případ Skripal (2018)</h4>
+      <p>Zatímco ricin nevratně blokuje syntézu bílkovin uvnitř buňky, novičok (organofosfát) inhibuje acetylcholinesterázu — enzym rozkládající acetylcholin v synapsích. Výsledkem je nadměrná stimulace cholinergních receptorů (křeče, respirační selhání). Rozdíl: tato inhibice je zpočátku <strong>reverzibilní</strong> — existují oximy (reaktivace enzymu) a atropin (kompetitivní blokáda downstream účinků). U ricinu takový farmakologický cíl chybí.</p>
+    </div>
+  </div>
+`);
+
+/* ================= 13. ENVIRONMENTAL ELECTROPHILE SOURCES ================= */
+slide('env-electrophiles','Environmentální zdroje elektrofilů', `
+  <div class="slide-inner">
+    <p class="eyebrow">Aktuální literatura · Kumagai &amp; Abiko, 2016</p>
+    <h2 class="headline">Environmentální zdroje elektrofilů</h2>
+    <p class="body-text">Jsme obklopeni elektrofilními sloučeninami vznikajícími spalováním, kouřením i vařením — reagují s nukleofilními centry bílkovin (cystein, histidin, lysin) a nukleových kyselin.</p>
+    <div class="grid-3" style="margin-top:12px;">
+      <div class="card"><p class="body-text" style="margin:0;"><strong>Chinony</strong> — vznikají spalováním benzinu (1,2-/1,4-naftochinon)</p></div>
+      <div class="card"><p class="body-text" style="margin:0;"><strong>Formaldehyd</strong> — polutant vnitřního ovzduší</p></div>
+      <div class="card"><p class="body-text" style="margin:0;"><strong>Krotonaldehyd, akrolein</strong> — tabákový kouř</p></div>
+      <div class="card"><p class="body-text" style="margin:0;"><strong>Akrylamid</strong> — vzniká při vysokoteplotní úpravě škrobnatých potravin</p></div>
+      <div class="card"><p class="body-text" style="margin:0;"><strong>Methylrtuť</strong> — bioakumulace v rybách a mořských savcích</p></div>
+      <div class="card"><p class="body-text" style="margin:0;"><strong>Kadmium</strong> — kontaminace plodin ze znečištěné půdy</p></div>
+    </div>
+    <p class="footer-note">Kumagai, Y., Abiko, Y. (2016). Environmental Electrophiles. <em>Chem. Res. Toxicol.</em> 30(1), 203–219.</p>
+  </div>
+`);
+
+/* ================= 14. 1,2-NQ MECHANISM ================= */
+slide('nq-mechanism','Mechanismus 1,2-naftochinonu', `
+  <div class="slide-inner">
+    <p class="eyebrow">Molekulární mechanismus · Kumagai &amp; Abiko, 2016</p>
+    <h2 class="headline">S-arylace a GSH-zprostředkovaná obnova proteinu</h2>
+    <svg viewBox="0 0 760 150" style="width:100%;">
+      <rect x="10" y="55" width="140" height="40" rx="8" fill="#EAF1EA" stroke="#3E5C42"/>
+      <text x="80" y="80" font-size="13" text-anchor="middle">protein–SH</text>
+      <line x1="150" y1="75" x2="195" y2="75" stroke="#5A5D51" stroke-width="2" marker-end="url(#arrow4)"/>
+      <text x="172" y="65" font-size="11" text-anchor="middle" fill="#B9791E">1,2-NQ</text>
+      <rect x="200" y="55" width="150" height="40" rx="8" fill="#FBF0DD" stroke="#B9791E"/>
+      <text x="275" y="80" font-size="13" text-anchor="middle">protein–S-arylace</text>
+      <line x1="350" y1="75" x2="395" y2="75" stroke="#5A5D51" stroke-width="2" marker-end="url(#arrow4)"/>
+      <text x="372" y="65" font-size="11" text-anchor="middle" fill="#9C3B2E">autooxidace</text>
+      <rect x="400" y="55" width="150" height="40" rx="8" fill="#F7EAE7" stroke="#9C3B2E"/>
+      <text x="475" y="80" font-size="13" text-anchor="middle">chinon-protein adukt</text>
+      <line x1="550" y1="75" x2="595" y2="75" stroke="#5A5D51" stroke-width="2" marker-end="url(#arrow4)"/>
+      <text x="572" y="65" font-size="11" text-anchor="middle" fill="#3E5C42">+ GSH</text>
+      <rect x="600" y="55" width="150" height="40" rx="8" fill="#EAF1EA" stroke="#3E5C42"/>
+      <text x="675" y="75" font-size="13" text-anchor="middle">protein–SH</text>
+      <text x="675" y="90" font-size="10.5" text-anchor="middle" fill="#3E5C42">(obnoveno) + chinon–SG</text>
+      <defs><marker id="arrow4" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#5A5D51"/></marker></defs>
+    </svg>
+    <p class="body-text" style="margin-top:14px;">Xenobiotikum (1,2-NQ) se naváže na –SH skupinu proteinu (S-arylace). Adukt podléhá autooxidaci. Vstup GSH umožní transarylaci — chinon se přenese na glutathion a protein se obnoví. Tímto mechanismem 1,2-NQ moduluje signální dráhy jako Keap1/Nrf2 — nízké koncentrace elektrofilů tak mohou aktivovat adaptivní (ochrannou) odpověď buňky, zatímco vysoké koncentrace signalizaci naopak naruší.</p>
+    <p class="footer-note">Kumagai &amp; Abiko (2016), Obr. 2. DOI: 10.1021/acs.chemrestox.6b00326</p>
+  </div>
+`);
+
+/* ================= 15. ELECTROPHILE-DNA ================= */
+slide('electrophile-dna','Reakce elektrofilů s DNA', `
+  <div class="slide-inner">
+    <p class="eyebrow">Molekulární úroveň — reakce elektrofilů</p>
+    <h2 class="headline">Vazba na nukleové kyseliny</h2>
+    <div class="grid-2">
+      <ul class="plain">
+        <li>vazba na nukleofilní centra v nukleových kyselinách</li>
+        <li>→ kovalentní modifikace purinových a pyrimidinových bází v DNA</li>
+        <li>→ změny v komplementaritě bází</li>
+        <li>→ chybné párování při replikaci DNA</li>
+        <li>→ poškození genetické informace — <strong>mutace</strong>, změny buněčného cyklu, iniciace tvorby nádorů</li>
+      </ul>
+      <div class="diagram-box">
+        <svg viewBox="0 0 300 140" style="width:100%;">
+          <rect x="20" y="50" width="80" height="40" rx="6" fill="#EAF1EA" stroke="#3E5C42"/>
+          <text x="60" y="74" font-size="12" text-anchor="middle">guanin</text>
+          <line x1="100" y1="70" x2="200" y2="70" stroke="#9C3B2E" stroke-width="2" stroke-dasharray="3 3"/>
+          <text x="150" y="60" font-size="10" text-anchor="middle" fill="#9C3B2E">N7 — nukleofilní centrum</text>
+          <rect x="200" y="50" width="80" height="40" rx="6" fill="#F7EAE7" stroke="#9C3B2E"/>
+          <text x="240" y="74" font-size="12" text-anchor="middle">cytosin</text>
+          <text x="150" y="120" font-size="11" text-anchor="middle" fill="#5A5D51">alkylace N7 guaninu — klasický cíl karcinogenů</text>
+        </svg>
+      </div>
+    </div>
+  </div>
+`);
+
+/* ================= 16. HEAVY METALS ================= */
+slide('heavy-metals','Reakce s kationty těžkých kovů', `
+  <div class="slide-inner">
+    <p class="eyebrow">Molekulární úroveň — reakce elektrofilů</p>
+    <h2 class="headline">Kationty těžkých kovů (Hg²⁺, Cd²⁺, Pb²⁺, Cu²⁺, Ni²⁺)</h2>
+    <p class="body-text">Vazba nevazebných elektronů cysteinových –SH skupin do koordinační sféry těžkého kovu vytváří stabilní, prakticky ireverzibilní metalosulfidické můstky, které narušují terciární strukturu proteinů.</p>
+    <div class="diagram-box">
+      <svg viewBox="0 0 500 100" style="width:100%;max-width:520px;">
+        <text x="20" y="30" font-size="13" font-family="monospace">protein–Cys–SH</text>
+        <text x="20" y="70" font-size="13" font-family="monospace" fill="#9C3B2E">+ M²⁺ + HS–Cys–protein</text>
+        <line x1="250" y1="45" x2="290" y2="45" stroke="#5A5D51" stroke-width="2" marker-end="url(#arrow5)"/>
+        <text x="310" y="30" font-size="13" font-family="monospace">protein–Cys–S–M–S–Cys–protein</text>
+        <defs><marker id="arrow5" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#5A5D51"/></marker></defs>
+      </svg>
+    </div>
+    <p class="body-text" style="margin-top:12px;">Detoxikace probíhá reakcí s nukleofilní sulfanylovou skupinou <strong>glutathionu</strong> — GSH tak přímo chrání strukturní proteiny před kovy.</p>
+  </div>
+`);
+
+/* ================= 17. QUIZ CHECKPOINT 2: CLASSIFY ================= */
+slide('quiz-classify','Kontrolní kvíz 2', `
+  <div class="slide-inner">
+    <p class="eyebrow">Kontrolní zastávka · kvíz</p>
+    <h2 class="headline">Elektrofil, nukleofil, nebo volný radikál?</h2>
+    <div class="quiz-card" id="qc1">
+      <div class="quiz-q">Kyanidový ion (CN⁻) se váže na kladně nabité železo v cytochrom-c oxidase. Do jaké kategorie patří jeho reaktivita?</div>
+      <button class="quiz-opt" data-correct="false">Elektrofil — útočí na místa se záporným nábojem</button>
+      <button class="quiz-opt" data-correct="true">Nukleofil — útočí na místa s kladným (parciálním) nábojem</button>
+      <button class="quiz-opt" data-correct="false">Volný radikál — má nepárový elektron</button>
+      <div class="quiz-feedback" id="qc1-fb"></div>
+    </div>
+    <div class="quiz-card" id="qc2" style="margin-top:16px;">
+      <div class="quiz-q">Hydroxylový radikál (HO•) abstrahuje vodík z uhlovodíkového řetězce mastné kyseliny v membránovém lipidu. Jaký typ reakce nastává?</div>
+      <button class="quiz-opt" data-correct="false">Elektrofilní alkylace</button>
+      <button class="quiz-opt" data-correct="true">Iniciace řetězové radikálové reakce (lipoperoxidace)</button>
+      <div class="quiz-feedback" id="qc2-fb"></div>
+    </div>
+  </div>
+`);
+
+/* ================= 18. NUCLEOPHILE REACTIONS ================= */
+slide('nucleophile-reactions','Reakce nukleofilů', `
+  <div class="slide-inner">
+    <p class="eyebrow">Molekulární úroveň — reakce nukleofilů</p>
+    <h2 class="headline">CO a kyanid v dýchacím řetězci</h2>
+    <p class="body-text">Nukleofily napadají místa s parciálním kladným nábojem — obvykle difuzně delokalizovaným (nespecifické působení), výjimkou jsou kladně nabité kovové ionty v metaloenzymech (specifické působení).</p>
+    <div class="diagram-box">
+      <svg viewBox="0 0 700 140" style="width:100%;">
+        <rect x="10" y="50" width="110" height="40" rx="6" fill="#EAF1EA" stroke="#3E5C42"/>
+        <text x="65" y="74" font-size="12" text-anchor="middle">Komplex I–III</text>
+        <line x1="120" y1="70" x2="180" y2="70" stroke="#5A5D51" stroke-width="2" marker-end="url(#arrow6)"/>
+        <rect x="185" y="50" width="130" height="40" rx="6" fill="#FBF0DD" stroke="#B9791E"/>
+        <text x="250" y="74" font-size="12" text-anchor="middle">cytochrom c</text>
+        <line x1="315" y1="70" x2="375" y2="70" stroke="#5A5D51" stroke-width="2" marker-end="url(#arrow6)"/>
+        <rect x="380" y="50" width="150" height="40" rx="6" fill="#F7EAE7" stroke="#9C3B2E"/>
+        <text x="455" y="74" font-size="12" text-anchor="middle">cytochrom-c oxidasa</text>
+        <line x1="530" y1="70" x2="590" y2="70" stroke="#5A5D51" stroke-width="2" stroke-dasharray="2 2"/>
+        <text x="610" y="65" font-size="12" text-anchor="middle" fill="#5A5D51">O₂ → H₂O</text>
+        <line x1="455" y1="10" x2="455" y2="45" stroke="#9C3B2E" stroke-width="2.5"/>
+        <text x="455" y="20" font-size="12" text-anchor="middle" fill="#9C3B2E" font-weight="bold">CN⁻ blokuje zde</text>
+        <defs><marker id="arrow6" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#5A5D51"/></marker></defs>
+      </svg>
+    </div>
+    <p class="body-text" style="margin-top:10px;"><strong>CO</strong> se váže na hemové železo hemoglobinu a brání navázání kyslíku. <strong>Kyanidový ion</strong> se váže na železnaté ionty v cytochrom-c oxidase — jiném hemovém enzymu dýchacího řetězce, kterého je v těle mnohem méně než hemoglobinu.</p>
+    <table class="data-table" style="margin-top:12px;max-width:420px;">
+      <tr><th>Látka</th><th>Letální koncentrace pro člověka</th></tr>
+      <tr><td>HCN</td><td>180 ppm / 2 min</td></tr>
+      <tr><td>CO</td><td>5 000 ppm (0,5 %) / 5 min</td></tr>
+    </table>
+  </div>
+`);
+
+/* ================= 19. FREE RADICALS ================= */
+slide('free-radicals','Reakce volných radikálů', `
+  <div class="slide-inner">
+    <p class="eyebrow">Molekulární úroveň — reakce volných radikálů</p>
+    <h2 class="headline">Řetězová radikálová reakce</h2>
+    <p class="body-text">Reaktivní částice s nepárovým elektronem (HO•, Cl•, Br•, RO•, NH•) mohou abstrahovat vodík z uhlovodíkového řetězce a iniciovat řetězovou radikálovou reakci — značné riziko pro buňky, tkáně i organismus. Cílovými molekulami jsou membránové lipidy a nukleové kyseliny.</p>
+    <table class="data-table" style="margin-top:12px;">
+      <tr><th>Volný radikál</th><th>Prekurzor</th><th>Zdroj expozice</th></tr>
+      <tr><td>HO•, HOO•</td><td>kyslík</td><td>dýchání</td></tr>
+      <tr><td>R• (alkyl, halogenalkyl)</td><td>halogenalkany</td><td>halogenovaná rozpouštědla, halothan</td></tr>
+      <tr><td>•NO, •NO₂</td><td>NO, NO₂</td><td>spalování, emise z vozidel</td></tr>
+      <tr><td>Ar-NH•</td><td>aromatické aminy</td><td>kouření</td></tr>
+      <tr><td>semichinony</td><td>benzen a jiné areny</td><td>zpracování ropy, emise z vozidel</td></tr>
+      <tr><td>RO•, ROO•</td><td>oxidační produkty lipidů</td><td>lipoperoxidace vyvolaná výše uvedenými radikály</td></tr>
+    </table>
+    <p class="footer-note">Dva zdroje řetězové reakce: a) selhání detoxikačních systémů, b) tvorba velkého množství radikálů biotransformací cizorodých látek.</p>
+  </div>
+`);
+
+/* ================= 20. SUBCELLULAR: MEMBRANES ================= */
+slide('sub-membranes','Buněčné membrány', `
+  <div class="slide-inner">
+    <p class="eyebrow">Působení na subcelulární úrovni · A) Buněčné membrány</p>
+    <h2 class="headline">Peroxidace lipidů buněčné membrány</h2>
+    <div class="grid-2">
+      <div class="diagram-box">
+        <svg viewBox="0 0 300 150" style="width:100%;">
+          <g>
+            <circle cx="30" cy="35" r="8" fill="#B9791E"/><line x1="30" y1="43" x2="30" y2="80" stroke="#B9791E" stroke-width="3"/>
+            <circle cx="60" cy="35" r="8" fill="#B9791E"/><line x1="60" y1="43" x2="60" y2="80" stroke="#B9791E" stroke-width="3"/>
+            <circle cx="90" cy="35" r="8" fill="#B9791E"/><line x1="90" y1="43" x2="90" y2="80" stroke="#B9791E" stroke-width="3"/>
+            <circle cx="120" cy="35" r="8" fill="#B9791E"/><line x1="120" y1="43" x2="120" y2="80" stroke="#B9791E" stroke-width="3"/>
+            <circle cx="150" cy="35" r="8" fill="#B9791E"/><line x1="150" y1="43" x2="150" y2="80" stroke="#B9791E" stroke-width="3"/>
+            <circle cx="180" cy="35" r="8" fill="#B9791E"/><line x1="180" y1="43" x2="180" y2="80" stroke="#B9791E" stroke-width="3"/>
+            <circle cx="210" cy="35" r="8" fill="#B9791E"/><line x1="210" y1="43" x2="210" y2="80" stroke="#B9791E" stroke-width="3"/>
+            <circle cx="240" cy="35" r="8" fill="#B9791E"/><line x1="240" y1="43" x2="240" y2="80" stroke="#B9791E" stroke-width="3"/>
+          </g>
+          <g>
+            <circle cx="30" cy="115" r="8" fill="#B9791E"/><line x1="30" y1="107" x2="30" y2="80" stroke="#B9791E" stroke-width="3"/>
+            <circle cx="60" cy="115" r="8" fill="#B9791E"/><line x1="60" y1="107" x2="60" y2="80" stroke="#B9791E" stroke-width="3"/>
+            <circle cx="90" cy="115" r="8" fill="#B9791E"/><line x1="90" y1="107" x2="90" y2="80" stroke="#B9791E" stroke-width="3"/>
+            <circle cx="120" cy="115" r="8" fill="#B9791E"/><line x1="120" y1="107" x2="120" y2="80" stroke="#B9791E" stroke-width="3"/>
+            <circle cx="150" cy="115" r="8" fill="#9C3B2E"/><line x1="150" y1="107" x2="150" y2="80" stroke="#9C3B2E" stroke-width="3" stroke-dasharray="3 2"/>
+            <circle cx="180" cy="115" r="8" fill="#B9791E"/><line x1="180" y1="107" x2="180" y2="80" stroke="#B9791E" stroke-width="3"/>
+            <circle cx="210" cy="115" r="8" fill="#B9791E"/><line x1="210" y1="107" x2="210" y2="80" stroke="#B9791E" stroke-width="3"/>
+            <circle cx="240" cy="115" r="8" fill="#B9791E"/><line x1="240" y1="107" x2="240" y2="80" stroke="#B9791E" stroke-width="3"/>
+          </g>
+          <text x="150" y="140" font-size="11" text-anchor="middle" fill="#9C3B2E">přerušený řetězec = štěpení volným radikálem</text>
+        </svg>
+      </div>
+      <ul class="plain">
+        <li>volné radikály štěpí řetězce mastných kyselin</li>
+        <li>→ rozpad fosfolipidů membrány</li>
+        <li>→ vylití obsahu buňky, odumření buňky</li>
+        <li>→ reakce imunitního systému, zánětlivý proces</li>
+        <li>→ zesilující efekt — generace dalších kyslíkatých radikálů</li>
+      </ul>
+    </div>
+    <div class="card" style="margin-top:14px;">
+      <p class="body-text" style="margin:0;"><strong>Organická rozpouštědla</strong> difundují do lipofilních membrán (nabobtnání, narkotický účinek — reverzibilní). <strong>Kationty těžkých kovů</strong> (Cd²⁺, Hg²⁺) mění fluiditu a permeabilitu membrány. <strong>Žlučové kyseliny</strong> se chovají jako detergenty a narušují integritu membrán.</p>
+    </div>
+  </div>
+`);
+
+/* ================= 21. SUBCELLULAR: MITOCHONDRIA ================= */
+slide('sub-mito','Mitochondrie', `
+  <div class="slide-inner">
+    <p class="eyebrow">Působení na subcelulární úrovni · B) Mitochondrie</p>
+    <h2 class="headline">Narušení syntézy ATP</h2>
+    <p class="body-text">Mitochondrie dodávají buňce energii ve formě ATP. Narušení jejich funkce vede k poklesu hladiny ATP až k odumření buňky.</p>
+    <div class="grid-2" style="margin-top:10px;">
+      <div class="card">
+        <p class="body-text" style="margin:0;"><strong>Fenolické sloučeniny</strong> (fenol, nitro-/chlorfenoly) mění pH uvnitř mitochondrií — naruší se pH gradient nutný pro syntézu ATP, energie se uvolní jako teplo. Klinicky: horečka.</p>
+      </div>
+      <div class="card">
+        <p class="body-text" style="margin:0;"><strong>Kyanidy a azidy</strong> se vážou na hem a blokují transport elektronů — přímo narušují syntézu ATP (viz dýchací řetězec, předchozí slide).</p>
+      </div>
+    </div>
+  </div>
+`);
+
+/* ================= 22. SUBCELLULAR: LYSOSOMES ================= */
+slide('sub-lyso','Lysozomy', `
+  <div class="slide-inner">
+    <p class="eyebrow">Působení na subcelulární úrovni · C) Lysozomy</p>
+    <h2 class="headline">„Sebevražedné balíčky"</h2>
+    <p class="body-text">Lysozomy obsahují hydrolytické enzymy, které vychytávají z cytoplazmy a bezpečně skladují. Prasknutí membrány → vylití obsahu do cytoplazmy → destrukce buňky.</p>
+    <div class="grid-2" style="margin-top:10px;">
+      <div class="card"><p class="body-text" style="margin:0;"><strong>Destabilizují</strong> membrány lysozomů: pyrogenní steroidy, polyenová antibiotika (amfotericin B, nystatin)</p></div>
+      <div class="card"><p class="body-text" style="margin:0;"><strong>Stabilizují</strong> membrány lysozomů: glukokortikoidy</p></div>
+    </div>
+  </div>
+`);
+
+/* ================= 23. SUBCELLULAR: NUCLEUS ================= */
+slide('sub-nucleus','Buněčná jádra', `
+  <div class="slide-inner">
+    <p class="eyebrow">Působení na subcelulární úrovni · D) Buněčná jádra</p>
+    <h2 class="headline">Cíl: syntéza nukleových kyselin</h2>
+    <p class="body-text">Buněčná jádra obsahují klíčové biomolekuly — mohou být cílem pro toxické látky, které inhibují nebo stimulují syntézu nukleových kyselin.</p>
+    <div class="ricin-box" style="margin-top:12px;">
+      <h3>Amanitin — návrat k muchomůrce zelené</h3>
+      <p>Toxin muchomůrky zelené (<em>Amanita phalloides</em>) z přednášky 1 — <strong>α-amanitin</strong> je účinný a selektivní inhibitor RNA polymerázy II, enzymu klíčového pro syntézu mediátorové RNA. Bez ní se zastaví syntéza bílkovin a buňka postupně odumírá — přesně ten mechanismus, který jsme si popsali u jaterního selhání po otravě.</p>
+    </div>
+  </div>
+`);
+
+/* ================= 24. SUBCELLULAR: ER ================= */
+slide('sub-er','Endoplazmatické retikulum', `
+  <div class="slide-inner">
+    <p class="eyebrow">Působení na subcelulární úrovni · E) Endoplazmatické retikulum</p>
+    <h2 class="headline">Místo biotransformace</h2>
+    <ul class="plain">
+      <li>syntéza bílkovin, mastných kyselin, lipidů a steroidních hormonů pro celou buňku</li>
+      <li>transport živin v rámci buňky</li>
+      <li>místo výskytu biotransformačních enzymů — <strong>cytochromu P450</strong> a flavinových monooxygenáz</li>
+    </ul>
+    <div class="card" style="margin-top:14px;">
+      <p class="body-text" style="margin:0;">Poškození endoplazmatického retikula vede k omezení proteosyntézy nebo k inhibici syntézy důležitých signálních látek. Právě zde dochází i k bioaktivaci xenobiotik na reaktivní elektrofilní metabolity (téma příští přednášky o biotransformaci).</p>
+    </div>
+  </div>
+`);
+
+/* ================= 25. CELLULAR LEVEL ================= */
+slide('cellular-level','Působení na úrovni buněk', `
+  <div class="slide-inner">
+    <p class="eyebrow">Buněčná úroveň</p>
+    <h2 class="headline">Nekróza, apoptóza a homeostáza</h2>
+    <div class="grid-2">
+      <div class="card"><div class="tag" style="border-color:var(--danger);color:var(--danger);">nekontrolovaná smrt</div>
+        <p class="body-text" style="margin:6px 0 0 0;"><strong>Nekróza</strong> — buňka nabobtná, praskne membrána, obsah se vylije → vyvolání imunitní odpovědi, zánětlivý proces.</p></div>
+      <div class="card"><div class="tag" style="border-color:var(--tox-green);color:var(--tox-green-deep);">řízená smrt</div>
+        <p class="body-text" style="margin:6px 0 0 0;"><strong>Apoptóza</strong> — buňka se zmenší, složky se postupně rozloží, nevznikají antigenní látky → buňka je rychle fagocytována leukocyty.</p></div>
+    </div>
+    <p class="body-text" style="margin-top:14px;">Nadměrná proliferace buněk může přerůst až ve zhoubné nádorové bujení. <strong>Homeostáza</strong> je schopnost udržet relativně stálé vnitřní prostředí i při změnách vnějšího prostředí.</p>
+    <div class="card" style="margin-top:10px;">
+      <p class="body-text" style="margin:0;"><strong>Homeostatická regulace — zbraně buňky:</strong> snížení prostupnosti membrány · využití transportních mechanismů (škodlivina ven) · chemická transformace škodliviny (produkt ven) · indukce biotransformačních enzymů zajišťujících detoxikaci.</p>
+    </div>
+  </div>
+`);
+
+/* ================= 26. PERSULFIDES PROTECTION ================= */
+slide('persulfides','Persulfidy jako ochrana', `
+  <div class="slide-inner">
+    <p class="eyebrow">Aktuální výzkum · Kumagai &amp; Abiko, 2016; Andrés et al., 2025</p>
+    <h2 class="headline">Jak se buňka brání elektrofilům navíc</h2>
+    <p class="body-text">Kromě konjugace s GSH existuje ještě jedna obranná linie: <strong>persulfidy a polysulfidy</strong> (CysSSH, GSSH) — reaktivní formy síry s vyšší nukleofilitou než samotný cystein nebo glutathion. Vznikají působením enzymů CBS, CSE a 3MST.</p>
+    <div class="diagram-box">
+      <svg viewBox="0 0 600 110" style="width:100%;">
+        <circle cx="60" cy="55" r="40" fill="none" stroke="#B9791E" stroke-width="1.5" stroke-dasharray="4 3"/>
+        <text x="60" y="50" font-size="11" text-anchor="middle">elektrofil</text>
+        <text x="60" y="64" font-size="11" text-anchor="middle">z prostředí</text>
+        <line x1="105" y1="55" x2="180" y2="55" stroke="#5A5D51" stroke-width="2" marker-end="url(#arrow7)"/>
+        <rect x="185" y="30" width="150" height="50" rx="8" fill="#EAF1EA" stroke="#3E5C42"/>
+        <text x="260" y="60" font-size="12" text-anchor="middle">persulfid (CysSSH)</text>
+        <line x1="335" y1="55" x2="400" y2="55" stroke="#5A5D51" stroke-width="2" marker-end="url(#arrow7)"/>
+        <rect x="405" y="30" width="180" height="50" rx="8" fill="#FBF0DD" stroke="#B9791E"/>
+        <text x="495" y="55" font-size="12" text-anchor="middle">síraný adukt</text>
+        <text x="495" y="70" font-size="10.5" text-anchor="middle" fill="#5A5D51">(elektrofil neutralizován)</text>
+        <defs><marker id="arrow7" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#5A5D51"/></marker></defs>
+      </svg>
+    </div>
+    <p class="body-text" style="margin-top:10px;">Autoři to označují jako „fázi nultou" (phase-zero reaction) detoxikace — persulfidy zachytí elektrofil ještě dřív, než stihne poškodit citlivé senzorové proteiny (Keap1, PTEN, PTP1B). Koncept persulfidové ochrany zůstává aktivní oblastí výzkumu i o téměř deset let později.</p>
+    <p class="footer-note">Andrés et al. (2025). Reactive Sulfur Species and Protein Persulfidation. <em>Curr. Issues Mol. Biol.</em> 47(9).</p>
+  </div>
+`);
+
+/* ================= 27. QUIZ CHECKPOINT 3: MATCHING ================= */
+slide('matching-game','Kontrolní úkol: spárujte', `
+  <div class="slide-inner">
+    <p class="eyebrow">Kontrolní zastávka · úkol</p>
+    <h2 class="headline">Spárujte látku s jejím molekulárním cílem</h2>
+    <p class="body-text">Klikněte na látku vlevo a poté na odpovídající cíl vpravo.</p>
+    <div class="match-wrap">
+      <div>
+        <div class="match-col-title">LÁTKA</div>
+        <div id="match-left"></div>
+      </div>
+      <div>
+        <div class="match-col-title">MOLEKULÁRNÍ CÍL</div>
+        <div id="match-right"></div>
+      </div>
+    </div>
+    <div class="match-result" id="match-result"></div>
+  </div>
+`);
+
+/* ================= 28. GROUP WORK ================= */
+slide('group-work','Skupinová práce', `
+  <div class="slide-inner">
+    <p class="eyebrow">Skupinová práce · PubChem a bezpečnostní listy</p>
+    <h2 class="headline">Toxicita vybraných chemických sloučenin a prvků</h2>
+    <p class="body-text">8 skupin, každá má dvě látky. Pro každou vyhledejte: název (čj/aj), vzorec (CAS, SMILES), zdroje a použití, bezpečnost práce, toxicitu. Klikněte na kartu pro shrnutí.</p>
+    <div class="expert-grid" id="expert-grid"></div>
+  </div>
+`);
+
+/* ================= 29. DISCUSSION QUESTIONS ================= */
+slide('discussion','Diskusní otázky', `
+  <div class="slide-inner">
+    <p class="eyebrow">Na závěr přednášky</p>
+    <h2 class="headline">Diskusní otázky pro studující</h2>
+    <div id="discussion-list" style="margin-top:14px;"></div>
+  </div>
+`);
+
+/* ================= 30. CLOSING ================= */
+slide('closing','Shrnutí a zdroje', `
+  <div class="slide-inner">
+    <p class="eyebrow">Na závěr</p>
+    <h2 class="headline">Shrnutí přednášky 2 a zdroje</h2>
+    <div class="grid-2">
+      <div class="card">
+        <p class="body-text" style="margin-top:0;"><strong>Z dnešní přednášky si odnášíme:</strong></p>
+        <ul class="plain">
+          <li>toxikodynamika popisuje, co xenobiotikum dělá s tělem — od receptoru po orgán</li>
+          <li>tři typy reaktivity: elektrofily, nukleofily, volné radikály</li>
+          <li>katalytický mechanismus (ricin, amanitin) je nebezpečnější než stechiometrický — jedna molekula stačí na tisíce cílů</li>
+          <li>reverzibilita mechanismu rozhoduje o tom, zda existuje antidotum</li>
+          <li>persulfidy jsou další, stále zkoumaná linie buněčné obrany proti elektrofilům</li>
+        </ul>
+      </div>
+      <div class="card sources">
+        <strong style="color:var(--ink); font-family:var(--sans); font-size:15px;">Zdroje</strong><br><br>
+        Kumagai, Y., Abiko, Y. (2016). Environmental Electrophiles. <em>Chem. Res. Toxicol.</em> 30(1), 203–219.<br>
+        Andrés et al. (2025). Reactive Sulfur Species and Protein Persulfidation. <em>Curr. Issues Mol. Biol.</em> 47(9).<br>
+        Crompton, Gall (1980). Georgi Markov: death in a pellet. <em>Med. Leg. J.</em> 48(2), 51–62.<br>
+        Grela et al. (2019). How Ricin Damages the Ribosome. <em>Toxins</em> 11(5), 241.<br>
+        Musshoff, Madea (2009). Ricin poisoning and forensic toxicology. <em>Drug Test Anal.</em> 1(4), 184–191.<br>
+        PubChem (NCBI) a bezpečnostní listy výrobců — data ke skupinové práci.
+      </div>
+    </div>
+  </div>
+`);
+
+/* ================= RENDER ================= */
+const deck = document.getElementById('deck');
+slides.forEach((s,i)=>{
+  const el = document.createElement('div');
+  el.className='slide'; el.id='slide-'+i; el.innerHTML=s.html;
+  deck.appendChild(el);
+});
+const overlayList = document.getElementById('overlay-list');
+slides.forEach((s,i)=>{
+  const li = document.createElement('li');
+  li.innerHTML = '<span>'+String(i+1).padStart(2,'0')+'</span>'+s.title;
+  li.onclick = ()=>{ goTo(i); toggleOverlay(false); };
+  overlayList.appendChild(li);
+});
+
+let current = 0;
+function render(){
+  document.querySelectorAll('.slide').forEach((el,i)=> el.classList.toggle('active', i===current));
+  document.getElementById('progress-fill').style.width = ((current+1)/slides.length*100)+'%';
+  document.getElementById('counter').textContent = (current+1)+' / '+slides.length;
+  document.getElementById('prevBtn').disabled = current===0;
+  document.getElementById('nextBtn').disabled = current===slides.length-1;
+  initSlideWidgets(current);
+}
+function goTo(i){ current = Math.max(0, Math.min(slides.length-1, i)); render(); }
+function nextSlide(){ goTo(current+1); }
+function prevSlide(){ goTo(current-1); }
+document.addEventListener('keydown', (e)=>{
+  if(document.getElementById('overlay').classList.contains('show')){ if(e.key==='Escape') toggleOverlay(false); return; }
+  if(e.key==='ArrowRight' || e.key===' ') nextSlide();
+  if(e.key==='ArrowLeft') prevSlide();
+  if(e.key==='Escape') toggleOverlay(false);
+});
+function toggleOverlay(show){ document.getElementById('overlay').classList.toggle('show', show); }
+
+/* ================= WIDGETS ================= */
+const initialized = {};
+function initSlideWidgets(i){
+  const id = slides[i].id;
+  if(initialized[id]) return;
+  initialized[id] = true;
+  if(id==='quiz-receptors') initSimpleQuizzes([
+    ['qr1','qr1-fb','Správně — CO a O₂ soutěží o stejné vazebné místo na hemu.','Zkuste znovu — CO se váže přímo na místo, kam normálně patří kyslík.'],
+    ['qr2','qr2-fb','Správně — vazba mimo aktivní místo mění konformaci a tím i funkci enzymu.','Zkuste znovu — těžké kovy nemusí útočit přímo na aktivní místo.'],
+    ['qr3','qr3-fb','Správně — proto má lithium tak úzké terapeutické okno.','Zkuste znovu — text říká, že Li⁺ soutěží o totéž vazebné místo jako Mg²⁺.']
+  ]);
+  if(id==='quiz-classify') initSimpleQuizzes([
+    ['qc1','qc1-fb','Přesně tak — nukleofily útočí na kladně nabitá centra, zde na Fe³⁺/Fe²⁺ v hemu.','Zkuste znovu — CN⁻ je samo záporně nabité, hledá tedy kladný náboj.'],
+    ['qc2','qc2-fb','Ano — abstrakce vodíku radikálem je start řetězové lipoperoxidační reakce.','Zkuste znovu — radikál má nepárový elektron, nejde o klasickou alkylaci.']
+  ]);
+  if(id==='discussion') initDiscussion();
+  if(id==='group-work') initExpertCards();
+  if(id==='matching-game') initMatching();
+}
+
+function initSimpleQuizzes(list){
+  list.forEach(([cardId, fbId, correctMsg, wrongMsg])=>{
+    const card = document.getElementById(cardId);
+    const opts = card.querySelectorAll('.quiz-opt');
+    opts.forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const isCorrect = btn.dataset.correct==='true';
+        opts.forEach(o=>o.disabled=true);
+        btn.classList.add(isCorrect?'correct':'wrong');
+        if(!isCorrect){ opts.forEach(o=>{ if(o.dataset.correct==='true') o.classList.add('correct'); }); }
+        const fb = document.getElementById(fbId);
+        fb.textContent = isCorrect? correctMsg: wrongMsg;
+        fb.classList.add('show');
+      });
+    });
+  });
+}
+
+/* ---- discussion accordion (Markov/ricin questions) ---- */
+function initDiscussion(){
+  const qa = [
+    {q:'Ricin působí katalyticky, nikoli stechiometricky. Proč to zvyšuje jeho účinnost ve srovnání s toxinem, který by musel vázat svůj cíl v poměru 1:1?',
+     a:'Enzymatická (katalytická) reakce umožňuje jedné molekule toxinu opakovaně reagovat s mnoha cílovými molekulami za jednotku času (obdoba turnover number enzymu). Jedna molekula RTA depurinuje tisíce ribozomů za minutu. Látka vázající se stechiometricky (1:1) potřebuje mnohem vyšší molární množství pro srovnatelný účinek.'},
+    {q:'Proč pro ricin neexistuje specifické antidotum, zatímco pro novičok existují atropin a oximy? Co to vypovídá o vztahu mezi mechanismem účinku a léčitelností otravy?',
+     a:'Depurinace ribozomální RNA ricinem je jednorázová, nevratná enzymatická reakce v cytosolu, pro kterou neexistuje farmakologický cíl schopný reakci zvrátit. Inhibice acetylcholinesterázy organofosfáty je zpočátku reverzibilní (než dojde ke „stárnutí" vazby) — oximy dokážou enzym reaktivovat, atropin kompetitivně blokuje downstream účinky. Existuje tedy konkrétní farmakologický cíl zásahu, který u ricinu chybí.'},
+    {q:'Případ Markov byl vyřešen díky forenzní analýze kovové kuličky vyjmuté z těla. Jaké analytické možnosti by měli forenzní toxikologové k dispozici dnes, o desítky let později?',
+     a:'Moderní forenzní toxikologie disponuje vysoce citlivými imunochemickými testy a LC-MS/MS metodami pro přímý průkaz ricinu nebo jeho biomarkerů (ricinin, kyselina ricinolejová) ve stopových množstvích, PCR metodami pro průkaz rostlinné DNA skočce, a hmotnostně-spektrometrickými přístupy k potvrzení depurinace RNA. V roce 1978 se diagnóza opírala prakticky výhradně o pitevní nález a metalurgickou analýzu kuličky.'},
+    {q:'Ricin (rostlinný protein) i novičok (syntetický organofosfát) byly použity jako chemické/biologické zbraně. Proč „přirozený" původ nekoreluje s nižší nebezpečností zbraně?',
+     a:'Řada nejúčinnějších biologických toxinů (botulotoxin, ricin) je přirozeného původu a svou potencí syntetické látky často překonává. Klasifikace zbraně na „biologickou" versus „chemickou" je otázkou původu a výrobního postupu, nikoli mechanismu účinku nebo nebezpečnosti — ta je určena farmakodynamikou, dávkou potřebnou k účinku a dostupností antidota.'}
+  ];
+  const wrap = document.getElementById('discussion-list');
+  qa.forEach((item,i)=>{
+    const div = document.createElement('div');
+    div.className='tl-item'; div.style.cssText='min-width:auto;width:100%;margin-bottom:10px;';
+    div.innerHTML = `<div class="tl-year">Otázka ${i+1}</div><div class="tl-title" style="font-size:17px;">${item.q}</div><div class="tl-detail"><strong>Řešení (pro lektora):</strong> ${item.a}</div>`;
+    div.onclick = ()=> div.classList.toggle('open');
+    wrap.appendChild(div);
+  });
+}
+
+/* ---- expert cards (group work, 16 compounds) ---- */
+function initExpertCards(){
+  const data = [
+    {grp:'Skupina 1', name:'Chroman amonný', cz:'chroman amonný', en:'ammonium chromate', formula:'(NH₄)₂CrO₄', cas:'7788-98-9', smiles:'[NH4+].[NH4+].[O-][Cr]([O-])(=O)=O',
+     info:'Žluté krystaly, oxidační činidlo. Používá se v pyrotechnice, textilním tisku a jako korozní inhibitor. Obsahuje šestimocný chrom Cr(VI) — prokázaný lidský karcinogen (H350), silně dráždí kůži a dýchací cesty, senzibilizátor.'},
+    {grp:'Skupina 1', name:'Krotonaldehyd', cz:'krotonaldehyd', en:'crotonaldehyde', formula:'C₄H₆O', cas:'4170-30-3', smiles:'CC=CC=O',
+     info:'α,β-nenasycený aldehyd (měkký elektrofil), meziprodukt při výrobě kyseliny sorbové. Vzniká v tabákovém kouři a při spalování. Váže se Michaelovou adicí na cysteinové –SH skupiny proteinů (viz environmentální elektrofily). Vysoce toxický, žíravý, hořlavý.'},
+    {grp:'Skupina 2', name:'Dichroman draselný', cz:'dichroman draselný', en:'potassium dichromate', formula:'K₂Cr₂O₇', cas:'7778-50-9', smiles:'[K+].[K+].[O-][Cr](=O)(=O)O[Cr]([O-])(=O)=O',
+     info:'Oranžové krystaly, silné oxidační činidlo — běžný laboratorní reagent (titrace, stanovení CHSK). Cr(VI) — karcinogen kategorie 1B, mutagen, žíravina, toxický při vdechnutí i požití.'},
+    {grp:'Skupina 2', name:'Akrylamid', cz:'akrylamid', en:'acrylamide', formula:'C₃H₅NO', cas:'79-06-1', smiles:'C=CC(N)=O',
+     info:'Bílé krystaly, monomer pro polyakrylamidové gely (elektroforéza), průmyslově pro úpravu vody. Vzniká i při vysokoteplotní úpravě škrobnatých potravin (Maillardova reakce). Neurotoxin — Michaelova adice na cysteinové thioláty presynaptických proteinů, narušuje přenos vzruchu. IARC 2A (pravděpodobný karcinogen).'},
+    {grp:'Skupina 3', name:'Kadmium', cz:'kadmium', en:'cadmium', formula:'Cd', cas:'7440-43-9', smiles:'[Cd]',
+     info:'Měkký, stříbrolesklý kov. Používá se v NiCd bateriích, pigmentech, galvanickém pokovování. Environmentální polutant (fosfátová hnojiva, cigaretový kouř, kontaminovaná rýže). Váže se na metalothionein, hromadí se v ledvinách a kostech (nemoc itai-itai). IARC skupina 1 (prokázaný karcinogen).'},
+    {grp:'Skupina 3', name:'Akrolein', cz:'akrolein', en:'acrolein', formula:'C₃H₄O', cas:'107-02-8', smiles:'O=CC=C',
+     info:'Nejjednodušší nenasycený aldehyd, štiplavý zápach. Meziprodukt při výrobě kyseliny akrylové, používá se jako herbicid do vodních nádrží. Vzniká v tabákovém kouři a přepáleném oleji. Silný dráždivý elektrofil, IARC 2B (2023). Velmi reaktivní Michaelův akceptor.'},
+    {grp:'Skupina 4', name:'Nikl', cz:'nikl', en:'nickel', formula:'Ni', cas:'7440-02-0', smiles:'[Ni]',
+     info:'Stříbrolesklý kov, použití ve slitinách (nerezová ocel), galvanickém pokovování, bateriích. Nejčastější kontaktní alergen (niklová dermatitida). Sloučeniny Ni — IARC skupina 1 (rakovina plic u pracovníků v rafinériích). Ni²⁺ nahrazuje Zn²⁺ v metaloenzymech a váže se na cysteinové zbytky.'},
+    {grp:'Skupina 4', name:'1,4-naftochinon', cz:'1,4-naftochinon', en:'1,4-naphthoquinone', formula:'C₁₀H₆O₂', cas:'130-15-4', smiles:'O=C1C=CC(=O)c2ccccc21',
+     info:'Žluté krystaly, environmentální elektrofil z dieselových výfukových plynů a atmosférických částic. Tvoří proteinové adukty (S-arylace Keap1, HSF1, PTEN) a aktivuje AhR/Nrf2 signalizaci (viz Kumagai &amp; Abiko, 2016).'},
+    {grp:'Skupina 5', name:'Síran olovnatý', cz:'síran olovnatý', en:'lead sulfate', formula:'PbSO₄', cas:'7446-14-2', smiles:'[Pb+2].[O-]S([O-])(=O)=O',
+     info:'Bílá nerozpustná sloučenina, vzniká jako produkt vybíjení olověných akumulátorů; dříve součást olovnatých pigmentů. Environmentální polutant z recyklace baterií a starých nátěrů. Pb²⁺ inhibuje syntézu hemu (enzym ALAD), neurotoxický zejména pro děti, váže se na –SH skupiny bílkovin.'},
+    {grp:'Skupina 5', name:'1,2-naftochinon', cz:'1,2-naftochinon', en:'1,2-naphthoquinone', formula:'C₁₀H₆O₂', cas:'524-42-5', smiles:'O=C1C(=O)c2ccccc2C=C1',
+     info:'Centrální modelová látka výzkumu environmentálních elektrofilů (viz mechanismus S-arylace na této přednášce) — vzniká v atmosférických částicích a dieselovém výfuku. Modifikuje Keap1, PTP1B, GAPDH, UCH-L1 přes cysteinové zbytky; aktivuje AhR i EGFR signalizaci.'},
+    {grp:'Skupina 6', name:'Dusičnan stříbrný', cz:'dusičnan stříbrný', en:'silver nitrate', formula:'AgNO₃', cas:'7761-88-8', smiles:'[Ag+].[O-][N+](=O)[O-]',
+     info:'Bezbarvé krystaly, rozpustné ve vodě. Použití ve fotografii, postříbřování, laboratorně na srážení halogenidů. Léčebně žíravý prostředek (odstraňování bradavic), historicky kapky do očí novorozenců. Ag⁺ je silně toxický pro mikroorganismy, váže se na –SH skupiny, chronická expozice vede k argyrii (zešednutí kůže).'},
+    {grp:'Skupina 6', name:'Anilin', cz:'anilin', en:'aniline', formula:'C₆H₅NH₂', cas:'62-53-3', smiles:'Nc1ccccc1',
+     info:'Bezbarvá až narůžovělá kapalina, výchozí látka pro barviva a polyuretany (MDI), pryžové chemikálie. Dobře se vstřebává kůží. Způsobuje methemoglobinemii (oxidace Fe²⁺→Fe³⁺ v hemoglobinu). V roce 2024 přeřazen IARC do skupiny 2B (možný karcinogen).'},
+    {grp:'Skupina 7', name:'Síran lithný', cz:'síran lithný', en:'lithium sulfate', formula:'Li₂SO₄', cas:'10377-48-7', smiles:'[Li+].[Li+].[O-]S([O-])(=O)=O',
+     info:'Bílá krystalická látka, používá se při výrobě lithiových baterií a keramiky, historicky i psychiatricky. Li⁺ má úzké terapeutické okno — kompetuje s Mg²⁺ o vazebná místa v enzymech (viz kvíz na této přednášce), ve vyšších dávkách neuro- a nefrotoxický.'},
+    {grp:'Skupina 7', name:'Chloroform', cz:'chloroform (trichlormethan)', en:'chloroform', formula:'CHCl₃', cas:'67-66-3', smiles:'ClC(Cl)Cl',
+     info:'Bezbarvá těkavá kapalina, sladkého zápachu. Historicky celkové anestetikum (dnes opuštěno kvůli hepatotoxicitě a arytmiím), dnes rozpouštědlo a vedlejší produkt chlorace pitné vody. Bioaktivace cytochromem P450 na fosgen poškozuje játra. IARC 2B.'},
+    {grp:'Skupina 8', name:'Hydroxid lithný', cz:'hydroxid lithný', en:'lithium hydroxide', formula:'LiOH', cas:'1310-65-2', smiles:'[Li+].[OH-]',
+     info:'Bílá pevná látka, silně žíravá (H302, H314). Používá se k pohlcování CO₂ (ponorky, kosmické lodě) a jako prekurzor elektrolytů lithiových baterií. Toxicita Li⁺ iontu — viz síran lithný.'},
+    {grp:'Skupina 8', name:'1,2-benzochinon', cz:'1,2-benzochinon (o-benzochinon)', en:'1,2-benzoquinone', formula:'C₆H₄O₂', cas:'583-63-1', smiles:'O=C1C=CC=CC1=O',
+     info:'Žluté až červené krystaly, vzniká oxidací katecholu a katecholaminů (dopamin-chinon je endogenní elektrofil vznikající při oxidačním stresu). Vysoce reaktivní Michaelův akceptor, mutagen, senzibilizátor kůže — modelová látka pro studium reakcí chinonů s glutathionem.'}
+  ];
+  const grid = document.getElementById('expert-grid');
+  data.forEach(d=>{
+    const card = document.createElement('div');
+    card.className='expert-card';
+    card.innerHTML = `<div class="grp">${d.grp}</div><div class="name">${d.name}</div>
+      <div class="expert-detail">
+        <div><strong>${d.cz}</strong> / ${d.en}</div>
+        <div style="font-family:var(--mono);font-size:13px;margin:4px 0;">${d.formula} · CAS ${d.cas}</div>
+        <div style="font-family:var(--mono);font-size:11.5px;color:#8a8d80;margin-bottom:6px;word-break:break-all;">SMILES: ${d.smiles}</div>
+        <div>${d.info}</div>
+      </div>`;
+    card.onclick = ()=> card.classList.toggle('open');
+    grid.appendChild(card);
+  });
+}
+
+/* ---- matching game ---- */
+function initMatching(){
+  const pairs = [
+    {left:'Oxid uhelnatý (CO)', right:'Hemové železo hemoglobinu'},
+    {left:'Kyanidový ion (CN⁻)', right:'Cytochrom-c oxidasa'},
+    {left:'α-amanitin', right:'RNA polymeráza II'},
+    {left:'Ricin', right:'Ribozomální RNA (28S)'},
+    {left:'Kadmium (Cd²⁺)', right:'Sulfanylové (–SH) skupiny proteinů'}
+  ];
+  const leftItems = pairs.map((p,i)=>({text:p.left, idx:i}));
+  const rightItems = pairs.map((p,i)=>({text:p.right, idx:i}));
+  // shuffle right items for a real matching challenge
+  for(let i=rightItems.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [rightItems[i],rightItems[j]]=[rightItems[j],rightItems[i]]; }
+
+  const leftEl = document.getElementById('match-left');
+  const rightEl = document.getElementById('match-right');
+  let selectedLeft = null;
+  let solved = 0;
+
+  leftItems.forEach(item=>{
+    const div = document.createElement('div');
+    div.className='match-item';
+    div.textContent = item.text;
+    div.dataset.idx = item.idx;
+    div.onclick = ()=>{
+      if(div.classList.contains('correct')) return;
+      leftEl.querySelectorAll('.match-item').forEach(x=>x.classList.remove('selected'));
+      div.classList.add('selected');
+      selectedLeft = div;
+    };
+    leftEl.appendChild(div);
+  });
+  rightItems.forEach(item=>{
+    const div = document.createElement('div');
+    div.className='match-item';
+    div.textContent = item.text;
+    div.dataset.idx = item.idx;
+    div.onclick = ()=>{
+      if(!selectedLeft || div.classList.contains('correct')) return;
+      const isMatch = selectedLeft.dataset.idx === div.dataset.idx;
+      if(isMatch){
+        selectedLeft.classList.remove('selected'); selectedLeft.classList.add('correct');
+        div.classList.add('correct');
+        solved++;
+        selectedLeft = null;
+        if(solved===pairs.length){
+          document.getElementById('match-result').textContent = 'Výborně — všechny páry sedí! Katalytické (amanitin, ricin) i vazebné (CO, CN⁻, Cd²⁺) mechanismy jsme dnes probrali podrobně.';
+        }
+      } else {
+        div.classList.add('wrong');
+        setTimeout(()=>div.classList.remove('wrong'), 500);
+      }
+    };
+    rightEl.appendChild(div);
+  });
+}
+
+render();
+</script>
+</body>
+</html>

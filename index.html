@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Úvod do toxikologie — Přednášky 2026</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --card-bg: #ffffff;
+    --text: #1f2933;
+    --muted: #6b7785;
+    --accent: #2f6f4f;
+    --accent-light: #e6f2ec;
+    --border: #e1e6eb;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 40px 16px;
+  }
+  .container {
+    max-width: 720px;
+    margin: 0 auto;
+  }
+  header {
+    margin-bottom: 32px;
+  }
+  h1 {
+    font-size: 1.6rem;
+    margin: 0 0 4px 0;
+  }
+  .subtitle {
+    color: var(--muted);
+    font-size: 0.95rem;
+  }
+  ul.lectures {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  li.lecture {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  li.lecture.available:hover {
+    border-color: var(--accent);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  }
+  a.lecture-link {
+    text-decoration: none;
+    color: var(--text);
+    font-weight: 600;
+    flex: 1;
+  }
+  a.lecture-link:hover {
+    color: var(--accent);
+  }
+  .lecture-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--accent-light);
+    color: var(--accent);
+    font-size: 0.85rem;
+    font-weight: 700;
+    margin-right: 12px;
+  }
+  .placeholder .lecture-number {
+    background: var(--border);
+    color: var(--muted);
+  }
+  .placeholder {
+    color: var(--muted);
+  }
+  .placeholder span.title {
+    font-weight: 600;
+    color: var(--muted);
+  }
+  .status {
+    font-size: 0.8rem;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .status.ready {
+    color: var(--accent);
+  }
+  footer {
+    margin-top: 32px;
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>Úvod do toxikologie</h1>
+    <div class="subtitle">Přednášky — akademický rok 2026</div>
+  </header>
+
+  <ul class="lectures">
+    <li class="lecture available">
+      <a class="lecture-link" href="Prednaska_1.html">
+        <span class="lecture-number">1</span>Přednáška 1
+      </a>
+      <span class="status ready">k dispozici</span>
+    </li>
+    <li class="lecture available">
+      <a class="lecture-link" href="Prednaska_2.html">
+        <span class="lecture-number">2</span>Přednáška 2
+      </a>
+      <span class="status ready">k dispozici</span>
+    </li>
+    
+    <li class="lecture placeholder">
+      <span class="lecture-number">3</span><span class="title">Přednáška 3</span>
+      <span class="status">připravuje se</span>
+    </li>
+    <li class="lecture placeholder">
+      <span class="lecture-number">4</span><span class="title">Přednáška 4</span>
+      <span class="status">připravuje se</span>
+    </li>
+    <li class="lecture placeholder">
+      <span class="lecture-number">5</span><span class="title">Přednáška 5</span>
+      <span class="status">připravuje se</span>
+    </li>
+  </ul>
+
+  <footer>
+    Odkazy na další přednášky budou postupně doplňovány.
+  </footer>
+</div>
+</body>
+</html>
