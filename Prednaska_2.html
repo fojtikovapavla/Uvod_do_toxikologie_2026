@@ -313,7 +313,19 @@ slide('glutathione','Glutathion (GSH)', `
         <li><strong>detoxikace</strong> — konjugace s elektrofilními (reaktivními) toxickými molekulami ve fázi II metabolismu → vyšší rozpustnost ve vodě → usnadnění vylučování (moč, žluč)</li>
       </ul>
     </div>
+    <img src="obrázky_1/GSH.jpg" alt="GSH" style="width:100%;max-width:450px;margin-top:16px;border:1px solid var(--line);border-radius:8px;">
+    <img src="obrázky_1/GSSG.jpg" alt="GSSG" style="width:100%;max-width:450px;margin-top:16px;border:1px solid var(--line);border-radius:8px;">
   </div>
+`);
+
+/* ================= 5B. GLUTATHIONE ================= */
+slide('glutathione','Glutathion (GSH) - rozšířující informace', `
+  <div class="slide-inner">
+    <p class="eyebrow">Biologicky významné molekuly</p>
+    <h2 class="headline">Tripeptid glutathion (GSH) - rozšířující informace</h2>
+    <img src="obrázky_1/derivatizace.jpg" alt="GSH-derivatizace" style="width:100%;max-width:900px;margin-top:16px;border:1px solid var(--line);border-radius:8px;">
+    <p> Derivatizace při analytickém stanovení obsahu GSH.</p>
+    </div>
 `);
 
 /* ================= 6. LEVELS OF ACTION ================= */
@@ -351,10 +363,11 @@ slide('mechanisms','Mechanismy účinku', `
     <div class="grid-2">
       <div class="card">
         <div class="tag">méně časté</div>
-        <p class="body-text" style="margin-top:6px;"><strong>Nespecifické mechanismy</strong> — účinek daný obecnými fyzikálně-chemickými vlastnostmi xenobiotik.</p>
+        <p class="body-text" style="margin-top:6px;"><strong>Nespecifické mechanismy</strong> — účinek daný obecnými fyzikálně-chemickými vlastnostmi xenobiotik. Látka nemá jeden konkrétní biologický cíl (specifický receptor, enzym ...). </p>
         <ul class="plain">
           <li>adsorpce (aktivní uhlí)</li>
-          <li>oxidoredukční vlastnosti (fenol, H₂O₂)</li>
+          <li>hydrofilita - lipofilita (fenol)</li>
+          <li>oxidačně-redukční vlastnosti (H₂O₂)</li>
           <li>osmotická aktivita (projímadla)</li>
         </ul>
       </div>
@@ -364,7 +377,7 @@ slide('mechanisms','Mechanismy účinku', `
         <svg viewBox="0 0 320 110" style="width:100%;margin-top:8px;">
           <circle cx="60" cy="50" r="35" fill="#FBF0DD" stroke="#B9791E"/>
           <text x="60" y="55" font-size="16" text-anchor="middle">ruka</text>
-          <text x="60" y="94" font-size="14" text-anchor="middle" fill="#5A5D51">= receptor</text>
+          <text x="60" y="98" font-size="14" text-anchor="middle" fill="#5A5D51">= receptor</text>
           <line x1="100" y1="48" x2="163" y2="48" stroke="#5A5D51" stroke-width="1.5" marker-end="url(#arrow2)"/>
           <rect x="168" y="25" width="100" height="46" rx="6" fill="#EAF1EA" stroke="#3E5C42"/>
           <text x="218" y="53" font-size="16" text-anchor="middle">klika</text>
@@ -381,7 +394,7 @@ slide('receptor-theory','Interakce xenobiotikum–receptor', `
   <div class="slide-inner">
     <p class="eyebrow">Molekulární úroveň</p>
     <h2 class="headline">Okupační teorie a dávka–účinek</h2>
-    <p class="body-text">Vztah mezi koncentrací ligandu v místě účinku a buněčnou odpovědí popisuje S-křivka (log dávka). Klíčové pojmy:</p>
+    <p class="body-text">Vztah mezi koncentrací ligandu v místě účinku a buněčnou odpovědí popisuje <br>S-křivka (log dávka). Klíčové pojmy:</p>
     <div class="grid-2" style="margin-top:10px;">
       <ul class="plain">
         <li><strong>afinita</strong> — schopnost ligandu navázat se na receptor; vysoká afinita = stačí malá dávka</li>
@@ -477,21 +490,59 @@ slide('story','Příběh: deštníková vražda', `
       <div>
         <p class="body-text">7. září 1978 čekal bulharský disident a novinář Georgi Markov na autobus na Waterloo Bridge v Londýně. Ucítil bodavou bolest v stehně — muž s deštníkem se omluvil a odešel. Markov zemřel o čtyři dny později. Pitva odhalila v ráně platino-iridiovou kuličku (1,7 mm) se dvěma dutinkami — nosič mikroskopické dávky jedu.</p>
         <p class="body-text">Forenzní analýza identifikovala obsah jako <strong>ricin</strong>, bílkovinný toxin ze semen skočce obecného.</p>
+        <img src="obrázky_1/Ricin_skočec.jpg" alt="GSH-derivatizace" style="width:100%;max-width:300px;margin-top:16px;border:1px solid var(--line);border-radius:8px;">
       </div>
-      <div class="ricin-box">
-        <h3>Ricin — jak funguje</h3>
-        <p>Ribozom-inaktivující protein typu II. Řetězec B se váže na buněčný povrch a umožní vstup; řetězec A (RTA) v cytosolu odštěpí jediný adenin ze specifického místa 28S ribozomální RNA (sarcin-ricinová smyčka).</p>
-        <p class="stat">letální dávka u člověka odhadována již od stovek µg</p>
-        <p>Jde o <strong>katalytickou, nikoli stechiometrickou</strong> reakci — jedna molekula RTA inaktivuje tisíce ribozomů za minutu. Translace bílkovin se nevratně zastaví. Specifické antidotum neexistuje.</p>
-      </div>
-    </div>
-    <div class="novichok-box">
-      <h4>Kontrapunkt: Novičok a případ Skripal (2018)</h4>
-      <p>Zatímco ricin nevratně blokuje syntézu bílkovin uvnitř buňky, novičok (organofosfát) inhibuje acetylcholinesterázu — enzym rozkládající acetylcholin v synapsích. Výsledkem je nadměrná stimulace cholinergních receptorů (křeče, respirační selhání). Rozdíl: tato inhibice je zpočátku <strong>reverzibilní</strong> — existují oximy (reaktivace enzymu) a atropin (kompetitivní blokáda downstream účinků). U ricinu takový farmakologický cíl chybí.</p>
-    </div>
-  </div>
+     <div class="ricin-box">
+    <h3>Ricin — jak funguje</h3>
+
+    <p>
+        <strong>Ribozom-inaktivující protein typu II (RIP-II).</strong>
+        Ricin tvoří dvě podjednotky: <strong>B-řetězec</strong> se váže
+        na sacharidové struktury na povrchu buňky a podporuje vstup
+        toxinu do buňky; <strong>A-řetězec (RTA)</strong> je enzymaticky aktivní.
+    </p>
+
+    <p>
+        Po průniku do cytosolu RTA působí jako
+        <strong>N-glykosidáza</strong> a odstraní specifický adenin
+        z <strong>28S rRNA v sarcin-ricinové smyčce</strong>
+        (sarcin–ricin loop, SRL). Tím dojde k inaktivaci ribozomu
+        a následně k zásadnímu útlumu syntézy bílkovin.
+    </p>
+
+    <p class="stat">
+        <strong>Velmi vysoká účinnost:</strong> reakce je katalytická,
+        nikoli stechiometrická — jedna molekula RTA může inaktivovat
+        velké množství ribozomů.
+    </p>
+
+    <p>
+        Inaktivace ribozomu je <strong>nevratná</strong>; při dostatečném
+        rozsahu poškození dochází k selhání proteosyntézy a buněčné smrti.
+        <strong>Specifické schválené antidotum není k dispozici</strong>;
+        léčba je především podpůrná.
+    </p>
+</div>
 `);
 
+/* ================= 12A. STORY: Novičok/Skripal ================= */
+slide('story','Příběh: nervové jedy', `
+  <div class="slide-inner">
+    <p class="eyebrow">Toxikologický příběh</p>
+    <h2 class="headline">Sergej Skripal a nervové jedy</h2>
+    <div class="two-col-story">
+    </div>
+    <div class="novichok-box"> <h4>Novičok a případ Skripal (2018)</h4>
+
+  <p> Zatímco <strong>ricin poškozuje ribozomy a zastavuje syntézu bílkovin</strong>, nervově paralytické organofosfáty ze skupiny Novičok <strong>inhibují acetylcholinesterázu (AChE)</strong> – enzym, který za normálních okolností hydrolyzuje neurotransmiter acetylcholin. </p>
+
+  <p> Inhibice AChE vede k <strong>hromadění acetylcholinu</strong> v synapsích a k nadměrné stimulaci cholinergních receptorů. Důsledkem mohou být <strong>mióza, zvýšená sekrece, svalové záškuby a křeče, poruchy vědomí a respirační selhání</strong>. </p>
+
+  <p> Organofosfát se na AChE <strong>kovalentně váže</strong>. V časné fázi lze u některých organofosfátových intoxikací využít <strong>oximy</strong>, které mohou fosforylovaný enzym reaktivovat, pokud ještě nedošlo k tzv. <em>aging</em>. <strong>Přírodní alkaloid atropin</strong> působí jiným mechanismem – kompetitivně blokuje <strong>muskarinové acetylcholinové receptory</strong>, a tím omezuje část následků nadbytku acetylcholinu. </p>
+
+  <p> <strong>Kontrast s ricinem:</strong> u ricinu je primárním cílem ribozomální RNA a následná ztráta proteosyntézy; neexistuje zde analogický farmakologický mechanismus, kterým by bylo možné poškozené ribozomy jednoduše reaktivovat. </p> </div>
+  </div>
+`);
 /* ================= 13. ENVIRONMENTAL ELECTROPHILE SOURCES ================= */
 slide('env-electrophiles','Environmentální zdroje elektrofilů', `
   <div class="slide-inner">
@@ -502,40 +553,23 @@ slide('env-electrophiles','Environmentální zdroje elektrofilů', `
       <div class="card"><p class="body-text" style="margin:0;"><strong>Chinony</strong> — vznikají spalováním benzinu (1,2-/1,4-naftochinon)</p></div>
       <div class="card"><p class="body-text" style="margin:0;"><strong>Formaldehyd</strong> — polutant vnitřního ovzduší</p></div>
       <div class="card"><p class="body-text" style="margin:0;"><strong>Krotonaldehyd, akrolein</strong> — tabákový kouř</p></div>
-      <div class="card"><p class="body-text" style="margin:0;"><strong>Akrylamid</strong> — vzniká při vysokoteplotní úpravě škrobnatých potravin</p></div>
+      <div class="card"><p class="body-text" style="margin:0;"><strong>Akrylamid</strong> — vzniká při vysokoteplotní úpravě některých potravin</p></div>
       <div class="card"><p class="body-text" style="margin:0;"><strong>Methylrtuť</strong> — bioakumulace v rybách a mořských savcích</p></div>
       <div class="card"><p class="body-text" style="margin:0;"><strong>Kadmium</strong> — kontaminace plodin ze znečištěné půdy</p></div>
     </div>
-    <p class="footer-note">Kumagai, Y., Abiko, Y. (2016). Environmental Electrophiles. <em>Chem. Res. Toxicol.</em> 30(1), 203–219.</p>
+    <p class="footer-note">Kumagai, Y., Abiko, Y. (2016). <em>Chem. Res. Toxicol.</em> 30(1), 203–219.</p>
   </div>
 `);
 
-/* ================= 14. 1,2-NQ MECHANISM ================= */
-slide('nq-mechanism','Mechanismus 1,2-naftochinonu', `
+
+/* ================= 13A. ENVIRONMENTAL ELECTROPHILE SOURCES ================= */
+slide('env-electrophiles','Environmentální zdroje elektrofilů', `
   <div class="slide-inner">
-    <p class="eyebrow">Molekulární mechanismus · Kumagai &amp; Abiko, 2016</p>
-    <h2 class="headline">S-arylace a GSH-zprostředkovaná obnova proteinu</h2>
-    <svg viewBox="0 0 500 225" style="width:100%;max-width:600px;">
-      <rect x="10" y="40" width="190" height="55" rx="8" fill="#EAF1EA" stroke="#3E5C42"/>
-      <text x="105" y="73" font-size="17" text-anchor="middle">protein–SH</text>
-      <line x1="200" y1="67" x2="245" y2="67" stroke="#5A5D51" stroke-width="2" marker-end="url(#arrow4)"/>
-      <text x="222" y="55" font-size="14" text-anchor="middle" fill="#B9791E">1,2-NQ</text>
-      <rect x="250" y="40" width="220" height="55" rx="8" fill="#FBF0DD" stroke="#B9791E"/>
-      <text x="360" y="73" font-size="17" text-anchor="middle">protein–S-arylace</text>
-      <line x1="360" y1="95" x2="360" y2="148" stroke="#5A5D51" stroke-width="2" marker-end="url(#arrow4)"/>
-      <text x="392" y="126" font-size="14" text-anchor="middle" fill="#9C3B2E">autooxidace</text>
-      <rect x="250" y="150" width="220" height="55" rx="8" fill="#F7EAE7" stroke="#9C3B2E"/>
-      <text x="360" y="183" font-size="16" text-anchor="middle">chinon-protein adukt</text>
-      <line x1="248" y1="178" x2="203" y2="178" stroke="#5A5D51" stroke-width="2" marker-end="url(#arrow4)"/>
-      <text x="225" y="162" font-size="14" text-anchor="middle" fill="#3E5C42">+ GSH</text>
-      <rect x="10" y="150" width="220" height="55" rx="8" fill="#EAF1EA" stroke="#3E5C42"/>
-      <text x="120" y="175" font-size="16" text-anchor="middle">protein–SH</text>
-      <text x="120" y="195" font-size="12.5" text-anchor="middle" fill="#3E5C42">(obnoveno) + chinon–SG</text>
-      <defs><marker id="arrow4" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#5A5D51"/></marker></defs>
-    </svg>
-    <p class="body-text" style="margin-top:14px;">Xenobiotikum (1,2-NQ) se naváže na –SH skupinu proteinu (S-arylace). Adukt podléhá autooxidaci. Vstup GSH umožní transarylaci — chinon se přenese na glutathion a protein se obnoví. Tímto mechanismem 1,2-NQ moduluje signální dráhy jako Keap1/Nrf2 — nízké koncentrace elektrofilů tak mohou aktivovat adaptivní (ochrannou) odpověď buňky, zatímco vysoké koncentrace signalizaci naopak naruší.</p>
-    <p class="footer-note">Kumagai &amp; Abiko (2016), Obr. 2. DOI: 10.1021/acs.chemrestox.6b00326</p>
-  </div>
+    <p class="eyebrow">Aktuální literatura · Kumagai &amp; Abiko, 2016</p>
+    <h2 class="headline">Environmentální zdroje elektrofilů</h2>
+    <img src="obrázky_1/Zdroje elektrofilů_vorce.jpg" alt="GSH-derivatizace" style="width:100%;max-width:900px;margin-top:16px;border:1px solid var(--line);border-radius:8px;">
+  <p class="footer-note">Kumagai, Y., Abiko, Y. (2016). <em>Chem. Res. Toxicol.</em> 30(1), 203–219.</p>
+</div>
 `);
 
 /* ================= 15. ELECTROPHILE-DNA ================= */
@@ -562,6 +596,7 @@ slide('electrophile-dna','Reakce elektrofilů s DNA', `
           <text x="230" y="140" font-size="14" text-anchor="middle" fill="#5A5D51">alkylace N7 guaninu — klasický cíl karcinogenů</text>
         </svg>
       </div>
+      <img src="obrázky_1/Vazba elektrofilů na NukK.png" alt="GSH-derivatizace" style="width:100%;max-width:600px;margin-top:16px;border:1px solid var(--line);border-radius:8px;">
     </div>
   </div>
 `);
@@ -611,29 +646,116 @@ slide('nucleophile-reactions','Reakce nukleofilů', `
   <div class="slide-inner">
     <p class="eyebrow">Molekulární úroveň — reakce nukleofilů</p>
     <h2 class="headline">CO a kyanid v dýchacím řetězci</h2>
-    <p class="body-text">Nukleofily napadají místa s parciálním kladným nábojem — obvykle difuzně delokalizovaným (nespecifické působení), výjimkou jsou kladně nabité kovové ionty v metaloenzymech (specifické působení).</p>
+
+    <p class="body-text">
+      Nukleofily napadají místa s parciálním kladným nábojem — obvykle difuzně
+      delokalizovaným (nespecifické působení). Výjimkou jsou kladně nabité
+      kovové ionty v&nbsp;metaloenzymech, které mohou představovat specifický cíl.
+    </p>
+
     <div class="diagram-box">
-      <svg viewBox="0 0 740 140" style="width:100%;">
-        <rect x="10" y="48" width="150" height="44" rx="6" fill="#EAF1EA" stroke="#3E5C42"/>
-        <text x="85" y="74" font-size="16" text-anchor="middle">Komplex I–III</text>
-        <line x1="160" y1="70" x2="182" y2="70" stroke="#5A5D51" stroke-width="2" marker-end="url(#arrow6)"/>
-        <rect x="185" y="48" width="150" height="44" rx="6" fill="#FBF0DD" stroke="#B9791E"/>
-        <text x="260" y="74" font-size="16" text-anchor="middle">cytochrom c</text>
-        <line x1="335" y1="70" x2="357" y2="70" stroke="#5A5D51" stroke-width="2" marker-end="url(#arrow6)"/>
-        <rect x="360" y="48" width="240" height="44" rx="6" fill="#F7EAE7" stroke="#9C3B2E"/>
-        <text x="480" y="74" font-size="16" text-anchor="middle">cytochrom-c oxidasa</text>
-        <line x1="600" y1="70" x2="660" y2="70" stroke="#5A5D51" stroke-width="2" stroke-dasharray="2 2"/>
-        <text x="685" y="65" font-size="15" text-anchor="middle" fill="#5A5D51">O₂ → H₂O</text>
-        <line x1="480" y1="8" x2="480" y2="45" stroke="#9C3B2E" stroke-width="2.5"/>
-        <text x="480" y="22" font-size="15" text-anchor="middle" fill="#9C3B2E" font-weight="bold">CN⁻ blokuje zde</text>
-        <defs><marker id="arrow6" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#5A5D51"/></marker></defs>
+      <svg viewBox="0 0 740 160" style="width:100%;">
+
+        <!-- Komplex I / II -->
+        <rect x="10" y="60" width="135" height="44" rx="6"
+              fill="#EAF1EA" stroke="#3E5C42"/>
+        <text x="77.5" y="86" font-size="16" text-anchor="middle">
+          Komplex I / II
+        </text>
+
+        <!-- šipka -->
+        <line x1="145" y1="82" x2="165" y2="82"
+              stroke="#5A5D51" stroke-width="2"
+              marker-end="url(#arrow6)"/>
+
+        <!-- Komplex III -->
+        <rect x="168" y="60" width="120" height="44" rx="6"
+              fill="#EAF1EA" stroke="#3E5C42"/>
+        <text x="228" y="86" font-size="16" text-anchor="middle">
+          Komplex III
+        </text>
+
+        <!-- šipka -->
+        <line x1="288" y1="82" x2="308" y2="82"
+              stroke="#5A5D51" stroke-width="2"
+              marker-end="url(#arrow6)"/>
+
+        <!-- cytochrom c -->
+        <rect x="311" y="60" width="125" height="44" rx="6"
+              fill="#FBF0DD" stroke="#B9791E"/>
+        <text x="373.5" y="86" font-size="16" text-anchor="middle">
+          cytochrom c
+        </text>
+
+        <!-- šipka -->
+        <line x1="436" y1="82" x2="456" y2="82"
+              stroke="#5A5D51" stroke-width="2"
+              marker-end="url(#arrow6)"/>
+
+        <!-- Komplex IV -->
+        <rect x="459" y="60" width="190" height="44" rx="6"
+              fill="#F7EAE7" stroke="#9C3B2E"/>
+        <text x="554" y="80" font-size="15" text-anchor="middle">
+          Komplex IV
+        </text>
+        <text x="554" y="97" font-size="13" text-anchor="middle">
+          cytochrom-c-oxidáza
+        </text>
+
+        <!-- O2 -> H2O -->
+        <line x1="649" y1="82" x2="675" y2="82"
+              stroke="#5A5D51" stroke-width="2"
+              marker-end="url(#arrow6)"/>
+        <text x="706" y="78" font-size="14" text-anchor="middle"
+              fill="#5A5D51">
+          O₂ → H₂O
+        </text>
+
+        <!-- CN- -->
+        <line x1="554" y1="18" x2="554" y2="57"
+              stroke="#9C3B2E" stroke-width="2.5"
+              marker-end="url(#arrowCN)"/>
+        <text x="554" y="13" font-size="15" text-anchor="middle"
+              fill="#9C3B2E" font-weight="bold">
+          CN⁻ → aktivní centrum
+        </text>
+
+        <defs>
+          <marker id="arrow6" markerWidth="8" markerHeight="8"
+                  refX="6" refY="4" orient="auto">
+            <path d="M0,0 L8,4 L0,8 Z" fill="#5A5D51"/>
+          </marker>
+
+          <marker id="arrowCN" markerWidth="8" markerHeight="8"
+                  refX="6" refY="4" orient="auto">
+            <path d="M0,0 L8,4 L0,8 Z" fill="#9C3B2E"/>
+          </marker>
+        </defs>
       </svg>
     </div>
-    <p class="body-text" style="margin-top:10px;"><strong>CO</strong> se váže na hemové železo hemoglobinu a brání navázání kyslíku. <strong>Kyanidový ion</strong> se váže na železnaté ionty v cytochrom-c oxidase — jiném hemovém enzymu dýchacího řetězce, kterého je v těle mnohem méně než hemoglobinu.</p>
+
+    <p class="body-text" style="margin-top:10px;">
+      <strong>CO</strong> se váže na hemové železo hemoglobinu a omezuje tak
+      transport kyslíku krví. <strong>Kyanidový ion</strong> se váže na
+      železo hemu <em>a</em><sub>3</sub> v aktivním centru
+      <strong>cytochrom-c-oxidázy (komplexu IV)</strong> a blokuje přenos
+      elektronů na O₂. Tím se zastaví mitochondriální buněčné dýchání,
+      přestože je kyslík v krvi přítomen.
+    </p>
+
     <table class="data-table" style="margin-top:12px;max-width:420px;">
-      <tr><th>Látka</th><th>Letální koncentrace pro člověka</th></tr>
-      <tr><td>HCN</td><td>180 ppm / 2 min</td></tr>
-      <tr><td>CO</td><td>5 000 ppm (0,5 %) / 5 min</td></tr>
+      <tr>
+        <th>Látka</th>
+        <th>Orientační toxická koncentrace</th>
+      </tr>
+      <tr>
+        <td>HCN</td>
+        <td>180 ppm / 2 min</td>
+      </tr>
+      <tr>
+        <td>CO</td>
+        <td>5 000 ppm (0,5 %) / 5 min</td>
+      </tr>
     </table>
   </div>
 `);
@@ -736,7 +858,7 @@ slide('sub-lyso','Lysozomy', `
 slide('sub-nucleus','Buněčná jádra', `
   <div class="slide-inner">
     <p class="eyebrow">Působení na subcelulární úrovni · D) Buněčná jádra</p>
-    <h2 class="headline">Cíl: syntéza nukleových kyselin</h2>
+    <h2 class="headline">Ovlivnění syntézy nukleových kyselin</h2>
     <p class="body-text">Buněčná jádra obsahují klíčové biomolekuly — mohou být cílem pro toxické látky, které inhibují nebo stimulují syntézu nukleových kyselin.</p>
     <div class="ricin-box" style="margin-top:12px;">
       <h3>Amanitin — návrat k muchomůrce zelené</h3>
@@ -753,10 +875,10 @@ slide('sub-er','Endoplazmatické retikulum', `
     <ul class="plain">
       <li>syntéza bílkovin, mastných kyselin, lipidů a steroidních hormonů pro celou buňku</li>
       <li>transport živin v rámci buňky</li>
-      <li>místo výskytu biotransformačních enzymů — <strong>cytochromu P450</strong> a flavinových monooxygenáz</li>
+      <li>místo výskytu biotransformačních enzymů — např. <strong>cytochromu P450</strong> a flavinových monooxygenáz</li>
     </ul>
     <div class="card" style="margin-top:14px;">
-      <p class="body-text" style="margin:0;">Poškození endoplazmatického retikula vede k omezení proteosyntézy nebo k inhibici syntézy důležitých signálních látek. Právě zde dochází i k bioaktivaci xenobiotik na reaktivní elektrofilní metabolity (téma příští přednášky o biotransformaci).</p>
+      <p class="body-text" style="margin:0;">Poškození endoplazmatického retikula vede k omezení proteosyntézy nebo k inhibici syntézy důležitých signálních látek. Právě zde dochází i k bioaktivaci xenobiotik na reaktivní metabolity (téma příští přednášky o biotransformaci) nebo k detoxikacixenobiotik.</p>
     </div>
   </div>
 `);
@@ -772,7 +894,7 @@ slide('cellular-level','Působení na úrovni buněk', `
       <div class="card"><div class="tag" style="border-color:var(--tox-green);color:var(--tox-green-deep);">řízená smrt</div>
         <p class="body-text" style="margin:6px 0 0 0;"><strong>Apoptóza</strong> — buňka se zmenší, složky se postupně rozloží, nevznikají antigenní látky → buňka je rychle fagocytována leukocyty.</p></div>
     </div>
-    <p class="body-text" style="margin-top:14px;">Nadměrná proliferace buněk může přerůst až ve zhoubné nádorové bujení. <strong>Homeostáza</strong> je schopnost udržet relativně stálé vnitřní prostředí i při změnách vnějšího prostředí.</p>
+    <p class="body-text" style="margin-top:14px;">Nadměrná proliferace (množení) buněk může přerůst až ve zhoubné nádorové bujení. <strong>Homeostáza</strong> je schopnost udržet relativně stálé vnitřní prostředí i při změnách vnějšího prostředí.</p>
     <div class="card" style="margin-top:10px;">
       <p class="body-text" style="margin:0;"><strong>Homeostatická regulace — zbraně buňky:</strong> snížení prostupnosti membrány · využití transportních mechanismů (škodlivina ven) · chemická transformace škodliviny (produkt ven) · indukce biotransformačních enzymů zajišťujících detoxikaci.</p>
     </div>
@@ -783,25 +905,89 @@ slide('cellular-level','Působení na úrovni buněk', `
 slide('persulfides','Persulfidy jako ochrana', `
   <div class="slide-inner">
     <p class="eyebrow">Aktuální výzkum · Kumagai &amp; Abiko, 2016; Andrés et al., 2025</p>
-    <h2 class="headline">Jak se buňka brání elektrofilům navíc</h2>
-    <p class="body-text">Kromě konjugace s GSH existuje ještě jedna obranná linie: <strong>persulfidy a polysulfidy</strong> (CysSSH, GSSH) — reaktivní formy síry s vyšší nukleofilitou než samotný cystein nebo glutathion. Vznikají působením enzymů CBS, CSE a 3MST.</p>
+
+    <h2 class="headline">Persulfidy: zachycení elektrofilů před poškozením proteinů</h2>
+
+    <p class="body-text">
+      Kromě reakce s <strong>glutathionem (GSH)</strong> může buňka využívat
+      také <strong>persulfidy</strong> – např. cystein-persulfid (CysSSH) a
+      glutathion-persulfid (GSSH). Díky své vysoké nukleofilitě mohou
+      reagovat s některými elektrofilními látkami a vytvořit méně reaktivní
+      <strong>sirné adukty</strong>.
+    </p>
+
     <div class="diagram-box">
       <svg viewBox="0 0 660 120" style="width:100%;">
-        <circle cx="55" cy="55" r="48" fill="none" stroke="#B9791E" stroke-width="1.5" stroke-dasharray="4 3"/>
-        <text x="55" y="50" font-size="13" text-anchor="middle">elektrofil</text>
-        <text x="55" y="66" font-size="13" text-anchor="middle">z prostředí</text>
-        <line x1="103" y1="55" x2="150" y2="55" stroke="#5A5D51" stroke-width="2" marker-end="url(#arrow7)"/>
-        <rect x="155" y="28" width="200" height="55" rx="8" fill="#EAF1EA" stroke="#3E5C42"/>
-        <text x="255" y="61" font-size="16" text-anchor="middle">persulfid (CysSSH)</text>
-        <line x1="355" y1="55" x2="405" y2="55" stroke="#5A5D51" stroke-width="2" marker-end="url(#arrow7)"/>
-        <rect x="410" y="28" width="230" height="55" rx="8" fill="#FBF0DD" stroke="#B9791E"/>
-        <text x="525" y="53" font-size="16" text-anchor="middle">síraný adukt</text>
-        <text x="525" y="73" font-size="13" text-anchor="middle" fill="#5A5D51">(elektrofil neutralizován)</text>
-        <defs><marker id="arrow7" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#5A5D51"/></marker></defs>
+
+        <circle cx="55" cy="55" r="48"
+                fill="none" stroke="#B9791E"
+                stroke-width="1.5" stroke-dasharray="4 3"/>
+        <text x="55" y="50" font-size="13" text-anchor="middle">
+          elektrofil
+        </text>
+        <text x="55" y="66" font-size="13" text-anchor="middle">
+          z prostředí
+        </text>
+
+        <line x1="103" y1="55" x2="150" y2="55"
+              stroke="#5A5D51" stroke-width="2"
+              marker-end="url(#arrow7)"/>
+
+        <rect x="155" y="28" width="200" height="55" rx="8"
+              fill="#EAF1EA" stroke="#3E5C42"/>
+        <text x="255" y="51" font-size="15" text-anchor="middle">
+          persulfid
+        </text>
+        <text x="255" y="71" font-size="14" text-anchor="middle">
+          CysSSH / GSSH
+        </text>
+
+        <line x1="355" y1="55" x2="405" y2="55"
+              stroke="#5A5D51" stroke-width="2"
+              marker-end="url(#arrow7)"/>
+
+        <rect x="410" y="28" width="230" height="55" rx="8"
+              fill="#FBF0DD" stroke="#B9791E"/>
+        <text x="525" y="51" font-size="15" text-anchor="middle">
+          sirný adukt
+        </text>
+        <text x="525" y="71" font-size="13" text-anchor="middle"
+              fill="#5A5D51">
+          (elektrofil zachycen)
+        </text>
+
+        <defs>
+          <marker id="arrow7" markerWidth="8" markerHeight="8"
+                  refX="6" refY="4" orient="auto">
+            <path d="M0,0 L8,4 L0,8 Z" fill="#5A5D51"/>
+          </marker>
+        </defs>
       </svg>
     </div>
-    <p class="body-text" style="margin-top:10px;">Autoři to označují jako „fázi nultou" (phase-zero reaction) detoxikace — persulfidy zachytí elektrofil ještě dřív, než stihne poškodit citlivé senzorové proteiny (Keap1, PTEN, PTP1B). Koncept persulfidové ochrany zůstává aktivní oblastí výzkumu i o téměř deset let později.</p>
-    <p class="footer-note">Andrés et al. (2025). Reactive Sulfur Species and Protein Persulfidation. <em>Curr. Issues Mol. Biol.</em> 47(9).</p>
+
+    <p class="body-text" style="margin-top:10px;">
+      Tento mechanismus byl navržen jako <strong>„phase-zero reaction“</strong>:
+      reaktivní formy síry mohou zachytit elektrofil ještě před jeho reakcí
+      s citlivými cysteinovými zbytky proteinů. Tím mohou omezit jejich
+      nežádoucí modifikaci a následné narušení buněčné signalizace.
+    </p>
+
+    <p class="body-text">
+      Persulfidy vznikají v rámci metabolismu reaktivních forem síry;
+      na jejich tvorbě se mohou podílet enzymy <strong>CBS, CSE a 3MST</strong>,
+      ale současné poznatky ukazují na komplexnější síť enzymových cest,
+      včetně <strong>cysteinyl-tRNA syntetáz (CARS/CARS2)</strong>.
+      Význam a přesné mechanismy této ochrany jsou stále předmětem výzkumu.
+    </p>
+
+    <p class="footer-note">
+      Kumagai &amp; Abiko (2016). Environmental Electrophiles: Protein Adducts,
+      Modulation of Redox Signaling, and Interaction with Persulfides/Polysulfides.
+      <em>Chemical Research in Toxicology</em>, 30, 203–219.
+      <br>
+      Andrés et al. (2025). Reactive Sulfur Species and Protein Persulfidation.
+      <em>Current Issues in Molecular Biology</em>, 47(9), 765.
+    </p>
   </div>
 `);
 
@@ -849,26 +1035,82 @@ slide('closing','Shrnutí a zdroje', `
   <div class="slide-inner">
     <p class="eyebrow">Na závěr</p>
     <h2 class="headline">Shrnutí přednášky 2 a zdroje</h2>
+
     <div class="grid-2">
+
       <div class="card">
-        <p class="body-text" style="margin-top:0;"><strong>Z dnešní přednášky si odnášíme:</strong></p>
+        <p class="body-text" style="margin-top:0;">
+          <strong>Z dnešní přednášky si odnášíme:</strong>
+        </p>
+
         <ul class="plain">
-          <li>toxikodynamika popisuje, co xenobiotikum dělá s tělem — od receptoru po orgán</li>
-          <li>tři typy reaktivity: elektrofily, nukleofily, volné radikály</li>
-          <li>katalytický mechanismus (ricin, amanitin) je nebezpečnější než stechiometrický — jedna molekula stačí na tisíce cílů</li>
-          <li>reverzibilita mechanismu rozhoduje o tom, zda existuje antidotum</li>
-          <li>persulfidy jsou další, stále zkoumaná linie buněčné obrany proti elektrofilům</li>
+          <li>
+            <strong>Toxikodynamika</strong> popisuje, co xenobiotikum dělá
+            s organismem — od molekulárního cíle až po účinek na orgán.
+          </li>
+
+          <li>
+            Tři hlavní typy chemické reaktivity:
+            <strong>elektrofily, nukleofily a volné radikály</strong>.
+          </li>
+
+          <li>
+            <strong>Katalytický mechanismus</strong> může výrazně zesílit účinek:
+            například ricinová A-řetězová N-glykosidáza může postupně
+            inaktivovat velké množství ribozomů.
+          </li>
+
+          <li>
+            U některých toxinů je cílová molekula poškozena
+            <strong>ireverzibilně</strong>; možnost farmakologického zásahu
+            proto závisí také na mechanismu a načasování účinku.
+          </li>
+
+          <li>
+            <strong>Persulfidy</strong> představují potenciální další linii
+            buněčné obrany proti elektrofilům — jejich role je stále
+            předmětem intenzivního výzkumu.
+          </li>
         </ul>
       </div>
+
       <div class="card sources">
-        <strong style="color:var(--ink); font-family:var(--sans); font-size:15px;">Zdroje</strong><br><br>
-        Kumagai, Y., Abiko, Y. (2016). Environmental Electrophiles. <em>Chem. Res. Toxicol.</em> 30(1), 203–219.<br>
-        Andrés et al. (2025). Reactive Sulfur Species and Protein Persulfidation. <em>Curr. Issues Mol. Biol.</em> 47(9).<br>
-        Crompton, Gall (1980). Georgi Markov: death in a pellet. <em>Med. Leg. J.</em> 48(2), 51–62.<br>
-        Grela et al. (2019). How Ricin Damages the Ribosome. <em>Toxins</em> 11(5), 241.<br>
-        Musshoff, Madea (2009). Ricin poisoning and forensic toxicology. <em>Drug Test Anal.</em> 1(4), 184–191.<br>
-        PubChem (NCBI) a bezpečnostní listy výrobců — data ke skupinové práci.
+        <strong style="color:var(--ink); font-family:var(--sans); font-size:15px;">
+          Zdroje
+        </strong>
+        <br><br>
+
+        Kumagai, Y., Abiko, Y. (2017).
+        Environmental Electrophiles: Protein Adducts, Modulation of Redox
+        Signaling, and Interaction with Persulfides/Polysulfides.
+        <em>Chem. Res. Toxicol.</em> 30(1), 203–219.
+        <br><br>
+
+        Andrés, C. M. C. et al. (2025).
+        Reactive Sulfur Species and Protein Persulfidation:
+        An Emerging Redox Axis in Human Health and Disease.
+        <em>Curr. Issues Mol. Biol.</em> 47(9), 765.
+        <br><br>
+
+        Crompton, R., Gall, D. (1980).
+        Georgi Markov — Death in a Pellet.
+        <em>Med. Leg. J.</em> 48(2), 51–62.
+        <br><br>
+
+        Grela, P. et al. (2019).
+        How Ricin Damages the Ribosome.
+        <em>Toxins</em> 11(5), 241.
+        <br><br>
+
+        Musshoff, F., Madea, B. (2009).
+        Ricin poisoning and forensic toxicology.
+        <em>Drug Test. Anal.</em> 1(4), 184–191.
+        <br><br>
+
+        PubChem (NCBI) a bezpečnostní listy výrobců —
+        data ke skupinové práci.
       </div>
+
     </div>
   </div>
 `);
