@@ -1,0 +1,1356 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Osud cizorodých látek v organismu — Přednáška 3</title>
+<style>
+  :root{
+    --paper:#F4F5EF;
+    --paper-deep:#ECEEE4;
+    --ink:#1E2019;
+    --ink-soft:#5A5D51;
+    --amber:#B9791E;
+    --amber-deep:#8F5D14;
+    --tox-green:#3E5C42;
+    --tox-green-deep:#2A3F2D;
+    --danger:#9C3B2E;
+    --blue:#3A5A72;
+    --blue-deep:#233C4E;
+    --line:#D6D6C6;
+    --card:#FFFFFE;
+    --serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', 'Book Antiqua', serif;
+    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --mono: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0; background:var(--paper); color:var(--ink); font-family:var(--sans);
+    overflow:hidden; font-size:18px;
+  }
+  ::selection{ background: var(--amber); color:#fff; }
+
+  #topbar{
+    position:fixed; top:0; left:0; right:0; height:54px;
+    display:flex; align-items:center; gap:16px; padding:0 20px; z-index:50;
+    background:linear-gradient(to bottom, rgba(244,245,239,0.97), rgba(244,245,239,0.85));
+    border-bottom:1px solid var(--line);
+  }
+  #topbar .brand{ font-family:var(--serif); font-size:16px; font-style:italic; color:var(--ink-soft); white-space:nowrap; }
+  #progress-track{ flex:1; height:3px; background:var(--line); border-radius:2px; overflow:hidden; }
+  #progress-fill{ height:100%; width:0%; background:var(--amber); transition:width .35s ease; }
+  #counter{ font-family:var(--mono); font-size:13px; color:var(--ink-soft); white-space:nowrap; }
+  #menu-btn{
+    font-family:var(--sans); font-size:14px; color:var(--ink); background:var(--card);
+    border:1px solid var(--line); border-radius:6px; padding:6px 12px; cursor:pointer;
+  }
+  #menu-btn:hover{ border-color:var(--amber); }
+
+  #deck{ position:relative; width:100%; height:100%; padding-top:54px; }
+  .slide{
+    position:absolute; inset:0; top:54px; display:flex; align-items:center; justify-content:center;
+    padding:36px 7vw 90px 7vw; opacity:0; visibility:hidden; transform:translateY(14px);
+    transition:opacity .4s ease, transform .4s ease; overflow-y:auto;
+  }
+  .slide.active{ opacity:1; visibility:visible; transform:translateY(0); }
+  .slide-inner{ width:100%; max-width:1000px; }
+  .eyebrow{ font-family:var(--mono); font-size:16px; letter-spacing:.02em; color:var(--amber-deep); margin:0 0 12px 0; }
+  h1.headline{ font-family:var(--serif); font-weight:400; font-size:clamp(30px,4.6vw,50px); line-height:1.1; margin:0 0 16px 0; }
+  h2.headline{ font-family:var(--serif); font-weight:400; font-size:clamp(24px,3.2vw,34px); line-height:1.18; margin:0 0 16px 0; }
+  p.lede{ font-size:19px; line-height:1.55; color:var(--ink-soft); max-width:700px; }
+  .body-text{ font-size:19px; line-height:1.6; color:var(--ink); max-width:760px; }
+  .body-text + .body-text{ margin-top:10px; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:10px; padding:20px 22px; }
+  .grid-2{ display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+  .grid-3{ display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+  .grid-4{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+  @media (max-width:800px){ .grid-2,.grid-3,.grid-4{ grid-template-columns:1fr; } }
+  .tag{ display:inline-block; font-family:var(--mono); font-size:12px; padding:3px 9px; border-radius:20px; border:1px solid var(--line); color:var(--ink-soft); margin-bottom:10px; }
+  .tag.new{ border-color:var(--danger); color:var(--danger); }
+  ul.plain{ margin:0; padding-left:22px; font-size:18px; }
+  ul.plain li{ margin-bottom:9px; line-height:1.5; }
+  blockquote.quote{ font-family:var(--serif); font-style:italic; font-size:26px; line-height:1.4; color:var(--tox-green-deep); border-left:3px solid var(--amber); padding-left:22px; margin:22px 0; }
+  blockquote.quote cite{ display:block; font-size:15px; font-style:normal; color:var(--ink-soft); margin-top:8px; }
+  #navbtns{ position:fixed; bottom:22px; right:28px; display:flex; gap:10px; z-index:50; }
+  .navbtn{ width:46px; height:46px; border-radius:50%; border:1px solid var(--line); background:var(--card); color:var(--ink); font-size:19px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .navbtn:hover{ border-color:var(--amber); color:var(--amber-deep); }
+  .navbtn:disabled{ opacity:.3; cursor:default; }
+  #overlay{ position:fixed; inset:0; background:rgba(30,32,25,.94); z-index:100; display:none; padding:56px 8vw; overflow-y:auto; }
+  #overlay.show{ display:block; }
+  #overlay h3{ font-family:var(--serif); color:#fff; font-weight:400; font-size:23px; margin-bottom:20px; }
+  #overlay-list{ list-style:none; margin:0; padding:0; columns:2; column-gap:40px; }
+  @media (max-width:800px){ #overlay-list{ columns:1; } }
+  #overlay-list li{ color:#EDEEE6; font-size:16px; padding:9px 0; border-bottom:1px solid rgba(255,255,255,.12); cursor:pointer; break-inside:avoid; }
+  #overlay-list li span{ font-family:var(--mono); color:var(--amber); margin-right:10px; font-size:13px; }
+  #overlay-list li:hover{ color:var(--amber); }
+  #overlay-close{ position:absolute; top:22px; right:30px; color:#fff; font-size:28px; background:none; border:none; cursor:pointer; }
+
+  .quiz-card{ background:var(--card); border:1px solid var(--line); border-radius:12px; padding:24px 26px; margin-top:10px; }
+  .quiz-q{ font-size:19px; font-weight:600; margin-bottom:16px; line-height:1.45; }
+  .quiz-opt{ display:block; width:100%; text-align:left; padding:13px 16px; margin-bottom:10px; border:1px solid var(--line); border-radius:8px; background:#fff; cursor:pointer; font-size:18px; font-family:var(--sans); color:var(--ink); }
+  .quiz-opt:hover{ border-color:var(--amber); }
+  .quiz-opt.correct{ border-color:var(--tox-green); background:#EAF1EA; color:var(--tox-green-deep); font-weight:600; }
+  .quiz-opt.wrong{ border-color:var(--danger); background:#F7EAE7; color:var(--danger); }
+  .quiz-opt[disabled]{ cursor:default; }
+  .quiz-feedback{ margin-top:14px; font-size:18px; line-height:1.55; color:var(--ink-soft); display:none; }
+  .quiz-feedback.show{ display:block; }
+
+  table.data-table{ width:100%; border-collapse:collapse; font-size:18px; margin-top:10px; }
+  table.data-table th{ text-align:left; font-family:var(--mono); font-size:16px; color:var(--ink-soft); padding:9px 10px; border-bottom:1px solid var(--ink); }
+  table.data-table td{ padding:10px 10px; border-bottom:1px solid var(--line); }
+  table.data-table tr.highlight td{ background:#FBF0DD; font-weight:600; }
+
+  .tl-item{ min-width:200px; background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px 16px; cursor:pointer; flex-shrink:0; }
+  .tl-item .tl-year{ font-family:var(--mono); font-size:18px; color:var(--amber-deep); }
+  .tl-item .tl-title{ font-family:var(--serif); font-size:20px; margin:4px 0 8px 0; }
+  .tl-item .tl-detail{ font-size:19px; color:var(--ink-soft); line-height:1.5; display:none; }
+  .tl-item.open .tl-detail{ display:block; }
+  .tl-item.open{ border-color:var(--amber); }
+
+  .footer-note{ margin-top:20px; font-size:18px; color:var(--ink-soft); font-family:var(--mono); line-height:1.5; }
+  .two-col-story{ display:grid; grid-template-columns:1.15fr .85fr; gap:34px; align-items:start; }
+  @media (max-width:820px){ .two-col-story{ grid-template-columns:1fr; } }
+  .polonium-box{ background:var(--blue-deep); color:#EAF0F4; border-radius:12px; padding:22px 24px; }
+  .polonium-box h3{ font-family:var(--serif); font-weight:400; font-size:21px; margin:0 0 10px 0; color:#fff; }
+  .polonium-box p{ font-size:18px; line-height:1.6; margin:0 0 10px 0; }
+  .polonium-box .stat{ font-family:var(--mono); font-size:17px; color:#9FC2D9; }
+  .aspirin-box{ background:var(--tox-green-deep); color:#EFEFE6; border-radius:12px; padding:20px 22px; margin-top:16px; }
+  .aspirin-box h4{ font-family:var(--serif); font-weight:400; font-size:19px; margin:0 0 8px 0; color:#fff; }
+  .aspirin-box p{ font-size:18px; line-height:1.6; margin:0; }
+
+  .sources{ font-size:14px; color:var(--ink-soft); line-height:1.7; }
+
+  .diagram-box{ background:#fff; border:1px solid var(--line); border-radius:10px; padding:14px; margin-top:12px; }
+
+  /* matching quiz */
+  .match-wrap{ display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-top:14px; }
+  @media (max-width:760px){ .match-wrap{ grid-template-columns:1fr; } }
+  .match-col-title{ font-family:var(--mono); font-size:13px; color:var(--ink-soft); margin-bottom:8px; }
+  .match-item{ background:var(--card); border:1px solid var(--line); border-radius:8px; padding:11px 14px; margin-bottom:8px; font-size:18px; cursor:pointer; }
+  .match-item.selected{ border-color:var(--amber); background:#FBF0DD; }
+  .match-item.correct{ border-color:var(--tox-green); background:#EAF1EA; }
+  .match-item.wrong{ border-color:var(--danger); background:#F7EAE7; }
+  .match-result{ margin-top:14px; font-size:18px; color:var(--ink-soft); min-height:24px; }
+
+  /* calculation reveal (native details/summary) */
+  details.calc{ background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px 18px; margin-top:12px; }
+  details.calc summary{ cursor:pointer; font-family:var(--sans); font-weight:600; color:var(--amber-deep); font-size:18px; outline:none; }
+  details.calc summary:hover{ color:var(--amber); }
+  details.calc[open] summary{ margin-bottom:10px; border-bottom:1px dashed var(--line); padding-bottom:8px; }
+  .calc-step{ font-family:var(--mono); font-size:19px; line-height:1.9; color:var(--ink); }
+  .calc-step .res{ color:var(--tox-green-deep); font-weight:700; }
+  .calc-note{ font-family:var(--sans); font-size:18px; line-height:1.5; color:var(--ink-soft); margin-top:8px; }
+  .chart-legend{ display:flex; gap:22px; flex-wrap:wrap; justify-content:center; margin-top:8px; font-size:16px; color:var(--ink-soft); }
+  .chart-legend span{ display:inline-flex; align-items:center; gap:7px; }
+  .chart-legend i{ width:16px; height:4px; border-radius:2px; display:inline-block; }
+
+  @media (prefers-reduced-motion: reduce){ .slide, .navbtn, #progress-fill{ transition:none !important; } }
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <div class="brand">Osud cizorodých látek v organismu · Přednáška 3</div>
+  <div id="progress-track"><div id="progress-fill"></div></div>
+  <div id="counter">1 / 1</div>
+  <button id="menu-btn" onclick="toggleOverlay(true)">Obsah</button>
+</div>
+
+<div id="deck"></div>
+
+<div id="navbtns">
+  <button class="navbtn" id="prevBtn" onclick="prevSlide()">←</button>
+  <button class="navbtn" id="nextBtn" onclick="nextSlide()">→</button>
+</div>
+
+<div id="overlay">
+  <button id="overlay-close" onclick="toggleOverlay(false)">×</button>
+  <h3>Přeskočit na</h3>
+  <ul id="overlay-list"></ul>
+</div>
+
+<script>
+const slides = [];
+function slide(id, title, html){ slides.push({id, title, html}); }
+
+/* ================= 0. TITLE ================= */
+slide('title','Titulní strana', `
+  <div class="slide-inner">
+    <p class="eyebrow">Ing. Pavla Fojtíková, Ph.D. · Přírodovědecká fakulta JU</p>
+    <h1 class="headline">Osud cizorodých látek v živém organismu</h1>
+    <p class="lede">Přednáška 3 <br>— toxikokinetika: vstup, distribuce, biotransformace a vylučování xenobiotik. <br>Co se s látkou v těle děje od okamžiku expozice až po její odstranění — a jak to lze matematicky popsat a využít.</p>
+    <p class="footer-note">Laboratoř analytické a environmentální chemie</p>
+  </div>
+`);
+
+/* ================= 1. OUTLINE ================= */
+slide('outline','Osnova přednášky 3', `
+  <div class="slide-inner">
+    <p class="eyebrow">Dnes</p>
+    <h2 class="headline">Osnova přednášky 3</h2>
+    <ul class="plain">
+      <li>Toxikokinetika — ADME: vstup, distribuce, biotransformace, vylučování</li>
+      <li>Membrány jako klíčová bariéra a mechanismy transportu</li>
+      <li>Role pH — Henderson–Hasselbalchova rovnice a výpočty s reálnými látkami</li>
+      <li>Cesty vstupu do organismu — požití, inhalace, kůže, žíla</li>
+      <li>Distribuce, depot a hematoencefalická bariéra</li>
+      <li>Skutečný případ: otrava poloniem-210 (Alexandr Litviněnko)</li>
+      <li>Biotransformace a vylučování — kinetika 0. a 1. řádu</li>
+      <li>Reálný forenzní výpočet: Widmarkova rovnice a eliminace alkoholu</li>
+    </ul>
+    <p class="body-text" style="margin-top:18px;">Budou tři kontrolní zastávky — krátký kvíz nebo úkol k opakování — a několik výpočtů, které si rozklikneme krok za krokem.</p>
+  </div>
+`);
+
+/* ================= 2. TOXICOKINETICS DEF ================= */
+slide('tk-def','Co je toxikokinetika?', `
+  <div class="slide-inner">
+    <p class="eyebrow">Toxikokinetika</p>
+    <h2 class="headline">Co se děje s látkou v organismu?</h2>
+    <p class="body-text">Zatímco toxikodynamika (přednáška 2) se ptá, co látka dělá s organismem, toxikokinetika se ptá na opak: co organismus dělá s látkou.</p>
+    <div class="grid-4" style="margin-top:16px;">
+      <div class="card"><div class="tag">1</div><p class="body-text" style="margin:0;"><strong>Absorpce</strong><br>vstup, vstřebávání</p></div>
+      <div class="card"><div class="tag">2</div><p class="body-text" style="margin:0;"><strong>Distribuce</strong><br>transport krví/lymfou</p></div>
+      <div class="card"><div class="tag">3</div><p class="body-text" style="margin:0;"><strong>Metabolismus</strong><br>biotransformace</p></div>
+      <div class="card"><div class="tag">4</div><p class="body-text" style="margin:0;"><strong>Exkrece</strong><br>vylučování</p></div>
+    </div>
+    <p class="body-text" style="margin-top:16px;">Zkratka <strong>ADME</strong> (Absorption, Distribution, Metabolism, Excretion) — základní rámec farmakokinetiky i toxikokinetiky.</p>
+  </div>
+`);
+
+/* ================= 3. AOP DIAGRAM ================= */
+slide('tk-td-aop','Toxikokinetika a toxikodynamika', `
+  <div class="slide-inner">
+    <p class="eyebrow">Návaznost na přednášku 2 · Adverse Outcome Pathway</p>
+    <h2 class="headline">Kde končí toxikokinetika a začíná toxikodynamika</h2>
+    <div class="diagram-box">
+      <svg viewBox="0 0 900 190" style="width:100%;">
+        <rect x="10" y="60" width="150" height="60" rx="8" fill="#EAF1EA" stroke="#3E5C42"/>
+        <text x="85" y="85" font-size="15" text-anchor="middle">koncentrace</text>
+        <text x="85" y="103" font-size="15" text-anchor="middle">v cílové tkáni</text>
+        <line x1="160" y1="90" x2="185" y2="90" stroke="#5A5D51" stroke-width="2" marker-end="url(#a1)"/>
+        <rect x="190" y="60" width="150" height="60" rx="8" fill="#FBF0DD" stroke="#B9791E"/>
+        <text x="265" y="85" font-size="15" text-anchor="middle">interakce s</text>
+        <text x="265" y="103" font-size="15" text-anchor="middle">molekulárním cílem</text>
+        <line x1="340" y1="90" x2="365" y2="90" stroke="#5A5D51" stroke-width="2" marker-end="url(#a1)"/>
+        <rect x="370" y="60" width="150" height="60" rx="8" fill="#F7EAE7" stroke="#9C3B2E"/>
+        <text x="445" y="85" font-size="15" text-anchor="middle">buněčná</text>
+        <text x="445" y="103" font-size="15" text-anchor="middle">odpověď</text>
+        <line x1="520" y1="90" x2="545" y2="90" stroke="#5A5D51" stroke-width="2" marker-end="url(#a1)"/>
+        <rect x="550" y="60" width="150" height="60" rx="8" fill="#F7EAE7" stroke="#9C3B2E"/>
+        <text x="625" y="85" font-size="15" text-anchor="middle">orgánová</text>
+        <text x="625" y="103" font-size="15" text-anchor="middle">odpověď</text>
+        <line x1="700" y1="90" x2="725" y2="90" stroke="#5A5D51" stroke-width="2" marker-end="url(#a1)"/>
+        <rect x="730" y="60" width="160" height="60" rx="8" fill="#EDE4EE" stroke="#6E4B73"/>
+        <text x="810" y="85" font-size="15" text-anchor="middle">odpověď</text>
+        <text x="810" y="103" font-size="15" text-anchor="middle">organismu</text>
+        <text x="85" y="150" font-size="15" text-anchor="middle" font-weight="bold" fill="#2A3F2D">TOXIKOKINETIKA</text>
+        <text x="540" y="150" font-size="15" text-anchor="middle" font-weight="bold" fill="#9C3B2E">TOXIKODYNAMIKA (přednáška 2)</text>
+        <line x1="10" y1="160" x2="160" y2="160" stroke="#3E5C42" stroke-width="2"/>
+        <line x1="190" y1="160" x2="890" y2="160" stroke="#9C3B2E" stroke-width="2"/>
+        <defs><marker id="a1" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#5A5D51"/></marker></defs>
+      </svg>
+    </div>
+    <p class="body-text" style="margin-top:12px;">Dnešní přednáška se soustředí na první krok tohoto řetězu — jak se koncentrace xenobiotika v cílové tkáni vůbec vytvoří a jak se v čase mění.</p>
+  </div>
+`);
+
+/* ================= 4. PRIJEM VS ELIMINACE ================= */
+slide('prijem-eliminace','Příjem versus eliminace', `
+  <div class="slide-inner">
+    <p class="eyebrow">Úvod</p>
+    <h2 class="headline">Homeostáze: příjem versus eliminace</h2>
+    <div class="grid-2">
+      <div class="card">
+        <div class="tag">rovnováha</div>
+        <p class="body-text" style="margin-top:6px;"><strong>PŘÍJEM ≈ ELIMINACE</strong><br>Organismus udržuje koncentraci cizorodé látky pod úrovní škodlivého efektu — spotřebovává na to energii.</p>
+      </div>
+      <div class="card">
+        <div class="tag" style="border-color:var(--danger);color:var(--danger);">nebezpečí</div>
+        <p class="body-text" style="margin-top:6px;"><strong>PŘÍJEM &gt; ELIMINACE</strong><br>Koncentrace roste, limity homeostatických procesů jsou překročeny → nástup pozorovatelných negativních účinků.</p>
+      </div>
+    </div>
+    <blockquote class="quote">Toxikologicky aktivní látka musí vniknout do organismu, dostat se k cílovému orgánu či tkáni a být v dostatečné blízkosti molekulárního cíle v dostatečné koncentraci.</blockquote>
+  </div>
+`);
+
+/* ================= 5. VSTUP ORGANISMY ================= */
+slide('vstup-organismy','Vstup u různých organismů', `
+  <div class="slide-inner">
+    <p class="eyebrow">Vstup cizorodých látek</p>
+    <h2 class="headline">Membrána — univerzální bariéra živé buňky</h2>
+    <div class="grid-2">
+      <ul class="plain">
+        <li><strong>jednobuněčné organismy</strong> — pasivní difuze, transportní systémy pro „selektivní" vstup</li>
+        <li><strong>vícebuněčné organismy / řasy</strong> — difuze přes membránu a mezi buňkami</li>
+        <li><strong>terestrické rostliny</strong> — vstup kořeny/listy (látky ve vodě, v půdě, plynné toxikanty)</li>
+        <li><strong>živočichové</strong> — 3 hlavní cesty: požití, vdechnutí, přes kůži; vždy první krok = přestup přes buněčnou membránu</li>
+      </ul>
+      <div class="card">
+        <p class="body-text" style="margin:0;">Bez ohledu na typ organismu a cestu vstupu musí toxikant překonat bariéru plazmatické membrány, resp. buněčné stěny — nejčastěji pasivní difuzí, dále aktivním transportem nebo pinocytózou.</p>
+      </div>
+    </div>
+  </div>
+`);
+
+/* ================= 6. MEMBRANY STRUKTURA ================= */
+slide('membrany-struktura','Buněčné membrány', `
+  <div class="slide-inner">
+    <p class="eyebrow">Struktura bariéry</p>
+    <h2 class="headline">Buněčná membrána — dvojvrstva fosfolipidů</h2>
+    <div class="grid-2">
+      <ul class="plain">
+        <li>struktura dvojvrstvy, elektrostatické interakce</li>
+        <li>chemicky — fosfolipidy (fosfatidylcholin, fosfatidylserin) — fosfoestery diacylglycerolů</li>
+        <li>klíčová pro distribuci biologicky účinných látek (léčiva, jedy) a látkovou výměnu s okolím</li>
+        <li>membránové proteiny — transport iontů, biokatalýza, receptory</li>
+        <li>sacharidy — imunitní rozpoznávání cizích struktur</li>
+        <li>fluidita — dynamický, nikoli statický systém</li>
+      </ul>
+      <div class="diagram-box">
+        <svg viewBox="0 0 380 190" style="width:100%;">
+          <g>
+            <circle cx="30" cy="30" r="9" fill="#B9791E"/><line x1="30" y1="39" x2="30" y2="78" stroke="#B9791E" stroke-width="3"/>
+            <circle cx="70" cy="30" r="9" fill="#B9791E"/><line x1="70" y1="39" x2="70" y2="78" stroke="#B9791E" stroke-width="3"/>
+            <circle cx="110" cy="30" r="9" fill="#B9791E"/><line x1="110" y1="39" x2="110" y2="78" stroke="#B9791E" stroke-width="3"/>
+            <circle cx="150" cy="30" r="9" fill="#B9791E"/><line x1="150" y1="39" x2="150" y2="78" stroke="#B9791E" stroke-width="3"/>
+            <circle cx="270" cy="30" r="9" fill="#B9791E"/><line x1="270" y1="39" x2="270" y2="78" stroke="#B9791E" stroke-width="3"/>
+            <circle cx="310" cy="30" r="9" fill="#B9791E"/><line x1="310" y1="39" x2="310" y2="78" stroke="#B9791E" stroke-width="3"/>
+            <circle cx="350" cy="30" r="9" fill="#B9791E"/><line x1="350" y1="39" x2="350" y2="78" stroke="#B9791E" stroke-width="3"/>
+          </g>
+          <g>
+            <circle cx="30" cy="130" r="9" fill="#B9791E"/><line x1="30" y1="121" x2="30" y2="82" stroke="#B9791E" stroke-width="3"/>
+            <circle cx="70" cy="130" r="9" fill="#B9791E"/><line x1="70" y1="121" x2="70" y2="82" stroke="#B9791E" stroke-width="3"/>
+            <circle cx="110" cy="130" r="9" fill="#B9791E"/><line x1="110" y1="121" x2="110" y2="82" stroke="#B9791E" stroke-width="3"/>
+            <circle cx="150" cy="130" r="9" fill="#B9791E"/><line x1="150" y1="121" x2="150" y2="82" stroke="#B9791E" stroke-width="3"/>
+            <circle cx="270" cy="130" r="9" fill="#B9791E"/><line x1="270" y1="121" x2="270" y2="82" stroke="#B9791E" stroke-width="3"/>
+            <circle cx="310" cy="130" r="9" fill="#B9791E"/><line x1="310" y1="121" x2="310" y2="82" stroke="#B9791E" stroke-width="3"/>
+            <circle cx="350" cy="130" r="9" fill="#B9791E"/><line x1="350" y1="121" x2="350" y2="82" stroke="#B9791E" stroke-width="3"/>
+          </g>
+          <rect x="185" y="15" width="55" height="145" rx="14" fill="#EAF1EA" stroke="#3E5C42" stroke-width="2"/>
+          <text x="212" y="10" font-size="12" text-anchor="middle" fill="#2A3F2D">kanál</text>
+          <text x="190" y="180" font-size="13" text-anchor="middle" fill="#5A5D51">fosfolipidová dvojvrstva + integrální protein</text>
+        </svg>
+      </div>
+    </div>
+  </div>
+`);
+
+/* ================= 7. TRANSPORT MECHANISMY ================= */
+slide('transport-mechanismy','Mechanismy transportu', `
+  <div class="slide-inner">
+    <p class="eyebrow">Přestup přes membrány</p>
+    <h2 class="headline">Pasivní, usnadněný a aktivní transport</h2>
+    <div class="diagram-box">
+      <svg viewBox="0 0 720 170" style="width:100%;">
+        <text x="90" y="20" font-size="14" text-anchor="middle" font-weight="bold">prostá difuze</text>
+        <rect x="20" y="35" width="140" height="90" fill="none" stroke="#D6D6C6"/>
+        <line x1="20" y1="80" x2="160" y2="80" stroke="#EDE7D9" stroke-width="14"/>
+        <circle cx="40" cy="50" r="4" fill="#3A5A72"/><circle cx="55" cy="45" r="4" fill="#3A5A72"/><circle cx="70" cy="55" r="4" fill="#3A5A72"/>
+        <circle cx="90" cy="110" r="4" fill="#3A5A72"/><circle cx="120" cy="115" r="4" fill="#3A5A72"/>
+        <text x="90" y="145" font-size="12" text-anchor="middle" fill="#5A5D51">malé lipofilní molekuly</text>
+
+        <text x="360" y="20" font-size="14" text-anchor="middle" font-weight="bold">usnadněná difuze</text>
+        <rect x="290" y="35" width="140" height="90" fill="none" stroke="#D6D6C6"/>
+        <line x1="290" y1="80" x2="430" y2="80" stroke="#EDE7D9" stroke-width="14"/>
+        <rect x="345" y="55" width="30" height="50" rx="12" fill="#3E5C42"/>
+        <circle cx="315" cy="50" r="5" fill="#9C3B2E"/><circle cx="405" cy="110" r="5" fill="#9C3B2E"/>
+        <text x="360" y="145" font-size="12" text-anchor="middle" fill="#5A5D51">přenašeč — protein</text>
+
+        <text x="630" y="20" font-size="14" text-anchor="middle" font-weight="bold">aktivní transport</text>
+        <rect x="560" y="35" width="140" height="90" fill="none" stroke="#D6D6C6"/>
+        <line x1="560" y1="80" x2="700" y2="80" stroke="#EDE7D9" stroke-width="14"/>
+        <rect x="615" y="55" width="30" height="50" rx="12" fill="#B9791E"/>
+        <circle cx="670" cy="50" r="5" fill="#6E4B73"/><circle cx="675" cy="60" r="5" fill="#6E4B73"/>
+        <text x="622" y="45" font-size="16">⚡</text>
+        <text x="630" y="145" font-size="12" text-anchor="middle" fill="#5A5D51">pumpa, spotřeba ATP</text>
+      </svg>
+    </div>
+    <div class="grid-2" style="margin-top:14px;">
+      <div class="card"><p class="body-text" style="margin:0;"><strong>Pasivní transport (difuze)</strong> — spontánní děj po koncentračním spádu; platí hlavně pro <strong>lipofilní</strong> látky.</p></div>
+      <div class="card"><p class="body-text" style="margin:0;"><strong>Aktivní transport</strong> — proti koncentračnímu spádu, prostřednictvím proteinových pump za spotřeby ATP.</p></div>
+    </div>
+  </div>
+`);
+
+/* ================= 8. FILTRACE PINOCYTOZA ================= */
+slide('filtrace-pinocytoza','Filtrace a pinocytóza', `
+  <div class="slide-inner">
+    <p class="eyebrow">Přestup toxikantů přes membrány</p>
+    <h2 class="headline">Filtrace póry a vezikulární transport</h2>
+    <div class="grid-2">
+      <div class="card">
+        <p class="body-text" style="margin:0;"><strong>Filtrace membránovými póry</strong> — malé hydrofilní molekuly (CO, HCN, NO, N₂O) procházejí přímo.</p>
+      </div>
+      <div class="card">
+        <p class="body-text" style="margin:0;"><strong>Vezikulární transport (pinocytóza)</strong> — uplatnění u velkých částic: vstup toxikantů navázaných na prachové částice (&lt; 1 µm), vlákna azbestu.</p>
+      </div>
+    </div>
+    <div class="card" style="margin-top:14px;">
+      <p class="body-text" style="margin:0;"><strong>Reálný příklad — jemné prachové částice PM2.5:</strong> částice o průměru menším než 2,5 µm pronikají hluboko do plicních sklípků a mohou být transportovány pinocytózou i přes epitelové bariéry do krevního oběhu. WHO uvádí, že dlouhodobá expozice PM2.5 je spojena se zvýšeným kardiovaskulárním a respiračním rizikem již od koncentrací kolem 5&nbsp;µg/m³ ročního průměru.</p>
+    </div>
+  </div>
+`);
+
+/* ================= 9. PH ROLE — HH derivace ================= */
+slide('ph-role','Role pH — odvození', `
+  <div class="slide-inner">
+    <p class="eyebrow">Molekulární úroveň</p>
+    <h2 class="headline">Proč je pH prostředí tak důležité?</h2>
+    <p class="body-text">Xenobiotikum se slabě kyselou nebo slabě zásaditou funkční skupinou mění podle pH prostředí svůj náboj — a tím i lipofilitu a schopnost projít membránou. Vztah mezi pH, pK<sub>a</sub> a poměrem ionizované/neionizované formy popisuje <strong>Hendersonova–Hasselbalchova rovnice</strong>.</p>
+    <details class="calc" open>
+      <summary>Odvození pro slabou kyselinu HA ⇌ H⁺ + A⁻</summary>
+      <div class="calc-step">
+K<sub>a</sub> = [H⁺]·[A⁻] / [HA]<br>
+log K<sub>a</sub> = log[H⁺] + log([A⁻]/[HA])<br>
+−log K<sub>a</sub> = −log[H⁺] − log([A⁻]/[HA])<br>
+pK<sub>a</sub> = pH − log([A⁻]/[HA])<br>
+<span class="res">log([A⁻]/[HA]) = pH − pK<sub>a</sub></span>
+      </div>
+      <p class="calc-note">A⁻ = ionizovaná (hydrofilní) forma, HA = neionizovaná (lipofilní) forma. Pro slabou zásadu B + H⁺ ⇌ BH⁺ platí analogicky log([B]/[BH⁺]) = pH − pK<sub>a</sub> (kde pK<sub>a</sub> = 14 − pK<sub>b</sub>).</p>
+    </details>
+    <div class="grid-2" style="margin-top:14px;">
+      <div class="card"><p class="body-text" style="margin:0;"><strong>Slabé kyseliny</strong> — deprotonizace v zásaditějším prostředí → záporný náboj, látka je hydrofilní.</p></div>
+      <div class="card"><p class="body-text" style="margin:0;"><strong>Slabé zásady</strong> — přijímají proton v kyselejším prostředí → kladný náboj, látka je hydrofilní.</p></div>
+    </div>
+  </div>
+`);
+
+/* ================= 10. VYPOCET KYSELINA OCTOVA ================= */
+slide('vypocet-kyselina','Výpočet: kyselina octová', `
+  <div class="slide-inner">
+    <p class="eyebrow">Aplikace Henderson–Hasselbalchovy rovnice</p>
+    <h2 class="headline">Kyselina octová — žaludek versus tenké střevo</h2>
+    <p class="body-text">Kyselina octová má pK<sub>a</sub> = 4,75 (25 °C). Spočítejme poměr disociované (A⁻) a nedisociované (HA) formy ve dvou různých prostředích trávicího traktu.</p>
+    <details class="calc" open>
+      <summary>Žaludek, pH = 2</summary>
+      <div class="calc-step">
+log([A⁻]/[HA]) = pH − pK<sub>a</sub> = 2 − 4,75 = <span class="res">−2,75</span><br>
+[A⁻]/[HA] = 10<sup>−2,75</sup> = <span class="res">1 : 562</span>
+      </div>
+      <p class="calc-note">Silně kyselé prostředí žaludku téměř veškerou kyselinu octovou udrží v nedisociované, lipofilní formě — ta se snadno vstřebává už žaludeční stěnou.</p>
+    </details>
+    <details class="calc">
+      <summary>Tenké střevo, pH ≈ 7</summary>
+      <div class="calc-step">
+log([A⁻]/[HA]) = 7 − 4,75 = <span class="res">2,25</span><br>
+[A⁻]/[HA] = 10<sup>2,25</sup> = <span class="res">178 : 1</span>
+      </div>
+      <p class="calc-note">V neutrálním prostředí střeva je naopak převážná část látky disociovaná (hydrofilní) — vstřebávání přes membránu je pomalejší. Proto platí obecné pravidlo: <strong>slabé kyseliny se lépe vstřebávají v žaludku.</strong></p>
+    </details>
+  </div>
+`);
+
+/* ================= 11. VYPOCET MORFOLIN ================= */
+slide('vypocet-zasada','Výpočet: morfolin', `
+  <div class="slide-inner">
+    <p class="eyebrow">Aplikace Henderson–Hasselbalchovy rovnice</p>
+    <h2 class="headline">Slabá zásada — morfolin</h2>
+    <p class="body-text">Morfolin (průmyslové rozpouštědlo a meziprodukt syntézy, používaný i jako těkavý inhibitor koroze v parních systémech) má pK<sub>b</sub> = 8,33, tedy pK<sub>a</sub> = 14 − 8,33 = 5,67.</p>
+    <details class="calc" open>
+      <summary>Žaludek, pH = 2</summary>
+      <div class="calc-step">
+log([B]/[BH⁺]) = pH − pK<sub>a</sub> = 2 − 5,67 = <span class="res">−3,67</span><br>
+[B]/[BH⁺] = 10<sup>−3,67</sup> = <span class="res">1 : 4677</span>
+      </div>
+      <p class="calc-note">V kyselém žaludku je morfolin téměř zcela protonizován (BH⁺) — hydrofilní, špatně se vstřebává.</p>
+    </details>
+    <details class="calc">
+      <summary>Tenké střevo, pH = 7</summary>
+      <div class="calc-step">
+log([B]/[BH⁺]) = 7 − 5,67 = <span class="res">1,33</span><br>
+[B]/[BH⁺] = 10<sup>1,33</sup> = <span class="res">21,4 : 1</span>
+      </div>
+      <p class="calc-note">V neutrálním střevě naopak převládá neprotonizovaná, lipofilní forma B — vstřebávání je mnohem účinnější. Pro slabé zásady tedy platí opak než pro kyseliny: <strong>vstřebávají se především v tenkém střevě.</strong></p>
+    </details>
+  </div>
+`);
+
+/* ================= 12. ASPIRIN ION TRAPPING ================= */
+slide('pripad-aspirin','Případ: iontové zachycení', `
+  <div class="slide-inner">
+    <p class="eyebrow">Reálná klinická aplikace</p>
+    <h2 class="headline">Kyselina acetylsalicylová a alkalizace moči</h2>
+    <p class="body-text">Kyselina acetylsalicylová (aspirin) má pK<sub>a</sub> ≈ 3,5. Při předávkování (salicylátová intoxikace) se v nemocnici běžně používá infuze hydrogenuhličitanu sodného — <strong>alkalizace moči</strong> — k urychlení vylučování. Proč to funguje, ukazuje stejná rovnice jako u kyseliny octové.</p>
+    <table class="data-table">
+      <tr><th>Prostředí</th><th>pH</th><th>log([A⁻]/[HA]) = pH − pK<sub>a</sub></th><th>Poměr A⁻ : HA</th></tr>
+      <tr><td>žaludek</td><td>2,0</td><td>−1,5</td><td>1 : 32</td></tr>
+      <tr><td>krevní plazma</td><td>7,4</td><td>3,9</td><td>7 943 : 1</td></tr>
+      <tr><td>kyselá moč (dehydratace)</td><td>5,0</td><td>1,5</td><td>32 : 1</td></tr>
+      <tr class="highlight"><td>alkalizovaná moč (terapie NaHCO₃)</td><td>8,0</td><td>4,5</td><td>31 623 : 1</td></tr>
+    </table>
+    <div class="aspirin-box">
+      <h4>Mechanismus „ion trapping"</h4>
+      <p>V ledvinových tubulech se zpět do krve reabsorbuje jen neionizovaná (lipofilní) forma HA. Zvýšením pH moči z 5 na 8 vzroste podíl ionizované formy A⁻ přibližně <strong>1000×</strong> — ionizovaná kyselina „zůstává v pasti" v moči a nemůže projít zpět přes tubulární membránu. Vylučování salicylátu se tak výrazně urychlí.</p>
+    </div>
+  </div>
+`);
+
+/* ================= 13. CESTY VSTUPU ================= */
+slide('cesty-vstupu','Cesty vstupu do organismu', `
+  <div class="slide-inner">
+    <p class="eyebrow">Absorpce</p>
+    <h2 class="headline">Toxikologicky nejvýznamnější cesty vstupu</h2>
+    <div class="grid-4">
+      <div class="card"><p class="body-text" style="margin:0;"><strong>Požití</strong><br><em>per os, p.o.</em></p></div>
+      <div class="card"><p class="body-text" style="margin:0;"><strong>Vdechnutí</strong><br><em>inhalací, inh.</em></p></div>
+      <div class="card"><p class="body-text" style="margin:0;"><strong>Přes kůži</strong><br><em>per cutam, p.c.</em></p></div>
+      <div class="card"><p class="body-text" style="margin:0;"><strong>Do žíly</strong><br><em>intra venam, i.v.</em></p></div>
+    </div>
+    <p class="body-text" style="margin-top:16px;">Cesta vstupu ovlivňuje nástup účinku, velikost účinku i dobu působení. <br><strong>ABSORPCE</strong> = přestup látky z místa vstupu do krevního řečiště (rychlost a rozsah absorpce).</p>
+  </div>
+`);
+
+/* ================= 14. ABSORPCE FAKTORY ================= */
+slide('absorpce-faktory','Faktory ovlivňující absorpci', `
+  <div class="slide-inner">
+    <p class="eyebrow">Absorpce</p>
+    <h2 class="headline">Co určuje rychlost a rozsah absorpce?</h2>
+    <ul class="plain">
+      <li>fyzikální a chemické vlastnosti xenobiotika (lipofilita, ionizace, molekulová hmotnost)</li>
+      <li>forma a koncentrace xenobiotika (roztok, prášek, aerosol)</li>
+      <li>fyziologické faktory (prokrvení tkáně, plocha absorpční plochy, motilita GIT)</li>
+      <li>interakce s jinými látkami</li>
+      <li>potrava (plný/prázdný žaludek)</li>
+      <li>cesta vstupu</li>
+    </ul>
+  </div>
+`);
+
+/* ================= 15. VSTUP POZITIM ================= */
+slide('vstup-pozitim','Vstup požitím', `
+  <div class="slide-inner">
+    <p class="eyebrow">Vstup požitím (p.o.)</p>
+    <h2 class="headline">Trávicí trakt jako brána do organismu</h2>
+    <div class="grid-2">
+      <ul class="plain">
+        <li>postupné vstřebávání sliznicí GIT, absorpce do krve</li>
+        <li>dokud je látka v zažívacím traktu, působí lokálně, ne systémově — využití při otravách (zvracení, výplach, projímadlo)</li>
+        <li>nejvýznamnější orgán pro absorpci ze zažívacího traktu — <strong>tenké střevo</strong> (obrovská plocha klků)</li>
+      </ul>
+      <div class="card">
+        <p class="body-text" style="margin:0;"><strong>Sublingvální podání</strong> — nitroglycerin (akutní angina pectoris) a nikotin se vstřebávají účinně už v dutině ústní. Obchází se tak trávicí trakt i první průchod játry — nástup účinku během minut.</p>
+      </div>
+    </div>
+  </div>
+`);
+
+/* ================= 16. PRESYSTEMOVA ELIMINACE ================= */
+slide('presystemova-eliminace','Efekt prvního průchodu játry', `
+  <div class="slide-inner">
+    <p class="eyebrow">Presystémová eliminace</p>
+    <h2 class="headline">First-pass efekt</h2>
+    <div class="diagram-box">
+      <svg viewBox="0 0 620 120" style="width:100%;max-width:640px;">
+        <text x="310" y="18" font-size="14" text-anchor="middle" fill="#9C3B2E">část dávky odbourána dříve, než dosáhne krevního oběhu</text>
+        <rect x="10" y="35" width="170" height="50" rx="6" fill="#FBF0DD" stroke="#B9791E"/>
+        <text x="95" y="65" font-size="15" text-anchor="middle">GIT / střevo</text>
+        <line x1="180" y1="60" x2="212" y2="60" stroke="#5A5D51" stroke-width="2" marker-end="url(#a2)"/>
+        <rect x="215" y="35" width="170" height="50" rx="6" fill="#F7EAE7" stroke="#9C3B2E"/>
+        <text x="300" y="58" font-size="15" text-anchor="middle">játra</text>
+        <text x="300" y="75" font-size="13" text-anchor="middle">(metabolismus)</text>
+        <line x1="385" y1="60" x2="417" y2="60" stroke="#5A5D51" stroke-width="2" marker-end="url(#a2)"/>
+        <rect x="420" y="35" width="170" height="50" rx="6" fill="#EAF1EA" stroke="#3E5C42"/>
+        <text x="505" y="58" font-size="15" text-anchor="middle">systémová</text>
+        <text x="505" y="75" font-size="13" text-anchor="middle">cirkulace</text>
+        <defs><marker id="a2" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#5A5D51"/></marker></defs>
+      </svg>
+    </div>
+    <p class="body-text" style="margin-top:12px;">Při průchodu střevní stěnou a zejména při prvním průchodu játry dochází k metabolismu na méně účinné (nebo naopak aktivnější) metabolity — xenobiotikum je odstraněno z krve dříve, než dosáhne systémové cirkulace.</p>
+    <div class="card" style="margin-top:12px;">
+      <p class="body-text" style="margin:0;"><strong>Reálný příklad — grapefruitová šťáva:</strong> furanokumariny v grapefruitu inhibují střevní izoformu cytochromu P450 3A4, která je klíčová pro first-pass metabolismus řady léčiv (např. některých statinů nebo blokátorů kalciových kanálů). Výsledkem je vyšší systémová dostupnost léčiva než obvykle — riziko předávkování při běžné terapeutické dávce.</p>
+    </div>
+  </div>
+`);
+
+/* ================= 17. RYCHLOST ABSORPCE ================= */
+slide('rychlost-absorpce','Rychlost absorpce v GIT', `
+  <div class="slide-inner">
+    <p class="eyebrow">Vstup požitím</p>
+    <h2 class="headline">Kyselé a zásadité látky v trávicím traktu</h2>
+    <div class="grid-2">
+      <div class="card"><p class="body-text" style="margin:0;"><strong>Látky kyselé povahy</strong> — vstřebávání lépe v žaludku (disociace potlačena, převládá lipofilní forma).</p></div>
+      <div class="card"><p class="body-text" style="margin:0;"><strong>Látky zásadité povahy</strong> — vstřebávání především v tenkém střevě (potlačena protonizace).</p></div>
+    </div>
+    <div class="card" style="margin-top:14px;border-color:var(--danger);">
+      <p class="body-text" style="margin:0;"><strong>POZOR:</strong> silné kyseliny a silné zásady (např. kyselina sírová, hydroxid sodný) se zpravidla vůbec neabsorbují — plně disociované, silně rozrušují epitel a způsobují chemické poleptání sliznic.</p>
+    </div>
+    <p class="body-text" style="margin-top:14px;">Rozhodující vliv na rychlost absorpce má také <strong>rozpustnost</strong> látky — vstřebávání na střevní stěně probíhá z roztoku. Vstup ústy má velkou kapacitu, ale absorpce ze zažívacího traktu je poměrně pomalá a často neúplná.</p>
+  </div>
+`);
+
+/* ================= 18. KVIZ 1 ================= */
+slide('kviz-1','Kontrolní kvíz 1', `
+  <div class="slide-inner">
+    <p class="eyebrow">Kontrolní zastávka · kvíz</p>
+    <h2 class="headline">pH, ionizace a absorpce</h2>
+    <div class="quiz-card" id="q1a">
+      <div class="quiz-q">Slabá kyselina s pK<sub>a</sub> = 4,0 se nachází v prostředí o pH = 1. Jaká forma bude převládat a co to znamená pro vstřebávání?</div>
+      <button class="quiz-opt" data-correct="true">Převládá neionizovaná (HA) forma — lipofilní, dobře se vstřebává</button>
+      <button class="quiz-opt" data-correct="false">Převládá ionizovaná (A⁻) forma — hydrofilní, špatně se vstřebává</button>
+      <div class="quiz-feedback" id="q1a-fb"></div>
+    </div>
+    <div class="quiz-card" id="q1b" style="margin-top:16px;">
+      <div class="quiz-q">Proč se slabé zásady (např. amfetamin) lépe vstřebávají v tenkém střevě než v žaludku?</div>
+      <button class="quiz-opt" data-correct="false">Protože se v žaludku rozkládají žaludeční kyselinou</button>
+      <button class="quiz-opt" data-correct="true">Protože v neutrálním prostředí střeva převládá neprotonizovaná, lipofilní forma zásady</button>
+      <div class="quiz-feedback" id="q1b-fb"></div>
+    </div>
+    <div class="quiz-card" id="q1c" style="margin-top:16px;">
+      <div class="quiz-q">Proč se u salicylátové intoxikace podává hydrogenuhličitan sodný k alkalizaci moči?</div>
+      <button class="quiz-opt" data-correct="true">Alkalizace zvýší podíl ionizované formy salicylátu, ta se v ledvinách nereabsorbuje a rychleji se vyloučí</button>
+      <button class="quiz-opt" data-correct="false">Alkalizace neutralizuje salicylát přímo v krvi chemickou reakcí</button>
+      <div class="quiz-feedback" id="q1c-fb"></div>
+    </div>
+  </div>
+`);
+
+/* ================= 19. VSTUP INHALACI ================= */
+slide('vstup-inhalaci','Vstup vdechováním', `
+  <div class="slide-inner">
+    <p class="eyebrow">Vstup vdechnutím (inh.)</p>
+    <h2 class="headline">Plicní alveoly — rychlá cesta do krevního oběhu</h2>
+    <div class="grid-2">
+      <ul class="plain">
+        <li>cesta vstupu pro plyny, kapalné a pevné aerosoly</li>
+        <li>ochrana dýchacích cest — výstelkové a vazivové buňky, hlen, řasinky</li>
+        <li>velká styčná plocha mezi vzduchem a krví v plicních sklípcích, tenké epitelové buňky → mnohem rychlejší vstřebávání než z GIT</li>
+        <li>převládající mechanismus — volná difuze; rozhodující je parciální tlak látky a její rozpustnost v krvi</li>
+      </ul>
+      <div class="card"><p class="body-text" style="margin:0;">Inhalované látky si často neuvědomujeme — inhalace patří mezi <strong>nejnebezpečnější cesty vstupu</strong>, zvláště při dlouhodobé nebo opakované expozici znečištěnému ovzduší (chronické účinky).</p></div>
+    </div>
+  </div>
+`);
+
+/* ================= 20. CO PRIPAD ================= */
+slide('pripad-co','Případ: otrava oxidem uhelnatým', `
+  <div class="slide-inner">
+    <p class="eyebrow">Reálný případ — inhalační toxikologie</p>
+    <h2 class="headline">Tichý zabiják v domácnosti</h2>
+    <p class="body-text">Oxid uhelnatý (CO) vzniká nedokonalým spalováním — vadné plynové kotle, generátory v uzavřených prostorech, kouřové plyny při požárech. Podle českých i evropských statistik jde každoročně o jednu z nejčastějších příčin náhodných smrtelných otrav v domácnostech, zejména v topné sezóně.</p>
+    <table class="data-table">
+      <tr><th>Koncentrace COHb v krvi</th><th>Klinický projev</th></tr>
+      <tr><td>&lt; 10 %</td><td>obvykle bezpříznakové (u kuřáků běžné)</td></tr>
+      <tr><td>10–20 %</td><td>bolest hlavy, únava</td></tr>
+      <tr><td>30–40 %</td><td>zmatenost, nauzea, závratě</td></tr>
+      <tr class="highlight"><td>&gt; 50 %</td><td>bezvědomí, riziko úmrtí</td></tr>
+    </table>
+    <p class="body-text" style="margin-top:12px;">CO se váže na hemové železo hemoglobinu s afinitou přibližně <strong>200–250× vyšší</strong> než kyslík — vzniká karboxyhemoglobin (COHb), který neumí přenášet O₂. Vdechovaný vzduch difunduje volně přes tenkou alveolární membránu, proto k nasycení krve CO dochází rychle. Léčba: čistý kyslík (zkracuje poločas COHb z ~5 hodin na vzduchu na ~90 minut při 100% O₂), v těžkých případech hyperbarická oxygenoterapie.</p>
+  </div>
+`);
+
+/* ================= 21. VSTUP KUZI ================= */
+slide('vstup-kuzi','Vstup kůží', `
+  <div class="slide-inner">
+    <p class="eyebrow">Vstup přes kůži (p.c.)</p>
+    <h2 class="headline">Kůže — relativně nejúčinnější bariéra</h2>
+    <div class="grid-2">
+      <ul class="plain">
+        <li>pokožka (zrohovatělá vrstva), vlastní kůže (škára), podkoží</li>
+        <li><strong>látky lipofilní</strong> — intercelulární a transcelulární cesta, přes mazové žlázy</li>
+        <li><strong>látky hydrofilní</strong> — průnik kanálky potních žláz a vlasových folikulů (mnohem menší kapacita)</li>
+        <li>ze škáry a podkoží vstup do oběhového systému — kontakt tkáňového moku s krevními a lymfatickými cévami</li>
+      </ul>
+      <div class="card"><p class="body-text" style="margin:0;"><strong>Dipolární aprotická rozpouštědla</strong> (např. dimethylsulfoxid, DMSO) zvyšují propustnost zrohovatělé vrstvy bobtnáním — využívá se to jako „nosič" pro transdermální podání některých léčiv, ale i jako zesilovač průniku toxických látek kůží.</p></div>
+    </div>
+  </div>
+`);
+
+/* ================= 22. VSTUP ZILOU ================= */
+slide('vstup-zilou','Vstup do žíly', `
+  <div class="slide-inner">
+    <p class="eyebrow">Vstup do žíly (i.v.)</p>
+    <h2 class="headline">Nejrychlejší možná cesta</h2>
+    <ul class="plain">
+      <li>intravenózní podání — látka se dostává přímo do krevního oběhu</li>
+      <li>odpadá fáze absorpce; okamžitá distribuce do cílových orgánů</li>
+      <li>využití v lékařství (přesné dávkování, rychlý nástup účinku), ale i zneužití u omamných látek</li>
+    </ul>
+    <div class="card" style="margin-top:14px;">
+      <p class="body-text" style="margin:0;">Právě proto, že u i.v. podání odpadá absorpce, má tato cesta z definice <strong>biologickou dostupnost (bioavailabilitu) 100 %</strong> — slouží jako referenční hodnota, ke které se poměřuje dostupnost látky podané jinou cestou (viz konec přednášky).</p>
+    </div>
+  </div>
+`);
+
+/* ================= 23. DISTRIBUCE ================= */
+slide('distribuce','Distribuce v organismu', `
+  <div class="slide-inner">
+    <p class="eyebrow">Toxikokinetika</p>
+    <h2 class="headline">Distribuce cizorodých látek</h2>
+    <p class="body-text">Cizorodá látka je již v oběhovém systému → rychlý roznos krví/lymfou do celého těla → cílová struktura (receptor). Distribuce je obousměrný transport mezi krevním řečištěm a orgány či tkáněmi.</p>
+    <ul class="plain" style="margin-top:10px;">
+      <li>vlivy: rychlost proudění krve, pasivní difuze, aktivní transport, vazba na proteiny v krvi a tkáních</li>
+      <li>aktivní transport — může vést k výrazně vyšším než rovnovážným koncentracím v tkáni oproti plazmě, důležitý zvláště u látek „analogických" přirozeným metabolitům</li>
+      <li><strong>vazba na krevní proteiny</strong> zpomaluje distribuci: xenobiotikum kyselé povahy — vazba na albumin; zásadité povahy — vazba na α₁-kyselý glykoprotein</li>
+    </ul>
+  </div>
+`);
+
+/* ================= 24. DEPOT ================= */
+slide('depot-ukladani','Ukládání v depotech', `
+  <div class="slide-inner">
+    <p class="eyebrow">Distribuce</p>
+    <h2 class="headline">Depot cizorodých látek</h2>
+    <div class="grid-3">
+      <div class="card"><p class="body-text" style="margin:0;"><strong>Ledviny a játra</strong> — vysoká schopnost vázat cizorodé látky na proteiny (ligandin, metalothionein) — těžké kovy, organické látky.</p></div>
+      <div class="card"><p class="body-text" style="margin:0;"><strong>Tuková tkáň</strong> — koncentrace lipofilních, perzistentních organických látek (POPs, DDT, PCB).</p></div>
+      <div class="card"><p class="body-text" style="margin:0;"><strong>Kosti</strong> — ionty se zabudovávají do krystalů hydroxyapatitu Ca₅(OH)(PO₄)₃ — těžké kovy (olovo, stroncium), fluoridy.</p></div>
+    </div>
+    <p class="body-text" style="margin-top:14px;">Uvolňování xenobiotik z depotu ještě dlouho po expozici prodlužuje jejich účinek — po poklesu koncentrace v plazmě dochází k redifuzi zpět z depotu. Právě to hraje klíčovou roli v následujícím případu.</p>
+  </div>
+`);
+
+/* ================= 25. PRIBEH LITVINENKO ================= */
+slide('pribeh-litvinenko','Příběh: polonium-210', `
+  <div class="slide-inner">
+    <p class="eyebrow">Toxikologický příběh</p>
+    <h2 class="headline">Alexandr Litviněnko a šálek čaje</h2>
+
+    <div class="two-col-story">
+
+      <!-- LEVÁ ČÁST -->
+      <div>
+
+        <p class="body-text">
+          1. listopadu 2006 se bývalý důstojník ruské FSB a kritik Kremlu
+          Alexandr Litviněnko sešel v londýnském hotelu se dvěma bývalými
+          kolegy u šálku zeleného čaje. O několik hodin později se u něj
+          objevila prudká nevolnost a zvracení. Zemřel 23. listopadu —
+          po akutní otravě poloniem-210.
+        </p>
+
+        <p class="body-text">
+          Polonium-210 je <strong>alfa-zářič</strong>. Zvenčí představuje
+          alfa záření jen malou radiační hrozbu, protože má velmi krátký
+          dosah a neproniká neporušenou kůží. Po vniknutí do organismu je
+          však mimořádně nebezpečné: energie alfa částic se uvolňuje přímo
+          v ozářených tkáních.
+        </p>
+
+        <!-- NOVÝ BOX -->
+        <div class="polonium-followup-box">
+          <h3>Co se děje dál?</h3>
+
+          <div class="half-life-row">
+            <span><strong>Fyzikální poločas</strong></span>
+            <span>≈ 138–140 dní</span>
+          </div>
+
+          <div class="half-life-row">
+            <span><strong>Biologický poločas</strong></span>
+            <span>≈ 50 dní</span>
+          </div>
+
+          <div class="half-life-row">
+            <span><strong>Efektivní poločas</strong></span>
+            <span>≈ 40 dní</span>
+          </div>
+
+          <p class="small-note">
+            Radioaktivní rozpad a vylučování z organismu probíhají současně.
+            <strong>Efektivní poločas</strong> proto určuje, jak rychle klesá
+            aktivita ²¹⁰Po v organismu.
+          </p>
+        </div>
+
+      </div>
+
+
+      <!-- PRAVÁ ČÁST -->
+      <div class="polonium-box">
+
+        <h3>Toxikokinetika ²¹⁰Po</h3>
+
+        <p>
+          <strong>Vstup:</strong> požití (kontaminovaný čaj) →
+          část požitého polonia se vstřebá z GIT do krve; rozsah absorpce
+          závisí na chemické formě. Pro odhad Litviněnkovy expozice bylo
+          použito <strong>10 %</strong>.
+        </p>
+
+        <p>
+          <strong>Distribuce:</strong> po vstupu do krve se ²¹⁰Po
+          distribuuje do měkkých tkání; významná část se dostává do
+          <strong>jater, ledvin, sleziny a červené kostní dřeně</strong>.
+        </p>
+
+        <p>
+          <strong>Mechanismus toxicity:</strong> alfa záření poškozuje
+          DNA a další buněčné struktury → poškození krvetvorné tkáně,
+          GIT, ledvin a jater → <strong>selhání krvetvorby a mnohočetné
+          orgánové selhání</strong>.
+        </p>
+
+        <p class="stat">
+          Odhadovaný příjem: <strong>≈ 4 GBq ²¹⁰Po</strong><br>
+          Odhadované dávky v orgánech: přibližně
+          <strong>20 až &gt;100 Gy</strong>
+        </p>
+
+      </div>
+
+    </div>
+  </div>
+`);
+
+/* ================= 25B. LITVINENKO POKRACOVANI ================= */
+slide('pribeh-litvinenko-2','Příběh: polonium-210 (pokračování)', `
+  <div class="slide-inner">
+    <p class="eyebrow">Toxikologický příběh — forenzní stopa</p>
+    <h2 class="headline">Jak se pátralo po neviditelném jedu</h2>
+    <p class="body-text">Lékaři zpočátku předpokládali otravu thalliem — klinický obraz (zvracení, průjem, později vypadávání vlasů) tomu odpovídal. Teprve gama-spektrometrická analýza moči odhalila stopy polonia-210 — látky, na kterou se běžně vůbec netestuje. Poté forenzní tým dohledal radioaktivní stopu poloniem kontaminovaných povrchů (letadla, hotelové pokoje, restaurace) podél celé trasy podezřelých před setkáním i po něm.</p>
+    <div class="card" style="margin-top:14px;">
+      <p class="body-text" style="margin:0;"><strong>Proč je tento případ toxikokineticky výjimečný:</strong> polonium se chová jako těžký kov (absorpce, distribuce, depot v kostní dřeni), ale jeho toxicita nepramení z chemické reaktivity, nýbrž z fyzikální vlastnosti — ionizujícího záření emitovaného přímo uvnitř tkání. Ukazuje to, že toxikokinetický „osud" látky (kam se dostane a kde se hromadí) může být stejně důležitý jako mechanismus účinku samotný.</p>
+    </div>
+  </div>
+`);
+
+/* ================= 26. HEMATOENCEFALICKA BARIERA ================= */
+slide('heb','Hematoencefalická bariéra', `
+  <div class="slide-inner">
+    <p class="eyebrow">Distribuce · speciální bariéry</p>
+    <h2 class="headline">Bariéra mezi krví a mozkem</h2>
+    <ul class="plain">
+      <li>CNS je chráněn před toxickými látkami hematoencefalickou bariérou — těsně přiléhající epitelové buňky kapilár v mozku</li>
+      <li>mimořádně úzké mezibuněčné póry, transportní proteiny (multidrug-resistant proteins) aktivně vrací některé látky zpět do krve</li>
+      <li>lipofilita usnadňuje absorpci do buněk CNS, ionizace ji naopak znesnadňuje</li>
+      <li><strong>zvýšená citlivost novorozenců</strong> na toxické látky — bariéra ještě není plně vyvinutá</li>
+    </ul>
+    <div class="card" style="margin-top:14px;">
+      <p class="body-text" style="margin:0;">Stejný princip lipofility platí i u placentární bariéry — historicky tragický příklad je <strong>thalidomid</strong> (50. léta 20. stol.), lipofilní sedativum, které volně procházelo placentou a způsobovalo těžké vrozené vady končetin plodu (fokomelie). Případ vedl k zásadnímu zpřísnění požadavků na toxikologické testování léčiv v těhotenství.</p>
+    </div>
+  </div>
+`);
+
+/* ================= 27. KVIZ 2 - MATCHING ================= */
+slide('kviz-2-matching','Kontrolní úkol: spárujte', `
+  <div class="slide-inner">
+    <p class="eyebrow">Kontrolní zastávka · úkol</p>
+    <h2 class="headline">Spárujte látku/situaci s jejím toxikokinetickým osudem</h2>
+    <p class="body-text">Klikněte na položku vlevo a poté na odpovídající pojem vpravo.</p>
+    <div class="match-wrap">
+      <div>
+        <div class="match-col-title">LÁTKA / SITUACE</div>
+        <div id="match-left"></div>
+      </div>
+      <div>
+        <div class="match-col-title">TOXIKOKINETICKÝ OSUD</div>
+        <div id="match-right"></div>
+      </div>
+    </div>
+    <div class="match-result" id="match-result"></div>
+  </div>
+`);
+
+/* ================= 28. BIOTRANSFORMACE ================= */
+slide('biotransformace','Biotransformace', `
+  <div class="slide-inner">
+    <p class="eyebrow">Toxikokinetika · enzymatický metabolismus</p>
+    <h2 class="headline">Biotransformace cizorodých látek</h2>
+    <p class="body-text">Chemické přeměny cizorodých i endogenních látek — látky méně polární se transformují na polárnější, což usnadňuje jejich vylučování. Klíčové je rozlišení <strong>detoxikace versus metabolická aktivace</strong> (bioaktivace na reaktivnější, toxičtější metabolit) — téma příští přednášky.</p>
+    <div class="grid-2" style="margin-top:12px;">
+      <div class="card">
+        <div class="tag">I. fáze</div>
+        <p class="body-text" style="margin-top:6px;">oxidace, redukce, hydrolytické přeměny — zavedení funkčních skupin (–OH, –NH₂, –SH). Klíčový enzymový systém: <strong>cytochrom P450</strong>.</p>
+      </div>
+      <div class="card">
+        <div class="tag">II. fáze</div>
+        <p class="body-text" style="margin-top:6px;">slučovací reakce (konjugace) s polárními endogenními látkami — glutathion, D-glukuronová kyselina, sulfát, acetát, aminokyseliny; methylace.</p>
+      </div>
+    </div>
+  </div>
+`);
+
+/* ================= 29. VYLUCOVANI ================= */
+slide('vylucovani','Vylučování cizorodých látek', `
+  <div class="slide-inner">
+    <p class="eyebrow">Exkrece</p>
+    <h2 class="headline">Cesty vylučování</h2>
+    <div class="grid-2">
+      <div class="card">
+        <p class="body-text" style="margin:0;"><strong>Moč</strong> — nutná rozpustnost ve vodě; klíčový orgán ledviny (filtrace v glomerulu → primární moč ~200 l/den → reabsorpce v tubulech). Produkty konjugace II. fáze se vylučují aktivním transportem.</p>
+      </div>
+      <div class="card">
+        <p class="body-text" style="margin:0;"><strong>Stolice</strong> — nevstřebané podíly z GIT i látky vyloučené žlučí z jater; lipofilní, nemetabolizované látky — prakticky jediná cesta vylučování.</p>
+      </div>
+      <div class="card">
+        <p class="body-text" style="margin:0;"><strong>Vydechovaný vzduch</strong> — nevstřebaný podíl vdechnuté látky i těkavé látky vzniklé metabolicky (přestup krev–vzduch v alveolách). Základ dechové zkoušky na alkohol.</p>
+      </div>
+      <div class="card">
+        <p class="body-text" style="margin:0;"><strong>Kůže</strong> — kvantitativně nevýznamná cesta, vylučování s potem a kožním mazem.</p>
+      </div>
+    </div>
+  </div>
+`);
+
+/* ================= 30. KINETIKA RADY ================= */
+slide('kinetika-rady','Kinetika vylučování — řády reakce', `
+  <div class="slide-inner">
+    <p class="eyebrow">Matematický popis vylučování</p>
+
+    <h2 class="headline" style="font-size:clamp(22px,2.8vw,30px);">
+      Kinetika nultého a prvního řádu
+    </h2>
+
+    <div class="grid-2">
+
+      <!-- NULTÝ ŘÁD -->
+      <div class="card" style="padding:14px 18px;">
+        <p class="body-text" style="margin:0 0 6px 0;">
+          <strong>Kinetika nultého řádu</strong>
+        </p>
+
+        <div class="calc-step" style="font-size:18px;">
+          dc/dt = −k<br>
+          <span class="res">c = c₀ − k·t</span>
+        </div>
+
+        <p class="calc-note" style="margin-top:6px;">
+          Rychlost eliminace je <strong>konstantní</strong>, nezávislá
+          na aktuální koncentraci — koncentrace klesá
+          <strong>lineárně</strong>.
+        </p>
+
+        <p class="calc-note" style="margin-top:5px;">
+          Při vysokých koncentracích může takto probíhat eliminace
+          <strong>ethanolu</strong>, pokud jsou metabolizující enzymy
+          saturovány.
+        </p>
+
+        <p class="calc-note" style="margin-top:5px;">
+          <strong>Jednotka k:</strong>
+          koncentrace·čas⁻¹
+          <span style="opacity:.7;">(např. mg·l⁻¹·h⁻¹)</span>
+        </p>
+      </div>
+
+
+      <!-- PRVNÍ ŘÁD -->
+      <div class="card" style="padding:14px 18px;">
+        <p class="body-text" style="margin:0 0 6px 0;">
+          <strong>Kinetika prvního řádu</strong>
+        </p>
+
+        <div class="calc-step" style="font-size:18px;">
+          dc/dt = −k·c<br>
+          c = c₀·e<sup>−k·t</sup><br>
+          <span class="res">ln c = ln c₀ − k·t</span>
+        </div>
+
+        <p class="calc-note" style="margin-top:6px;">
+          Rychlost eliminace je <strong>úměrná aktuální koncentraci</strong>
+          — koncentrace klesá <strong>exponenciálně</strong>.
+        </p>
+
+        <p class="calc-note" style="margin-top:5px;">
+          Je běžným modelem eliminace léčiv a mnoha xenobiotik,
+          pokud nejsou eliminační mechanismy <strong>saturovány</strong>.
+        </p>
+
+        <p class="calc-note" style="margin-top:5px;">
+          <strong>Jednotka k:</strong> čas⁻¹
+          <span style="opacity:.7;">(např. h⁻¹)</span>
+          &nbsp; | &nbsp;
+          <strong>t<sub>1/2</sub> = ln 2 / k</strong>
+        </p>
+      </div>
+
+    </div>
+
+
+    <!-- GRAFY -->
+    <div class="diagram-box" style="margin-top:12px;padding:10px;">
+
+      <svg viewBox="0 0 640 225" style="width:100%;">
+
+        <!-- LEVÝ GRAF -->
+        <text x="160" y="18"
+              font-size="16"
+              text-anchor="middle"
+              fill="#5A5D51"
+              font-weight="600">
+          koncentrace v čase (lineární osa)
+        </text>
+
+        <line x1="60" y1="180" x2="300" y2="180"
+              stroke="#5A5D51" stroke-width="1.5"/>
+        <line x1="60" y1="180" x2="60" y2="35"
+              stroke="#5A5D51" stroke-width="1.5"/>
+
+        <text x="40" y="178"
+              font-size="15"
+              text-anchor="end"
+              fill="#5A5D51">
+          0
+        </text>
+
+        <text x="20" y="108"
+              font-size="16"
+              text-anchor="middle"
+              fill="#5A5D51"
+              transform="rotate(-90 20 108)">
+          koncentrace c
+        </text>
+
+        <!-- 0. řád -->
+        <line x1="60" y1="45"
+              x2="280" y2="172"
+              stroke="#B9791E"
+              stroke-width="3"/>
+
+        <!-- 1. řád -->
+        <path d="
+          M 60 45
+          C 100 86, 140 136, 170 160
+          C 200 174, 240 178, 280 179"
+          fill="none"
+          stroke="#3E5C42"
+          stroke-width="3"/>
+
+        <text x="170" y="204"
+              font-size="15"
+              text-anchor="middle"
+              fill="#5A5D51">
+          čas t
+        </text>
+
+
+        <!-- PRAVÝ GRAF -->
+        <text x="480" y="18"
+              font-size="16"
+              text-anchor="middle"
+              fill="#5A5D51"
+              font-weight="600">
+          ln(koncentrace) v čase
+        </text>
+
+        <line x1="380" y1="180" x2="620" y2="180"
+              stroke="#5A5D51" stroke-width="1.5"/>
+        <line x1="380" y1="180" x2="380" y2="35"
+              stroke="#5A5D51" stroke-width="1.5"/>
+
+        <text x="360" y="178"
+              font-size="15"
+              text-anchor="end"
+              fill="#5A5D51">
+          0
+        </text>
+
+        <text x="340" y="108"
+              font-size="16"
+              text-anchor="middle"
+              fill="#5A5D51"
+              transform="rotate(-90 340 108)">
+          ln c
+        </text>
+
+        <!-- 0. řád: křivka pouze do c > 0 -->
+        <path d="
+          M 380 45
+          C 410 76, 435 112, 455 136
+          C 475 157, 495 169, 515 175"
+          fill="none"
+          stroke="#B9791E"
+          stroke-width="3"/>
+
+        <!-- 1. řád -->
+        <line x1="380" y1="54"
+              x2="600" y2="179"
+              stroke="#3E5C42"
+              stroke-width="3"/>
+
+        <text x="490" y="204"
+              font-size="15"
+              text-anchor="middle"
+              fill="#5A5D51">
+          čas t
+        </text>
+
+      </svg>
+
+
+      <div class="chart-legend">
+
+        <span>
+          <i style="background:#B9791E;"></i>
+          0. řád — v levém grafu přímka,
+          v pravém grafu křivka
+        </span>
+
+        <span>
+          <i style="background:#3E5C42;"></i>
+          1. řád — v levém grafu křivka,
+          v pravém grafu přímka
+        </span>
+
+      </div>
+    </div>
+
+
+    <!-- ZÁVĚREČNÉ SDĚLENÍ -->
+    <p class="footer-note" style="margin-top:14px;">
+      V semilogaritmickém zobrazení
+      (<strong>ln c vs. t</strong>) je kinetika 1. řádu přímkou —
+      <strong>směrnice = −k</strong>.
+      Z konstanty <strong>k</strong> lze určit poločas eliminace:
+      <strong>t<sub>1/2</sub> = ln 2 / k</strong>.
+    </p>
+
+  </div>
+`);
+
+/* ================= 31. PRIPAD ALKOHOL ================= */
+slide('pripad-alkohol','Případ: Widmarkova rovnice', `
+  <div class="slide-inner">
+    <p class="eyebrow">Reálný forenzní výpočet</p>
+    <h2 class="headline">Proč je alkohol výjimkou — kinetika 0. řádu</h2>
+    <p class="body-text">Ethanol je metabolizován především alkoholdehydrogenázou v játrech. Na rozdíl od většiny xenobiotik je tento enzymový systém při běžných koncentracích alkoholu v krvi <strong>nasycen</strong> — rychlost odbourávání je proto konstantní (kinetika 0. řádu), typicky <strong>β ≈ 0,15&nbsp;‰/hod</strong>. Této skutečnosti využívá forenzní toxikologie ve <strong>Widmarkově rovnici</strong>:</p>
+    <details class="calc" open>
+      <summary>Widmarkova rovnice — výpočet koncentrace alkoholu v krvi</summary>
+      <div class="calc-step">
+C₀ = A / (m · r)   [g/kg ≈ ‰]<br>
+C(t) = C₀ − β·t
+      </div>
+      <p class="calc-note">A = hmotnost požitého alkoholu [g] · m = tělesná hmotnost [kg] · r = distribuční (Widmarkův) faktor: 0,68 muži, 0,55 ženy (podíl vody v těle) · β = rychlost eliminace [‰/hod]</p>
+    </details>
+    <details class="calc">
+      <summary>Příklad: muž 80 kg, 3 piva 12° (≈ 60 g ethanolu)</summary>
+      <div class="calc-step">
+C₀ = 60 / (80 · 0,68) = 60 / 54,4 = <span class="res">1,10 ‰</span><br>
+t(0) = C₀ / β = 1,10 / 0,15 = <span class="res">≈ 7,3 hodiny</span> do úplného vystřízlivění
+      </div>
+      <p class="calc-note">Pozn.: skutečná hodnota bývá o něco nižší kvůli neúplné resorpci a individuální variabilitě β (0,10–0,20 ‰/hod) — ve forenzní praxi se proto počítá s bezpečnostním rozpětím.</p>
+    </details>
+    <div class="diagram-box" style="margin-top:12px;">
+      <svg viewBox="0 0 500 200" style="width:100%;max-width:520px;">
+        <line x1="50" y1="170" x2="470" y2="170" stroke="#5A5D51" stroke-width="1.5"/>
+        <line x1="50" y1="170" x2="50" y2="20" stroke="#5A5D51" stroke-width="1.5"/>
+        <text x="15" y="30" font-size="13" fill="#5A5D51">1,10 ‰</text>
+        <line x1="50" y1="30" x2="410" y2="170" stroke="#9C3B2E" stroke-width="3"/>
+        <circle cx="50" cy="30" r="4" fill="#9C3B2E"/>
+        <circle cx="410" cy="170" r="4" fill="#9C3B2E"/>
+        <text x="410" y="188" font-size="13" text-anchor="middle" fill="#5A5D51">t ≈ 7,3 h</text>
+        <text x="250" y="195" font-size="13" text-anchor="middle" fill="#5A5D51">čas [hod]</text>
+        <text x="15" y="100" font-size="13" fill="#5A5D51" transform="rotate(-90 15 100)">C [‰]</text>
+      </svg>
+    </div>
+  </div>
+`);
+
+/* ================= 32. CLEARANCE BIOAVAILABILITA ================= */
+slide('clearance-biodostupnost','Clearance a bioavailabilita', `
+  <div class="slide-inner">
+    <p class="eyebrow">Kinetika vylučování</p>
+    <h2 class="headline">Dvě klíčové veličiny toxikokinetiky</h2>
+    <div class="grid-2">
+      <div class="card">
+        <p class="body-text" style="margin-top:0;"><strong>Clearance (CL)</strong></p>
+        <div class="calc-step" style="font-size:16px;">CL = v / c &nbsp; [objem/čas, např. ml/min]</div>
+        <p class="body-text" style="margin:8px 0 0 0;">Pomyslný objem plazmy, který se za jednotku času „vyčistí" od dané látky. Poměr rychlosti vylučování a koncentrace látky v plazmě.</p>
+      </div>
+      <div class="card">
+        <p class="body-text" style="margin-top:0;"><strong>Biologická dostupnost (F)</strong></p>
+        <div class="calc-step" style="font-size:16px;">F = (AUC<sub>p.o.</sub> / AUC<sub>i.v.</sub>) × 100&nbsp;%</div>
+        <p class="body-text" style="margin:8px 0 0 0;">Podíl podané dávky, který dosáhne systémové cirkulace v nezměněné podobě. U i.v. podání F = 100 % (referenční hodnota); u p.o. podání ji snižuje neúplná absorpce i first-pass efekt v játrech.</p>
+      </div>
+    </div>
+    <p class="body-text" style="margin-top:14px;">Poločas eliminace (t<sub>1/2</sub>) u kinetiky 1. řádu nezávisí na počáteční koncentraci — za každý poločas klesne koncentrace na polovinu; u kinetiky 0. řádu (ethanol) závisí čas do vymizení přímo na počáteční koncentraci, jak jsme viděli u Widmarkova výpočtu.</p>
+  </div>
+`);
+
+/* ================= 33. DISKUSE ================= */
+slide('diskuse','Diskusní otázky', `
+  <div class="slide-inner">
+    <p class="eyebrow">Na závěr přednášky</p>
+    <h2 class="headline">Diskusní otázky pro studující</h2>
+    <div id="discussion-list" style="margin-top:14px;"></div>
+  </div>
+`);
+
+/* ================= 34. SHRNUTI ================= */
+slide('closing','Shrnutí a zdroje', `
+  <div class="slide-inner">
+    <p class="eyebrow">Na závěr</p>
+    <h2 class="headline">Shrnutí přednášky 3 a zdroje</h2>
+    <div class="grid-2">
+      <div class="card">
+        <p class="body-text" style="margin-top:0;"><strong>Z dnešní přednášky si odnášíme:</strong></p>
+        <ul class="plain">
+          <li><strong>ADME</strong> — absorpce, distribuce, metabolismus, exkrece — společný rámec osudu každého xenobiotika.</li>
+          <li>pH prostředí rozhoduje o ionizaci slabých kyselin a zásad, a tím o jejich vstřebávání i vylučování — využívá se to i klinicky (alkalizace moči u salicylátů).</li>
+          <li>Distribuce není rovnoměrná — depoty v tukové tkáni, kostech i kostní dřeni mohou prodlužovat expozici dlouho po jednorázovém kontaktu s látkou.</li>
+          <li>Kinetika vylučování je většinou 1. řádu (exponenciální), ethanol je důležitou výjimkou s kinetikou 0. řádu (Widmarkova rovnice).</li>
+          <li>Biotransformace může látku detoxikovat i naopak aktivovat na toxičtější metabolit — téma příští přednášky.</li>
+        </ul>
+      </div>
+      <div class="card sources">
+        <strong style="color:var(--ink); font-family:var(--sans); font-size:15px;">Zdroje</strong>
+        <br><br>
+        Linhart, I. (2020). <em>Toxikologie: Otázky vztahu chemických látek a živých organismů.</em> Vydavatelství VŠCHT Praha.
+        <br><br>
+        Klaassen, C. D. (ed.) (2019). <em>Casarett &amp; Doull's Toxicology: The Basic Science of Poisons</em> (9th ed.). McGraw-Hill.
+        <br><br>
+        Widmark, E. M. P. (1932). <em>Die theoretischen Grundlagen und die praktische Verwendbarkeit der gerichtlich-medizinischen Alkoholbestimmung.</em> Urban &amp; Schwarzenberg.
+        <br><br>
+        Harrison, K. A. et al. (2017). Polonium-210 poisoning: a first-hand account. <em>Clinical Toxicology</em>, 55(2), 115–121.
+        <br><br>
+        Proctor, N. H., Hughes, J. P. (2004). <em>Chemical Hazards of the Workplace</em> — kapitoly o CO a inhalační toxikologii.
+        <br><br>
+        WHO (2021). <em>WHO global air quality guidelines</em> — limity pro PM2.5.
+      </div>
+    </div>
+  </div>
+`);
+
+/* ================= RENDER ================= */
+const deck = document.getElementById('deck');
+slides.forEach((s,i)=>{
+  const el = document.createElement('div');
+  el.className='slide'; el.id='slide-'+i; el.innerHTML=s.html;
+  deck.appendChild(el);
+});
+const overlayList = document.getElementById('overlay-list');
+slides.forEach((s,i)=>{
+  const li = document.createElement('li');
+  li.innerHTML = '<span>'+String(i+1).padStart(2,'0')+'</span>'+s.title;
+  li.onclick = ()=>{ goTo(i); toggleOverlay(false); };
+  overlayList.appendChild(li);
+});
+
+let current = 0;
+function render(){
+  document.querySelectorAll('.slide').forEach((el,i)=> el.classList.toggle('active', i===current));
+  document.getElementById('progress-fill').style.width = ((current+1)/slides.length*100)+'%';
+  document.getElementById('counter').textContent = (current+1)+' / '+slides.length;
+  document.getElementById('prevBtn').disabled = current===0;
+  document.getElementById('nextBtn').disabled = current===slides.length-1;
+  initSlideWidgets(current);
+}
+function goTo(i){ current = Math.max(0, Math.min(slides.length-1, i)); render(); }
+function nextSlide(){ goTo(current+1); }
+function prevSlide(){ goTo(current-1); }
+document.addEventListener('keydown', (e)=>{
+  if(document.getElementById('overlay').classList.contains('show')){ if(e.key==='Escape') toggleOverlay(false); return; }
+  if(e.key==='ArrowRight' || e.key===' ') nextSlide();
+  if(e.key==='ArrowLeft') prevSlide();
+  if(e.key==='Escape') toggleOverlay(false);
+});
+function toggleOverlay(show){ document.getElementById('overlay').classList.toggle('show', show); }
+
+/* ================= WIDGETS ================= */
+const initialized = {};
+function initSlideWidgets(i){
+  const id = slides[i].id;
+  if(initialized[id]) return;
+  initialized[id] = true;
+  if(id==='kviz-1') initSimpleQuizzes([
+    ['q1a','q1a-fb','Správně — při pH nižším než pKa převládá u kyseliny neionizovaná forma HA, ta lépe difunduje přes membránu.','Zkuste znovu — porovnejte pH prostředí (1) s pKa látky (4,0): pH je nižší, takže rovnováha je posunuta k HA.'],
+    ['q1b','q1b-fb','Přesně tak — v neutrálním střevě převládá u slabé zásady neprotonizovaná forma B, která je lipofilní.','Zkuste znovu — u slabých zásad platí opačné pravidlo než u kyselin: potřebují méně kyselé prostředí.'],
+    ['q1c','q1c-fb','Ano — to je princip „ion trapping": ionizovaná forma se nemůže vrátit přes tubulární membránu zpět do krve.','Zkuste znovu — hydrogenuhličitan sodný nereaguje se salicylátem chemicky, mění pouze pH moči.']
+  ]);
+  if(id==='diskuse') initDiscussion();
+  if(id==='kviz-2-matching') initMatching();
+}
+
+function initSimpleQuizzes(list){
+  list.forEach(([cardId, fbId, correctMsg, wrongMsg])=>{
+    const card = document.getElementById(cardId);
+    const opts = card.querySelectorAll('.quiz-opt');
+    opts.forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const isCorrect = btn.dataset.correct==='true';
+        opts.forEach(o=>o.disabled=true);
+        btn.classList.add(isCorrect?'correct':'wrong');
+        if(!isCorrect){ opts.forEach(o=>{ if(o.dataset.correct==='true') o.classList.add('correct'); }); }
+        const fb = document.getElementById(fbId);
+        fb.textContent = isCorrect? correctMsg: wrongMsg;
+        fb.classList.add('show');
+      });
+    });
+  });
+}
+
+/* ---- discussion accordion ---- */
+function initDiscussion(){
+  const qa = [
+    {q:'Proč se salicyláty vylučují rychleji při alkalizaci moči, ale slabé zásady (např. amfetamin) naopak při okyselení moči? Odvoďte to z Henderson–Hasselbalchovy rovnice.',
+     a:'Ledvinové tubuly reabsorbují zpět do krve jen neionizovanou, lipofilní formu látky. U slabé kyseliny (salicylát) zvýšení pH moči zvyšuje podíl ionizované formy A⁻ → látka „zůstává v pasti" v moči a je vyloučena. U slabé zásady je to naopak — snížení pH moči zvyšuje podíl protonizované, ionizované formy BH⁺, která se nereabsorbuje, takže okyselení moči urychlí vylučování zásaditých látek.'},
+    {q:'Proč je otrava poloniem-210 obtížně odhalitelná běžnými toxikologickými testy, zatímco otrava těžkými kovy jako olovo nebo rtuť se dá zjistit rutinně?',
+     a:'Standardní toxikologické screeningy hledají chemickou přítomnost látky (např. atomovou absorpční spektrometrií u olova či rtuti). Polonium-210 se v těle chová chemicky jako běžný, netoxický stopový prvek přítomný jen ve zcela zanedbatelném množství — jeho nebezpečnost není dána chemickou reaktivitou, ale radioaktivitou. Je proto nutná specializovaná gama/alfa-spektrometrická analýza, na kterou se běžně netestuje, pokud není konkrétní podezření na radioaktivní kontaminaci.'},
+    {q:'Widmarkova rovnice předpokládá kinetiku 0. řádu (konstantní rychlost eliminace). Co by se stalo s výpočtem doby do vystřízlivění, kdyby byla eliminace alkoholu ve skutečnosti kinetikou 1. řádu?',
+     a:'U kinetiky 1. řádu by rychlost eliminace klesala úměrně s klesající koncentrací (exponenciální pokles), takže by koncentrace nikdy formálně nedosáhla nuly — klesala by čím dál pomaleji. Místo pevného „času do nuly" by se používal poločas eliminace, nezávislý na počáteční koncentraci. Skutečnost, že alkohol při běžných koncentracích v krvi klesá lineárně (konstantní rychlostí), je právě důkazem nasycení enzymového systému alkoholdehydrogenázy.'},
+    {q:'Novorozenci mají neúplně vyvinutou hematoencefalickou bariéru i nezralé jaterní enzymy pro biotransformaci. Jak by se to mělo promítnout do stanovování bezpečných dávek léčiv nebo limitů expozice chemikáliím u dětí?',
+     a:'Nedostatečně vyvinutá HEB znamená vyšší riziko průniku lipofilních i některých hydrofilních látek do CNS, které by u dospělého byly bariérou zadrženy. Nezralé jaterní enzymy (např. nižší aktivita cytochromu P450 a konjugačních enzymů II. fáze) znamenají pomalejší biotransformaci a delší biologický poločas látky. Bezpečné dávky pro děti proto nelze jednoduše přepočítat lineárně podle tělesné hmotnosti dospělého — je nutné zohlednit vývojové rozdíly ve všech čtyřech fázích ADME.'}
+  ];
+  const wrap = document.getElementById('discussion-list');
+  qa.forEach((item,i)=>{
+    const div = document.createElement('div');
+    div.className='tl-item'; div.style.cssText='min-width:auto;width:100%;margin-bottom:10px;';
+    div.innerHTML = `<div class="tl-year">Otázka ${i+1}</div><div class="tl-title" style="font-size:20px;">${item.q}</div><div class="tl-detail"><strong>Řešení:</strong> ${item.a}</div>`;
+    div.onclick = ()=> div.classList.toggle('open');
+    wrap.appendChild(div);
+  });
+}
+
+/* ---- matching game ---- */
+function initMatching(){
+  const pairs = [
+    {left:'Kyselina acetylsalicylová při alkalizaci moči', right:'Zvýšené vylučování (ion trapping v moči)'},
+    {left:'Ethanol', right:'Kinetika eliminace 0. řádu'},
+    {left:'Perzistentní organické látky (POPs)', right:'Depot v tukové tkáni'},
+    {left:'Polonium-210', right:'Depot v kostní dřeni'},
+    {left:'Thalidomid', right:'Průnik placentární bariérou'},
+    {left:'Nitroglycerin (sublingválně)', right:'Obchází first-pass efekt v játrech'}
+  ];
+  const leftItems = pairs.map((p,i)=>({text:p.left, idx:i}));
+  const rightItems = pairs.map((p,i)=>({text:p.right, idx:i}));
+  for(let i=rightItems.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [rightItems[i],rightItems[j]]=[rightItems[j],rightItems[i]]; }
+
+  const leftEl = document.getElementById('match-left');
+  const rightEl = document.getElementById('match-right');
+  let selectedLeft = null;
+  let solved = 0;
+
+  leftItems.forEach(item=>{
+    const div = document.createElement('div');
+    div.className='match-item';
+    div.textContent = item.text;
+    div.dataset.idx = item.idx;
+    div.onclick = ()=>{
+      if(div.classList.contains('correct')) return;
+      leftEl.querySelectorAll('.match-item').forEach(x=>x.classList.remove('selected'));
+      div.classList.add('selected');
+      selectedLeft = div;
+    };
+    leftEl.appendChild(div);
+  });
+  rightItems.forEach(item=>{
+    const div = document.createElement('div');
+    div.className='match-item';
+    div.textContent = item.text;
+    div.dataset.idx = item.idx;
+    div.onclick = ()=>{
+      if(!selectedLeft || div.classList.contains('correct')) return;
+      const isMatch = selectedLeft.dataset.idx === div.dataset.idx;
+      if(isMatch){
+        selectedLeft.classList.remove('selected'); selectedLeft.classList.add('correct');
+        div.classList.add('correct');
+        solved++;
+        selectedLeft = null;
+        if(solved===pairs.length){
+          document.getElementById('match-result').textContent = 'Výborně — všechny páry sedí! Od ion trappingu přes depoty až po kinetiku nultého řádu jsme dnes probrali celý osud látky v těle.';
+        }
+      } else {
+        div.classList.add('wrong');
+        setTimeout(()=>div.classList.remove('wrong'), 500);
+      }
+    };
+    rightEl.appendChild(div);
+  });
+}
+
+render();
+</script>
+</body>
+</html>
