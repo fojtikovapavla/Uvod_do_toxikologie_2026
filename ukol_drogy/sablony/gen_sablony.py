@@ -204,9 +204,9 @@ section_gap(doc1)
 
 h1(doc1, '2. Toxikokinetika')
 bullet(doc1, 'Cesta vstupu typická pro rekreační/zneužívající užití (p.o., inhalace/kouření, intranazálně, injekčně…) a co to znamená pro rychlost nástupu účinku')
-bullet(doc1, 'Ionizace a pKa — jak ovlivňuje vstřebávání (aplikujte Henderson–Hasselbalchovu rovnici z přednášky 3)')
+bullet(doc1, 'Ionizace a pKa — jak ovlivňuje vstřebávání')
 bullet(doc1, 'Distribuce — lipofilita, vazba na plazmatické proteiny, průchod hematoencefalickou bariérou (klíčové u látek působících na CNS), případný depot')
-bullet(doc1, 'Biotransformace — které enzymy (CYP, jiné), vzniká aktivní/toxický metabolit? Jde o detoxikaci, nebo bioaktivaci? (přednáška 4)')
+bullet(doc1, 'Biotransformace — které enzymy (CYP, jiné), vzniká aktivní/toxický metabolit? Jde o detoxikaci, nebo bioaktivaci?')
 bullet(doc1, 'Eliminace — kinetika (řád), přibližný biologický poločas, význam pro dobu detekovatelnosti')
 section_gap(doc1)
 
@@ -214,14 +214,14 @@ doc1.add_page_break()
 
 h1(doc1, '3. Toxikodynamika')
 bullet(doc1, 'Molekulární cíl — receptor, iontový kanál, enzym, transportér')
-bullet(doc1, 'Typ interakce — agonista, antagonista, inhibitor zpětného vychytávání… (přednáška 2)')
+bullet(doc1, 'Typ interakce — agonista, antagonista, inhibitor zpětného vychytávání…')
 bullet(doc1, 'Mechanismus akutní toxicity a předávkování — co se děje na buněčné/orgánové úrovni')
 bullet(doc1, 'Tolerance a závislost — mechanismus (např. down-regulace receptorů), abstinenční příznaky')
 section_gap(doc1)
 
 h1(doc1, '4. Reálný rozměr')
 bullet(doc1, 'Konkrétní kazuistika nebo epidemiologická data (reálný případ otravy/úmrtí, pokud dohledatelný)')
-bullet(doc1, 'Významné lékové/drogové interakce (často přes sdílený CYP enzym — viz přednáška 4)')
+bullet(doc1, 'Významné lékové/drogové interakce (často přes sdílený CYP enzym)')
 bullet(doc1, 'Antidotum nebo léčba, pokud existuje')
 section_gap(doc1)
 
@@ -246,6 +246,7 @@ fill_line(doc2, 'Skupina č.', 8)
 fill_line(doc2, 'Moje číslo a látka', 40)
 spacer(doc2, 4)
 body(doc2, 'Postupně vysvětlete ostatním členům skupiny svou látku (bez internetu, jen z poznámek). Zatímco posloucháte spolužáky, vyplňte tabulku — pro každého jednoho z vašich čtyř spolužáků jeden řádek. Nezapomeňte položit alespoň jednu doplňující otázku ke každé látce.', italic=True, size=10, color=SOFT)
+body(doc2, 'Tento list po semináři odevzdejte (foto/sken) do své složky v Teams — hodnotí se individuálně.', bold=True, size=10)
 spacer(doc2, 6)
 
 table = doc2.add_table(rows=5, cols=4)
@@ -270,9 +271,6 @@ for row_idx in range(1, 5):
         for _ in range(2):
             cell.add_paragraph(' ')
 
-spacer(doc2, 14)
-body(doc2, 'Tento list po semináři odevzdejte (foto/sken) do své složky v Teams — hodnotí se individuálně.', bold=True, size=10)
-
 doc2.save('Pracovni_list_krok_B.docx')
 print('written Pracovni_list_krok_B.docx')
 
@@ -288,6 +286,7 @@ eyebrow(doc3, 'Úvod do toxikologie 2026 · Seminář 8. prosince')
 title(doc3, 'Skupinová syntéza — krok C')
 fill_line(doc3, 'Skupina č.', 8)
 fill_line(doc3, 'Členové (čísla)', 40)
+body(doc3, 'Tuto kartu po semináři odevzdejte do Teams (jedna za celou skupinu) — hodnotí se sdíleně pro všechny členy skupiny.', bold=True, size=10)
 spacer(doc3, 4)
 
 h2(doc3, 'Zvolte úhel syntézy (zaškrtněte jednu možnost)')
@@ -307,9 +306,6 @@ section_gap(doc3, 180)
 
 h2(doc3, 'Podklady použité ve skupině')
 section_gap(doc3, 120)
-
-spacer(doc3, 10)
-body(doc3, 'Tuto kartu po semináři odevzdejte do Teams (jedna za celou skupinu) — hodnotí se sdíleně pro všechny členy skupiny.', bold=True, size=10)
 
 doc3.save('Synteticka_karta_krok_C.docx')
 print('written Synteticka_karta_krok_C.docx')
