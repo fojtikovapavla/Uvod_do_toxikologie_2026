@@ -1,0 +1,1562 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chemické přeměny cizorodých látek — Přednáška 4</title>
+<style>
+  :root{
+    --paper:#F4F5EF;
+    --paper-deep:#ECEEE4;
+    --ink:#1E2019;
+    --ink-soft:#5A5D51;
+    --amber:#B9791E;
+    --amber-deep:#8F5D14;
+    --tox-green:#3E5C42;
+    --tox-green-deep:#2A3F2D;
+    --danger:#9C3B2E;
+    --blue:#3A5A72;
+    --blue-deep:#233C4E;
+    --line:#D6D6C6;
+    --card:#FFFFFE;
+    --serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', 'Book Antiqua', serif;
+    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --mono: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0; background:var(--paper); color:var(--ink); font-family:var(--sans);
+    overflow:hidden; font-size:18px;
+  }
+  ::selection{ background: var(--amber); color:#fff; }
+
+  #topbar{
+    position:fixed; top:0; left:0; right:0; height:54px;
+    display:flex; align-items:center; gap:16px; padding:0 20px; z-index:50;
+    background:linear-gradient(to bottom, rgba(244,245,239,0.97), rgba(244,245,239,0.85));
+    border-bottom:1px solid var(--line);
+  }
+  #topbar .brand{ font-family:var(--serif); font-size:16px; font-style:italic; color:var(--ink-soft); white-space:nowrap; }
+  #progress-track{ flex:1; height:3px; background:var(--line); border-radius:2px; overflow:hidden; }
+  #progress-fill{ height:100%; width:0%; background:var(--amber); transition:width .35s ease; }
+  #counter{ font-family:var(--mono); font-size:13px; color:var(--ink-soft); white-space:nowrap; }
+  #menu-btn{
+    font-family:var(--sans); font-size:14px; color:var(--ink); background:var(--card);
+    border:1px solid var(--line); border-radius:6px; padding:6px 12px; cursor:pointer;
+  }
+  #menu-btn:hover{ border-color:var(--amber); }
+
+  #deck{ position:relative; width:100%; height:100%; padding-top:54px; }
+  .slide{
+    position:absolute; inset:0; top:54px; display:flex; align-items:center; justify-content:center;
+    padding:36px 7vw 90px 7vw; opacity:0; visibility:hidden; transform:translateY(14px);
+    transition:opacity .4s ease, transform .4s ease; overflow-y:auto;
+  }
+  .slide.active{ opacity:1; visibility:visible; transform:translateY(0); }
+  .slide-inner{ width:100%; max-width:1000px; }
+  .eyebrow{ font-family:var(--mono); font-size:16px; letter-spacing:.02em; color:var(--amber-deep); margin:0 0 12px 0; }
+  h1.headline{ font-family:var(--serif); font-weight:400; font-size:clamp(30px,4.6vw,50px); line-height:1.1; margin:0 0 16px 0; }
+  h2.headline{ font-family:var(--serif); font-weight:400; font-size:clamp(24px,3.2vw,34px); line-height:1.18; margin:0 0 16px 0; }
+  p.lede{ font-size:19px; line-height:1.55; color:var(--ink-soft); max-width:700px; }
+  .body-text{ font-size:19px; line-height:1.6; color:var(--ink); max-width:760px; }
+  .body-text + .body-text{ margin-top:10px; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:10px; padding:20px 22px; }
+  .grid-2{ display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+  .grid-3{ display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+  .grid-4{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+  @media (max-width:800px){ .grid-2,.grid-3,.grid-4{ grid-template-columns:1fr; } }
+  .tag{ display:inline-block; font-family:var(--mono); font-size:12px; padding:3px 9px; border-radius:20px; border:1px solid var(--line); color:var(--ink-soft); margin-bottom:10px; }
+  .tag.new{ border-color:var(--danger); color:var(--danger); }
+  ul.plain{ margin:0; padding-left:22px; font-size:18px; }
+  ul.plain li{ margin-bottom:9px; line-height:1.5; }
+  blockquote.quote{ font-family:var(--serif); font-style:italic; font-size:26px; line-height:1.4; color:var(--tox-green-deep); border-left:3px solid var(--amber); padding-left:22px; margin:22px 0; }
+  blockquote.quote cite{ display:block; font-size:15px; font-style:normal; color:var(--ink-soft); margin-top:8px; }
+  #navbtns{ position:fixed; bottom:22px; right:28px; display:flex; gap:10px; z-index:50; }
+  .navbtn{ width:46px; height:46px; border-radius:50%; border:1px solid var(--line); background:var(--card); color:var(--ink); font-size:19px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .navbtn:hover{ border-color:var(--amber); color:var(--amber-deep); }
+  .navbtn:disabled{ opacity:.3; cursor:default; }
+  #overlay{ position:fixed; inset:0; background:rgba(30,32,25,.94); z-index:100; display:none; padding:56px 8vw; overflow-y:auto; }
+  #overlay.show{ display:block; }
+  #overlay h3{ font-family:var(--serif); color:#fff; font-weight:400; font-size:23px; margin-bottom:20px; }
+  #overlay-list{ list-style:none; margin:0; padding:0; columns:2; column-gap:40px; }
+  @media (max-width:800px){ #overlay-list{ columns:1; } }
+  #overlay-list li{ color:#EDEEE6; font-size:16px; padding:9px 0; border-bottom:1px solid rgba(255,255,255,.12); cursor:pointer; break-inside:avoid; }
+  #overlay-list li span{ font-family:var(--mono); color:var(--amber); margin-right:10px; font-size:13px; }
+  #overlay-list li:hover{ color:var(--amber); }
+  #overlay-close{ position:absolute; top:22px; right:30px; color:#fff; font-size:28px; background:none; border:none; cursor:pointer; }
+
+  .quiz-card{ background:var(--card); border:1px solid var(--line); border-radius:12px; padding:24px 26px; margin-top:10px; }
+  .quiz-q{ font-size:19px; font-weight:600; margin-bottom:16px; line-height:1.45; }
+  .quiz-opt{ display:block; width:100%; text-align:left; padding:13px 16px; margin-bottom:10px; border:1px solid var(--line); border-radius:8px; background:#fff; cursor:pointer; font-size:18px; font-family:var(--sans); color:var(--ink); }
+  .quiz-opt:hover{ border-color:var(--amber); }
+  .quiz-opt.correct{ border-color:var(--tox-green); background:#EAF1EA; color:var(--tox-green-deep); font-weight:600; }
+  .quiz-opt.wrong{ border-color:var(--danger); background:#F7EAE7; color:var(--danger); }
+  .quiz-opt[disabled]{ cursor:default; }
+  .quiz-feedback{ margin-top:14px; font-size:18px; line-height:1.55; color:var(--ink-soft); display:none; }
+  .quiz-feedback.show{ display:block; }
+
+  table.data-table{ width:100%; border-collapse:collapse; font-size:18px; margin-top:10px; }
+  table.data-table th{ text-align:left; font-family:var(--mono); font-size:16px; color:var(--ink-soft); padding:9px 10px; border-bottom:1px solid var(--ink); }
+  table.data-table td{ padding:10px 10px; border-bottom:1px solid var(--line); }
+  table.data-table tr.highlight td{ background:#FBF0DD; font-weight:600; }
+
+  .tl-item{ min-width:200px; background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px 16px; cursor:pointer; flex-shrink:0; }
+  .tl-item .tl-year{ font-family:var(--mono); font-size:18px; color:var(--amber-deep); }
+  .tl-item .tl-title{ font-family:var(--serif); font-size:20px; margin:4px 0 8px 0; }
+  .tl-item .tl-detail{ font-size:19px; color:var(--ink-soft); line-height:1.5; display:none; }
+  .tl-item.open .tl-detail{ display:block; }
+  .tl-item.open{ border-color:var(--amber); }
+
+  .footer-note{ margin-top:20px; font-size:18px; color:var(--ink-soft); font-family:var(--mono); line-height:1.5; }
+  .two-col-story{ display:grid; grid-template-columns:1.15fr .85fr; gap:34px; align-items:start; }
+  @media (max-width:820px){ .two-col-story{ grid-template-columns:1fr; } }
+  .polonium-box{ background:var(--blue-deep); color:#EAF0F4; border-radius:12px; padding:22px 24px; }
+  .polonium-box h3{ font-family:var(--serif); font-weight:400; font-size:21px; margin:0 0 10px 0; color:#fff; }
+  .polonium-box p{ font-size:18px; line-height:1.6; margin:0 0 10px 0; }
+  .polonium-box .stat{ font-family:var(--mono); font-size:17px; color:#9FC2D9; }
+  .aspirin-box{ background:var(--tox-green-deep); color:#EFEFE6; border-radius:12px; padding:20px 22px; margin-top:16px; }
+  .aspirin-box h4{ font-family:var(--serif); font-weight:400; font-size:19px; margin:0 0 8px 0; color:#fff; }
+  .aspirin-box p{ font-size:18px; line-height:1.6; margin:0; }
+
+  .sources{ font-size:14px; color:var(--ink-soft); line-height:1.7; }
+
+  .diagram-box{ background:#fff; border:1px solid var(--line); border-radius:10px; padding:14px; margin-top:12px; }
+  .scheme-img{ width:100%; max-width:720px; display:block; margin:0 auto; border:1px solid var(--line); border-radius:8px; background:#fff; cursor:zoom-in; }
+  .scheme-img.wide{ max-width:900px; }
+  .diagram-box svg{ cursor:zoom-in; }
+
+  #lightbox{ position:fixed; inset:0; background:rgba(15,16,12,.95); z-index:300; display:none; align-items:center; justify-content:center; padding:4vh 4vw; cursor:zoom-out; }
+  #lightbox.show{ display:flex; }
+  #lightbox-inner{ max-width:100%; max-height:100%; cursor:default; }
+  #lightbox-inner img{ display:block; max-width:92vw; max-height:92vh; border-radius:10px; }
+  #lightbox-inner svg{ display:block; width:92vw; height:auto; max-height:92vh; background:#fff; border-radius:10px; padding:28px; }
+  #lightbox-hint{ position:absolute; bottom:22px; left:50%; transform:translateX(-50%); color:#B9B9A8; font-family:var(--mono); font-size:13px; }
+
+  /* matching quiz */
+  .match-wrap{ display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-top:14px; }
+  @media (max-width:760px){ .match-wrap{ grid-template-columns:1fr; } }
+  .match-col-title{ font-family:var(--mono); font-size:13px; color:var(--ink-soft); margin-bottom:8px; }
+  .match-item{ background:var(--card); border:1px solid var(--line); border-radius:8px; padding:11px 14px; margin-bottom:8px; font-size:18px; cursor:pointer; }
+  .match-item.selected{ border-color:var(--amber); background:#FBF0DD; }
+  .match-item.correct{ border-color:var(--tox-green); background:#EAF1EA; }
+  .match-item.wrong{ border-color:var(--danger); background:#F7EAE7; }
+  .match-result{ margin-top:14px; font-size:18px; color:var(--ink-soft); min-height:24px; }
+
+  /* calculation reveal (native details/summary) */
+  details.calc{ background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px 18px; margin-top:12px; }
+  details.calc summary{ cursor:pointer; font-family:var(--sans); font-weight:600; color:var(--amber-deep); font-size:18px; outline:none; }
+  details.calc summary:hover{ color:var(--amber); }
+  details.calc[open] summary{ margin-bottom:10px; border-bottom:1px dashed var(--line); padding-bottom:8px; }
+  .calc-step{ font-family:var(--mono); font-size:19px; line-height:1.9; color:var(--ink); }
+  .calc-step .res{ color:var(--tox-green-deep); font-weight:700; }
+  .calc-note{ font-family:var(--sans); font-size:18px; line-height:1.5; color:var(--ink-soft); margin-top:8px; }
+  .chart-legend{ display:flex; gap:22px; flex-wrap:wrap; justify-content:center; margin-top:8px; font-size:16px; color:var(--ink-soft); }
+  .chart-legend span{ display:inline-flex; align-items:center; gap:7px; }
+  .chart-legend i{ width:16px; height:4px; border-radius:2px; display:inline-block; }
+
+  /* case-study cards for group work */
+  .expert-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:14px; }
+  @media (max-width:900px){ .expert-grid{ grid-template-columns:repeat(2,1fr); } }
+  @media (max-width:560px){ .expert-grid{ grid-template-columns:1fr; } }
+  .expert-card{ background:var(--card); border:1px solid var(--line); border-radius:8px; padding:12px 14px; cursor:pointer; }
+  .expert-card:hover{ border-color:var(--amber); }
+  .expert-card .grp{ font-family:var(--mono); font-size:11.5px; color:var(--amber-deep); }
+  .expert-card .name{ font-family:var(--serif); font-size:19px; margin:3px 0 0 0; }
+  .expert-detail{ display:none; margin-top:8px; font-size:17px; color:var(--ink-soft); line-height:1.55; }
+  .expert-card.open .expert-detail{ display:block; }
+  .expert-card.open{ border-color:var(--amber); grid-column: span 3; }
+  @media (max-width:900px){ .expert-card.open{ grid-column: span 2; } }
+  @media (max-width:560px){ .expert-card.open{ grid-column: span 1; } }
+
+  @media (prefers-reduced-motion: reduce){ .slide, .navbtn, #progress-fill{ transition:none !important; } }
+
+  /* ===== Methanol case study: shared styles ===== */
+
+.methanol-slide {
+  --methanol-danger: #bd5145;
+  --methanol-accent: #397c70;
+}
+
+.methanol-intro {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 18px;
+  align-items: center;
+  margin: 10px 0 20px;
+}
+
+.methanol-intro .body-text {
+  margin: 0;
+}
+
+.methanol-alert {
+  padding: 13px 16px;
+  border-left: 4px solid #d28a3d;
+  border-radius: 8px;
+  background: rgba(210, 138, 61, .11);
+}
+
+.methanol-kicker {
+  display: block;
+  margin-bottom: 6px;
+  font-size: .74em;
+  font-weight: 750;
+  letter-spacing: .065em;
+  text-transform: uppercase;
+  opacity: .8;
+}
+
+.methanol-alert strong {
+  display: block;
+  line-height: 1.35;
+}
+
+.methanol-section-title {
+  margin: 17px 0 10px;
+  font-size: 1.05em;
+}
+
+.methanol-timeline {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 12px 0 20px;
+}
+
+.methanol-phase {
+  padding: 14px 15px;
+  border: 1px solid var(--border-color, rgba(128,128,128,.3));
+  border-radius: 10px;
+}
+
+.methanol-step {
+  display: grid;
+  width: 27px;
+  height: 27px;
+  place-items: center;
+  margin-bottom: 9px;
+  border-radius: 50%;
+  background: rgba(128,128,128,.15);
+  font-size: .78em;
+  font-weight: 800;
+}
+
+.methanol-phase h3,
+.methanol-effect h3 {
+  margin: 0 0 7px;
+  font-size: .98em;
+}
+
+.methanol-phase p,
+.methanol-case p,
+.methanol-effect p {
+  margin: 0;
+  font-size: .86em;
+  line-height: 1.45;
+}
+
+.methanol-phase-danger {
+  border-color: rgba(189,81,69,.6);
+  background: rgba(189,81,69,.08);
+}
+
+.methanol-case {
+  display: grid;
+  grid-template-columns: .85fr 2fr;
+  gap: 18px;
+  align-items: start;
+  margin-top: 16px;
+  padding: 14px 16px;
+  border-radius: 9px;
+  background: rgba(128,128,128,.09);
+}
+
+.methanol-case h3 {
+  margin: 0;
+  font-size: 1.05em;
+}
+
+.methanol-question {
+  margin-top: 14px;
+  padding: 12px 15px;
+  border-left: 4px solid var(--methanol-accent);
+  border-radius: 0 8px 8px 0;
+  background: rgba(57,124,112,.08);
+}
+
+.methanol-question > strong {
+  display: block;
+  line-height: 1.4;
+}
+
+.methanol-question p {
+  margin: 6px 0 0;
+  font-size: .84em;
+  opacity: .8;
+}
+
+/* Metabolic pathway */
+
+.methanol-pathway {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1fr) auto
+    minmax(0, 1fr) auto
+    minmax(0, 1fr) auto
+    minmax(0, 1fr);
+  gap: 7px;
+  align-items: center;
+  margin: 14px 0 9px;
+}
+
+.methanol-compound {
+  display: flex;
+  min-width: 0;
+  min-height: 94px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 10px 6px;
+  border: 1px solid var(--border-color, rgba(128,128,128,.3));
+  border-radius: 9px;
+  text-align: center;
+  background: var(--card-bg, rgba(128,128,128,.04));
+}
+
+.methanol-compound strong {
+  font-size: .88em;
+  line-height: 1.25;
+}
+
+.methanol-compound span {
+  margin-top: 5px;
+  font-size: .88em;
+  font-weight: 650;
+}
+
+.methanol-compound small {
+  margin-top: 5px;
+  font-size: .7em;
+  line-height: 1.3;
+  opacity: .8;
+}
+
+.methanol-toxic {
+  border: 2px solid var(--methanol-danger);
+  background: rgba(189,81,69,.1);
+}
+
+.methanol-final {
+  border-style: dashed;
+}
+
+.methanol-arrow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.methanol-arrow b {
+  font-size: 1.4em;
+}
+
+.methanol-arrow span {
+  max-width: 76px;
+  font-size: .68em;
+  line-height: 1.25;
+  text-align: center;
+  opacity: .8;
+}
+
+.methanol-note {
+  margin: 7px 0 16px;
+  font-size: .76em;
+  line-height: 1.4;
+  opacity: .8;
+}
+
+/* Toxic effects */
+
+.methanol-effects {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin: 13px 0 17px;
+}
+
+.methanol-effect {
+  display: grid;
+  grid-template-columns: 30px 1fr;
+  gap: 10px;
+  align-items: start;
+}
+
+.methanol-effect-number {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(189,81,69,.12);
+  color: var(--methanol-danger);
+  font-size: .76em;
+  font-weight: 800;
+}
+
+.methanol-takeaway {
+  padding: 12px 15px;
+  border-left: 4px solid var(--methanol-accent);
+  border-radius: 0 8px 8px 0;
+  background: rgba(57,124,112,.08);
+  font-size: .9em;
+  line-height: 1.45;
+}
+
+/* Narrow screens */
+
+@media (max-width: 760px) {
+  .methanol-intro,
+  .methanol-case,
+  .methanol-effects {
+    grid-template-columns: 1fr;
+  }
+
+  .methanol-timeline {
+    grid-template-columns: 1fr;
+  }
+
+  .methanol-pathway {
+    grid-template-columns: 1fr;
+    gap: 5px;
+  }
+
+  .methanol-compound {
+    min-height: 70px;
+  }
+
+  .methanol-arrow {
+    flex-direction: row-reverse;
+    justify-content: center;
+  }
+
+  .methanol-arrow b {
+    transform: rotate(90deg);
+  }
+
+  .methanol-arrow span {
+    max-width: none;
+  }
+}
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <div class="brand">Chemické přeměny cizorodých látek · Přednáška 4</div>
+  <div id="progress-track"><div id="progress-fill"></div></div>
+  <div id="counter">1 / 1</div>
+  <button id="menu-btn" onclick="toggleOverlay(true)">Obsah</button>
+</div>
+
+<div id="deck"></div>
+
+<div id="navbtns">
+  <button class="navbtn" id="prevBtn" onclick="prevSlide()">←</button>
+  <button class="navbtn" id="nextBtn" onclick="nextSlide()">→</button>
+</div>
+
+<div id="lightbox" onclick="closeLightbox()">
+  <div id="lightbox-inner" onclick="event.stopPropagation()"></div>
+  <div id="lightbox-hint">klikněte mimo obrázek nebo stiskněte Esc pro zavření</div>
+</div>
+
+<div id="overlay">
+  <button id="overlay-close" onclick="toggleOverlay(false)">×</button>
+  <h3>Přeskočit na</h3>
+  <ul id="overlay-list"></ul>
+</div>
+
+<script>
+const slides = [];
+function slide(id, title, html){ slides.push({id, title, html}); }
+
+/* ================= 0. TITLE ================= */
+slide('title','Titulní strana', `
+  <div class="slide-inner">
+    <p class="eyebrow">Ing. Pavla Fojtíková, Ph.D. · Přírodovědecká fakulta JU</p>
+    <h1 class="headline">Chemické přeměny cizorodých látek v živém organismu</h1>
+    <p class="lede">Přednáška 4 — biotransformace (metabolismus): enzymové systémy I. a II. fáze, cytochrom P450, detoxikace versus bioaktivace a reálné případy od ethanolu po paracetamol.</p>
+    <p class="footer-note">Laboratoř analytické a environmentální chemie</p>
+  </div>
+`);
+
+/* ================= 1. OUTLINE ================= */
+slide('outline','Osnova přednášky 4', `
+  <div class="slide-inner">
+    <p class="eyebrow">Dnes</p>
+    <h2 class="headline">Osnova přednášky 4</h2>
+    <ul class="plain">
+      <li>Biotransformace — proč, kde a s jakým rizikem (detoxikace vs. bioaktivace)</li>
+      <li>I. fáze: enzymové systémy, cytochrom P450 a jeho katalytický cyklus</li>
+      <li>Alkoholdehydrogenasa a biotransformace ethanolu — vazba na kinetiku z přednášky 3</li>
+      <li>Skutečný případ: otrava methanolem a princip kompetitivní inhibice jako terapie</li>
+      <li>II. fáze: konjugační reakce (glukuronidace, sulfatace, GSH, acetylace)</li>
+      <li>Konkrétní příklady: vinylchlorid, akrylonitril, benzen, benzo[a]pyren, styren, paracetamol</li>
+      <li>Peroxidace lipidů jako vedlejší produkt biotransformace</li>
+      <li>Skupinová práce a diskusní otázky</li>
+    </ul>
+    <p class="body-text" style="margin-top:18px;">Navážeme na toxikodynamiku (přednáška 2 — elektrofily, nukleofily, radikály, GSH) a na toxikokinetiku (přednáška 3 — ADME, first-pass efekt, kinetika vylučování).</p>
+  </div>
+`);
+
+/* ================= 2. UVOD ================= */
+slide('biotransformace-uvod','Biotransformace — úvod', `
+  <div class="slide-inner">
+    <p class="eyebrow">Biotransformace (metabolismus)</p>
+    <h2 class="headline">Chemické přeměny cizorodých látek</h2>
+    <ul class="plain">
+      <li>xenobiotikum vstoupí do organismu → chemická přeměna (játra, ledviny, plíce, mozek, ale i dutina ústní, placenta, srdeční sval…)</li>
+      <li><strong>eliminační proces</strong> — usnadňuje exkreci (viz přednáška 3 — vylučování vyžaduje hydrofilitu)</li>
+      <li>obvykle <strong>detoxikační cesta</strong> — metabolity bývají méně toxické a polárnější než výchozí látka</li>
+      <li><strong>bioaktivace</strong> — biotransformace naopak vede ke vzniku toxičtější sloučeniny</li>
+      <li>hrozba kumulace lipofilních látek v tukové tkáni (nízká expozice ↔ toxická koncentrace v cílovém orgánu, srov. depot z přednášky 3)</li>
+      <li>jedno xenobiotikum — obvykle více různých biotransformačních přeměn současně</li>
+    </ul>
+  </div>
+`);
+
+/* ================= 3. FAZE BIOTRANSFORMACE ================= */
+slide('faze-biotransformace','Fáze biotransformace', `
+  <div class="slide-inner">
+    <p class="eyebrow">Přehled</p>
+    <h2 class="headline">I. a II. fáze biotransformace</h2>
+    <div class="diagram-box">
+      <svg viewBox="0 0 760 150" style="width:100%;max-width:780px;">
+        <rect x="10" y="45" width="170" height="55" rx="6" fill="#FBF0DD" stroke="#B9791E"/>
+        <text x="95" y="78" font-size="16" text-anchor="middle">xenobiotikum</text>
+        <line x1="180" y1="72" x2="206" y2="72" stroke="#5A5D51" stroke-width="2" marker-end="url(#a1)"/>
+        <rect x="209" y="35" width="205" height="75" rx="6" fill="#F7EAE7" stroke="#9C3B2E"/>
+        <text x="311" y="58" font-size="17" text-anchor="middle" font-weight="600">I. fáze</text>
+        <text x="311" y="78" font-size="15" text-anchor="middle">oxidace, redukce,</text>
+        <text x="311" y="96" font-size="15" text-anchor="middle">hydrolýza</text>
+        <line x1="414" y1="72" x2="440" y2="72" stroke="#5A5D51" stroke-width="2" marker-end="url(#a1)"/>
+        <rect x="443" y="35" width="205" height="75" rx="6" fill="#EAF1EA" stroke="#3E5C42"/>
+        <text x="545" y="58" font-size="17" text-anchor="middle" font-weight="600">II. fáze</text>
+        <text x="545" y="78" font-size="15" text-anchor="middle">konjugace —</text>
+        <text x="545" y="96" font-size="15" text-anchor="middle">polární zbytek</text>
+        <line x1="648" y1="72" x2="674" y2="72" stroke="#5A5D51" stroke-width="2" marker-end="url(#a1)"/>
+        <text x="716" y="77" font-size="16" text-anchor="middle">vyloučení</text>
+        <defs><marker id="a1" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#5A5D51"/></marker></defs>
+      </svg>
+    </div>
+    <div class="grid-2" style="margin-top:14px;">
+      <div class="card">
+        <p class="body-text" style="margin:0;"><strong>I. fáze — transformace</strong><br>v molekule vzniká volná polární funkční skupina (–OH, –SH, –NH₂, –COOH) → pokles lipofility, změna účinku i toxicity. Vzniklé metabolity vstupují do další reakce I. fáze, nebo přímo do konjugace.</p>
+      </div>
+      <div class="card">
+        <p class="body-text" style="margin:0;"><strong>II. fáze — konjugace</strong><br>prostřednictvím funkční skupiny se připojí zbytek jiné molekuly, vzniká polární konjugát → pokles lipofility, změna rozpustnosti (glukuronidace, sulfatace, acetylace, slučování s GSH).</p>
+      </div>
+    </div>
+  </div>
+`);
+
+/* ================= 4. FAZE 1 ENZYMY ================= */
+slide('faze-1-enzymy','I. fáze — enzymové systémy', `
+  <div class="slide-inner">
+    <p class="eyebrow">I. fáze biotransformace</p>
+    <h2 class="headline">Jaké enzymy I. fázi katalyzují?</h2>
+    <ul class="plain">
+      <li>vznik polárnějších a <strong>reaktivnějších</strong> sloučenin — zavedení nebo odhalení funkční skupiny</li>
+      <li>četností převládají <strong>oxidační děje</strong></li>
+      <li>nejdůležitější enzymy — <strong>cytochromy P450</strong> (zhruba ¾ biotransformačních dějů)</li>
+      <li>další oxidoreduktázy: prostaglandin H-synthasa (PHS/COX), flavinová monooxygenasa (FMO), alkoholdehydrogenasa (ADH), aldehyddehydrogenasa (ALDH), NAD(P)H:chinon-oxidoreduktasa (NQO)</li>
+      <li>hydrolýza — hydrolasy (esterasy, peptidasy)</li>
+    </ul>
+  </div>
+`);
+
+/* ================= 5. CYP450 UVOD ================= */
+slide('cyp450-uvod','Cytochrom P450', `
+  <div class="slide-inner">
+    <p class="eyebrow">I. fáze — klíčový enzym</p>
+    <h2 class="headline">Cytochrom P450 — „nejdůležitější" biotransformační enzym</h2>
+    <div class="grid-2">
+      <ul class="plain">
+        <li>výskyt — játra, GIT, ale prakticky v každé tkáni</li>
+        <li>ve struktuře hem — planární útvar s centrálním atomem Fe</li>
+        <li>řada forem: „rodiny" (CYP3), „podrodiny" (CYP3A), konkrétní enzym (CYP3A4 — klíčový pro first-pass metabolismus, viz přednáška 3, grapefruitová šťáva)</li>
+        <li>katalyzuje především oxidaci xenobiotik; oxidační činidlo kyslík, redukční činidlo kofaktor NADPH</li>
+      </ul>
+      <div class="card">
+        <p class="body-text" style="margin:0;font-family:var(--mono);font-size:17px;">RH + O₂ + NADPH + H⁺ →<br>ROH + NADP⁺ + H₂O</p>
+        <p class="calc-note" style="margin-top:10px;">Substrát RH se oxiduje na hydroxylovaný produkt ROH za spotřeby jedné molekuly kyslíku a jednoho redukčního ekvivalentu NADPH.</p>
+      </div>
+    </div>
+  </div>
+`);
+
+/* ================= 6. CYP450 CYKLUS ================= */
+slide('cyp450-cyklus','Katalytický cyklus cytochromu P450', `
+  <div class="slide-inner">
+    <p class="eyebrow">I. fáze — mechanismus</p>
+    <h2 class="headline">Katalytický cyklus cytochromu P450</h2>
+    <div class="grid-2">
+      <div>
+        <ul class="plain" style="font-size:16px;">
+          <li><strong>1.</strong> substrát RH se naváže na aktivní místo s Fe⁺ᴵᴵᴵ</li>
+          <li><strong>2.</strong> redukce elektronem z NADPH<br>&nbsp;→ komplex s Fe⁺ᴵᴵ</li>
+          <li><strong>3.</strong> navázání O₂ na hemové železo<br>&nbsp;→ hemoperoxidový komplex Fe⁺ᴵⱽ–O⁻ᴵ–O⁻ᴵ</li>
+          <li><strong>4.</strong> redukce dalším e⁻ z NADPH a protonizace<br>&nbsp;→ hemhydroperoxidový komplex</li>
+          <li><strong>5.</strong> heterolytické štěpení peroxidické vazby<br>&nbsp;→ formálně pětimocné železo Fe⁺ⱽ–O⁻ᴵᴵ</li>
+          <li><strong>6.</strong> oxidace substrátu RH, redukce železa zpět na Fe⁺ᴵᴵᴵ</li>
+          <li><strong>7.</strong> uvolnění produktu ROH a obnova volného enzymu</li>
+        </ul>
+      </div>
+      <img src="biotransformace/web/cytochrom_cyklus.jpg" alt="Katalytický cyklus cytochromu P450" class="scheme-img">
+    </div>
+  </div>
+`);
+
+/* ================= 7. KVIZ CYKLUS PORADI ================= */
+slide('kviz-cyklus-poradi','Kontrolní úkol: seřaďte cyklus', `
+  <div class="slide-inner">
+    <p class="eyebrow">Kontrolní zastávka · úkol</p>
+    <h2 class="headline">Spárujte krok cyklu s jeho pořadím</h2>
+    <p class="body-text">Klikněte na číslo kroku vlevo a poté na odpovídající děj vpravo.</p>
+    <div class="match-wrap">
+      <div>
+        <div class="match-col-title">POŘADÍ</div>
+        <div id="match-left"></div>
+      </div>
+      <div>
+        <div class="match-col-title">DĚJ V CYKLU</div>
+        <div id="match-right"></div>
+      </div>
+    </div>
+    <div class="match-result" id="match-result"></div>
+  </div>
+`);
+
+/* ================= 8. VEDLEJSI REAKCE ================= */
+slide('cyklus-vedlejsi-reakce','Vedlejší reakce cyklu', `
+  <div class="slide-inner">
+    <p class="eyebrow">I. fáze — toxikologicky významné vedlejší reakce</p>
+    <h2 class="headline">Kde se v cyklu P450 berou volné radikály?</h2>
+    <p class="body-text">Katalytický cyklus  — v jednotlivých krocích vznikají reaktivní meziprodukty, než dojde k úplné čtyřelektronové redukci kyslíku:</p>
+    <div class="grid-3" style="margin-top:12px;">
+      <div class="card"><p class="body-text" style="margin:0;"><strong>RH⁻•</strong><br>anion-radikál substrátu</p></div>
+      <div class="card"><p class="body-text" style="margin:0;"><strong>O₂⁻•</strong><br>superoxidový anion-radikál</p></div>
+      <div class="card"><p class="body-text" style="margin:0;"><strong>H₂O₂</strong><br>peroxid vodíku</p></div>
+    </div>
+    <blockquote class="quote" style="margin-top:18px;font-size:20px;">Toto jsou přesně ty reaktivní částice s nepárovým elektronem, o kterých jsme mluvili u radikálových reakcí v přednášce 2 — biotransformace je jedním z jejich hlavních vnitřních zdrojů.</blockquote>
+  </div>
+`);
+
+/* ================= 9. PREHLED TYPU REAKCI ================= */
+slide('prehled-typu-reakci','Typy reakcí katalyzovaných P450', `
+  <div class="slide-inner">
+    <p class="eyebrow">I. fáze — přehled</p>
+    <h2 class="headline">Přehled typů reakcí cytochromu P450</h2>
+    <table class="data-table">
+      <tr><th>Typ reakce</th><th>Schéma</th><th>Příklad</th></tr>
+      <tr><td>alifatická hydroxylace</td><td>RH → R-OH</td><td>hexan → 1-/2-hexanol</td></tr>
+      <tr><td>aromatická hydroxylace</td><td>ArH → ArOH</td><td>benzen → fenol</td></tr>
+      <tr><td>dehydrogenace</td><td>-CH₂CH₂- → -CH=CH-</td><td>ethylkarbamát → ethenylkarbamát</td></tr>
+      <tr><td>oxidace alkenů</td><td>alken → epoxid</td><td>ethen → ethylenoxid</td></tr>
+      <tr><td>oxidace na heteroatomu</td><td>R₃N → R₃N⁺-O⁻</td><td>anilin → fenylhydroxylamin</td></tr>
+      <tr><td>dealkylace heteroatomu</td><td>ArNHCH₂R → ArNH₂ + RCHO</td><td>dimethylformamid → methylformamid</td></tr>
+      <tr><td>redukce</td><td>R-Cl → R• + Cl⁻</td><td>CCl₄ → •CCl₃ + Cl⁻</td></tr>
+      <tr><td>oxidativní dehalogenace</td><td>R-X → R=O + HX</td><td>CHCl₃ → COCl₂ + HCl</td></tr>
+    </table>
+    <p class="footer-note">Všimněte si: redukce CCl₄ na radikál •CCl₃ je výchozí krok pro peroxidaci lipidů (viz dále).</p>
+  </div>
+`);
+
+/* ================= 10. ADH ETHANOL ================= */
+slide('adh-ethanol','Alkoholdehydrogenasa', `
+  <div class="slide-inner">
+    <p class="eyebrow">I. fáze — konkrétní enzym</p>
+    <h2 class="headline">Alkoholdehydrogenasa (ADH) a aldehyddehydrogenasa (ALDH)</h2>
+    <div class="grid-2">
+      <div class="card">
+        <p class="body-text" style="margin:0;"><strong>ADH</strong> — cytosolický protein; aktivní místo obsahuje Zn²⁺ (váže substrát-alkohol) a NAD⁺ (akceptor elektronů, vlastní oxidační činidlo). Katalyzuje oxidaci alkoholů, ale i redukci aldehydů/ketonů zpět na alkoholy.</p>
+      </div>
+      <div class="card">
+        <p class="body-text" style="margin:0;"><strong>ALDH</strong> — oxiduje aldehydické skupiny na karboxylové kyseliny (v mitochondriích).</p>
+      </div>
+    </div>
+    <div class="card" style="margin-top:14px;border-color:var(--danger);">
+      <p class="body-text" style="margin:0;"><strong>Metabolická aktivace:</strong> ethanol → acetaldehyd, methanol → formaldehyd, ethylenglykol → glyoxal. Ve všech třech případech je <strong>metabolit toxičtější</strong> než mateřská látka — klíčové pro pochopení otravy methanolem.</p>
+    </div>
+    <p class="footer-note">Inhibitor ADH — 4-methylpyrazol (fomepizol), kompetitivní inhibice; antidotum při otravě methanolem a ethylenglykolem (viz dále).</p>
+  </div>
+`);
+
+/* ================= 11. SCHEMA ETHANOL ================= */
+slide('schema-ethanol','Biotransformace ethanolu', `
+  <div class="slide-inner">
+    <p class="eyebrow">I. fáze — tři cesty k acetaldehydu</p>
+    <h2 class="headline">Biotransformace ethanolu — tři enzymové cesty</h2>
+    <div class="diagram-box">
+      <svg viewBox="0 0 720 300" style="width:100%;max-width:740px;">
+        <rect x="275" y="12" width="170" height="46" rx="6" fill="#FBF0DD" stroke="#B9791E"/>
+        <text x="360" y="40" font-size="17" text-anchor="middle">Ethanol</text>
+
+        <path d="M 305 60 L 90 95 L 310 140" fill="none" stroke="#5A5D51" stroke-width="2" marker-end="url(#a2)"/>
+        <text x="15" y="118" font-size="15" fill="#5A5D51">peroxisomy</text>
+        <text x="15" y="136" font-size="15" font-weight="bold">kataláza</text>
+
+        <line x1="360" y1="60" x2="360" y2="140" stroke="#5A5D51" stroke-width="2" marker-end="url(#a2)"/>
+        <text x="378" y="100" font-size="15">cytosol</text>
+        <text x="378" y="120" font-size="15" font-weight="bold">ADH</text>
+
+        <path d="M 415 60 L 630 95 L 410 140" fill="none" stroke="#5A5D51" stroke-width="2" marker-end="url(#a2)"/>
+        <text x="640" y="118" font-size="15" fill="#5A5D51">mikrosomy</text>
+        <text x="640" y="136" font-size="15" font-weight="bold">CYP2E1</text>
+
+        <rect x="275" y="140" width="170" height="46" rx="6" fill="#F7EAE7" stroke="#9C3B2E"/>
+        <text x="360" y="168" font-size="17" text-anchor="middle">Acetaldehyd</text>
+
+        <line x1="360" y1="186" x2="360" y2="238" stroke="#5A5D51" stroke-width="2" marker-end="url(#a2)"/>
+        <text x="378" y="206" font-size="15">mitochondrie</text>
+        <text x="378" y="226" font-size="15" font-weight="bold">ALDH</text>
+
+        <rect x="265" y="242" width="190" height="46" rx="6" fill="#EAF1EA" stroke="#3E5C42"/>
+        <text x="360" y="270" font-size="17" text-anchor="middle">Kyselina octová</text>
+
+        <defs><marker id="a2" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#5A5D51"/></marker></defs>
+      </svg>
+    </div>
+    <p class="footer-note">Tři nezávislé enzymové cesty (kataláza, ADH, CYP2E1) vedou ke stejnému meziproduktu — acetaldehydu. V přednášce 3 jsme odvodili, že celková eliminace ethanolu je kinetikou<br><strong>0. řádu</strong> (enzymový systém je nasycen) — Widmarkova rovnice odtud přímo vychází.</p>
+  </div>
+`);
+/*
+POZNÁMKA PRO PŘEDNÁŠEJÍCÍHO (není vidět na slidu, pouze ve zdrojovém kódu) — slide 'schema-ethanol':
+
+Proč je metabolismus ethanolu kinetikou 0. řádu:
+- ADH má vůči ethanolu relativně nízkou Km (vysokou afinitu) — už při nízkých koncentracích v krvi
+  (řádově desetiny promile) je enzym blízko svého Vmax, tedy prakticky nasycen.
+- Jakmile je enzym nasycen, rychlost reakce dál nezávisí na koncentraci substrátu (ethanolu) — je
+  konstantní, daná maximální kapacitou enzymu (Vmax). To je přesně definice kinetiky nultého řádu:
+  dc/dt = −k (konstanta), na rozdíl od kinetiky 1. řádu dc/dt = −k·c, kde rychlost klesá s klesající
+  koncentrací.
+- Hlavní podíl na odbourání (cca 90 %) má ADH; CYP2E1 je navíc INDUKOVATELNÝ enzym — jeho kapacita
+  roste při chronické expozici (typicky u alkoholiků), což částečně vysvětluje vyšší toleranci
+  a rychlejší eliminaci u chronických pijáků (více "nasycitelné kapacity" v systému). Kataláza
+  přispívá jen okrajově za normálních okolností.
+- Důsledek pro praxi: koncentrace ethanolu v krvi klesá LINEÁRNĚ s časem (konstantní úbytek, typicky
+  ~0,15 ‰/hod u průměrného člověka), ne exponenciálně jako typické léčivo s kinetikou 1. řádu.
+
+Vztah k Widmarkově rovnici (přednáška 3):
+- Widmarkova rovnice C(t) = C0 − β·t přímo předpokládá lineární (nultého řádu) pokles koncentrace —
+  proto v ní figuruje konstanta β (rychlost eliminace v ‰/hod) odečítaná LINEÁRNĚ s časem t, a ne
+  exponenciální člen e^(−k·t), jaký bychom použili pro kinetiku 1. řádu (srov. s obecným vzorcem
+  kinetiky 1. řádu probíraným tamtéž).
+- β je tedy ve Widmarkově rovnici prakticky totéž co Vmax/distribuční objem — maximální rychlost,
+  jakou tělo dokáže ethanol odbourávat, bez ohledu na aktuální hladinu v krvi.
+- Pedagogický háček: ethanol je klasický učebnicový příklad nultého řádu právě proto, že běžné pitné
+  dávky už enzym nasytí — u drtivé většiny ostatních xenobiotik (a i u ethanolu při velmi nízkých,
+  stopových koncentracích) se naopak typicky uplatňuje kinetika 1. řádu.
+
+Časté nepochopení u studentů: pletou si "nultý řád" s "nulovou rychlostí" nebo s "žádným
+metabolismem" — zdůraznit, že nultý řád znamená konstantní RYCHLOST eliminace (ne nulovou,
+ani konstantní koncentraci).
+*/
+
+/* ================= 12. PRIBEH METHANOL ================= */
+slide('pribeh-methanol-1','Příběh: otrava methanolem', `
+  <div class="slide-inner methanol-slide">
+    <p class="eyebrow">Případová studie · klinický obraz</p>
+    <h2 class="headline">Methanol: když se otrava projeví se zpožděním</h2>
+
+    <div class="methanol-intro">
+      <p class="body-text">
+        Po požití methanolu mohou být počáteční příznaky nenápadné
+        a podobné intoxikaci ethanolem. Závažné projevy se však mohou
+        rozvinout až po několika hodinách.
+      </p>
+      <div class="methanol-alert">
+        <span class="methanol-kicker">Zásadní princip</span>
+        <strong>Málo příznaků na začátku neznamená malé riziko.</strong>
+      </div>
+    </div>
+
+    <h3 class="methanol-section-title">Jak se otrava vyvíjí?</h3>
+
+    <div class="methanol-timeline">
+      <div class="methanol-phase">
+        <span class="methanol-step">01</span>
+        <h3>Po požití</h3>
+        <p>
+          Nevolnost, bolest hlavy, závratě nebo útlum CNS.
+          Příznaky mohou být mírné a nespecifické.
+        </p>
+      </div>
+
+      <div class="methanol-phase">
+        <span class="methanol-step">02</span>
+        <h3>Latentní období</h3>
+        <p>
+          Metabolity se postupně tvoří. Závažné projevy mohou
+          nastoupit až po 6–24 hodinách, někdy i později.
+        </p>
+      </div>
+
+      <div class="methanol-phase methanol-phase-danger">
+        <span class="methanol-step">03</span>
+        <h3>Těžká otrava</h3>
+        <p>
+          Poruchy vidění až slepota, metabolická acidóza,
+          poruchy vědomí, křeče, kóma a případně smrt.
+        </p>
+      </div>
+    </div>
+
+    <div class="methanol-case">
+      <div class="methanol-case-heading">
+        <span class="methanol-kicker">Česká republika · 2012</span>
+        <h3>Methanolová aféra</h3>
+      </div>
+      <p>
+        Hromadné otravy po požití lihovin kontaminovaných methanolem
+        vedly k desítkám úmrtí a případům trvalého poškození zraku.
+        Případ ukázal, že závažnost otravy nelze spolehlivě odhadnout
+        podle počátečních příznaků.
+      </p>
+    </div>
+
+    <div class="methanol-question">
+      <span class="methanol-kicker">Otázka pro studenty</span>
+      <strong>Proč se stav pacienta může zhoršit, i když už od požití uplynulo několik hodin?</strong>
+      <p>
+        Klíč k odpovědi: methanol se v organismu přeměňuje
+        na toxické metabolity.
+      </p>
+    </div>
+  </div>
+`);
+
+/* ================= 12_A. PRIBEH METHANOL_2 ================= */
+slide('pribeh-methanol-2','Methanol: mechanismus toxicity', `
+  <div class="slide-inner methanol-slide">
+    <p class="eyebrow">Případová studie · biotransformace</p>
+    <h2 class="headline">Proč je methanol toxický?</h2>
+
+    <p class="body-text">
+      Rozhodující část závažné otravy souvisí s přeměnou methanolu
+      na formiát, který narušuje buněčné dýchání a přispívá
+      k rozvoji metabolické acidózy.
+    </p>
+
+    <h3 class="methanol-section-title">Metabolická dráha</h3>
+
+    <div class="methanol-pathway">
+      <div class="methanol-compound">
+        <strong>Methanol</strong>
+        <span>CH₃OH</span>
+        <small>Výchozí látka</small>
+      </div>
+
+      <div class="methanol-arrow">
+        <b>→</b>
+        <span>ADH</span>
+      </div>
+
+      <div class="methanol-compound">
+        <strong>Formaldehyd</strong>
+        <span>HCHO</span>
+        <small>Reaktivní meziprodukt</small>
+      </div>
+
+      <div class="methanol-arrow">
+        <b>→</b>
+        <span>ALDH</span>
+      </div>
+
+      <div class="methanol-compound methanol-toxic">
+        <strong>Formiát</strong>
+        <span>HCOO⁻</span>
+        <small>Hlavní toxický metabolit</small>
+      </div>
+
+      <div class="methanol-arrow">
+        <b>→</b>
+        <span>Folátová dráha</span>
+      </div>
+
+      <div class="methanol-compound methanol-final">
+        <strong>CO₂</strong>
+        <small>Další metabolická přeměna</small>
+      </div>
+    </div>
+
+    <p class="methanol-note">
+      <strong>ADH</strong> – alkoholdehydrogenasa;
+      <strong>ALDH</strong> – aldehyddehydrogenasa.
+      Schéma zobrazuje hlavní metabolickou dráhu zjednodušeně.
+    </p>
+
+    <h3 class="methanol-section-title">Jak formiát poškozuje organismus?</h3>
+
+    <div class="methanol-effects">
+      <div class="methanol-effect">
+        <span class="methanol-effect-number">01</span>
+        <div>
+          <h3>Metabolická acidóza</h3>
+          <p>
+            Hromadění formiátu přispívá k poklesu pH krve
+            a narušení buněčných funkcí.
+          </p>
+        </div>
+      </div>
+
+      <div class="methanol-effect">
+        <span class="methanol-effect-number">02</span>
+        <div>
+          <h3>Poškození zraku a CNS</h3>
+          <p>
+            Formiát inhibuje mitochondriální cytochrom-c oxidázu,
+            narušuje buněčné dýchání a může poškodit zrakový nerv
+            i další nervové struktury.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="methanol-takeaway">
+      <strong>Hlavní sdělení:</strong>
+      Toxicita látky může zásadně záviset na tom, na jaké metabolity
+      se v organismu přemění a jak rychle jsou tyto metabolity
+      dále odbourávány.
+    </div>
+  </div>
+`);
+
+/* ================= 13. METHANOL VYPOCET ================= */
+slide('methanol-vypocet-davky','Methanol — reálné prahové hodnoty', `
+  <div class="slide-inner">
+    <p class="eyebrow">Toxikologické informační středisko (TIS) — odborné doporučení</p>
+    <h2 class="headline">Dávky a koncentrace rozhodující o léčbě</h2>
+    <table class="data-table">
+      <tr><th>Hladina methanolu v krvi</th><th>Klinický význam</th></tr>
+      <tr><td>&lt; 75 mg/l</td><td>pod mezí kvantifikace</td></tr>
+      <tr><td>100 mg/l</td><td>možné první oční příznaky</td></tr>
+      <tr class="highlight"><td>200 mg/l</td><td>první CNS příznaky — hranice pro zahájení antidota</td></tr>
+      <tr><td>400 mg/l</td><td>těžká až velmi těžká otrava</td></tr>
+      <tr><td>1000–2500 mg/l</td><td>velmi těžká až smrtelná otrava</td></tr>
+    </table>
+    <div class="grid-2" style="margin-top:14px;">
+      <div class="card"><p class="body-text" style="margin:0;"><strong>Minimální toxická dávka</strong> čistého methanolu ≈ 0,1&nbsp;ml/kg (orientačně 10&nbsp;ml pro dospělého) — ale popsáno i oslepnutí po 10&nbsp;ml.</p></div>
+      <div class="card"><p class="body-text" style="margin:0;"><strong>Průměrná smrtelná dávka</strong> ≈ 1 ml/kg (30–100(event200)&nbsp;ml), při agresivní terapii přežito i 500–600&nbsp;ml 40% methanolu.</p></div>
+    </div>
+    <p class="footer-note">POZOR — v pozdní fázi otravy koncentrace methanolu v krvi klesá, protože je již zmetabolizován na kyselinu mravenčí; nízká hladina methanolu proto otravu nevylučuje. Závažnost lépe odráží stupeň acidózy.</p>
+  </div>
+`);
+
+/* ================= 14. KOMPETITIVNI INHIBICE ================= */
+slide('kompetitivni-inhibice-adh','Etanol jako antidotum', `
+  <div class="slide-inner">
+    <p class="eyebrow">Terapie — aplikace přednášky 2</p>
+    <h2 class="headline">Proč je ethanol antidotem otravy methanolem?</h2>
+    <p class="body-text">V přednášce 2 jsme probírali <strong>kompetitivní inhibici</strong> na příkladu lithia soutěžícího s Mg²⁺. Zde je další reálný příklad: ethanol má k alkoholdehydrogenase mnohem vyšší afinitu než methanol, a proto s ním <strong>soutěží o stejné aktivní místo</strong> enzymu.</p>
+    <div class="card" style="margin-top:12px;">
+      <p class="body-text" style="margin:0;">Podání ethanolu (nebo fomepizolu) zablokuje přeměnu methanolu na formaldehyd a kyselinu mravenčí — methanol se pak z těla vyloučí z větší části nezměněný (močí, plícemi) nebo pomalu hemodialýzou, aniž by vznikly toxické metabolity.</p>
+    </div>
+    <details class="calc" open>
+      <summary>Reálné dávkování ethanolu (TIS, i.v. podání)</summary>
+      <div class="calc-step">
+úvodní bolus: 800 mg/kg (≈ 8 ml/kg 10% ethanolu) za 20–60 min<br>
+udržovací dávka: 80–150 mg/kg/hod<br>
+<span class="res">cílová hladina ethanolu v krvi: 1–1,5 ‰</span> (u dospělých až 2 ‰)
+      </div>
+      <p class="calc-note">Všimněte si jednotky ‰ (promile) — stejná veličina, kterou jsme počítali Widmarkovou rovnicí v přednášce 3. Udržovaná hladina 1–1,5 ‰ odpovídá běžné opilosti, ale právě ta zde funguje jako lék.</p>
+    </details>
+  </div>
+`);
+
+/* ================= 15. FOLINOVA HD ================= */
+slide('folinova-hd','Kyselina folinová a hemodialýza', `
+  <div class="slide-inner">
+    <p class="eyebrow">Terapie — doplňkové postupy</p>
+    <h2 class="headline">Jak urychlit odstranění kyseliny mravenčí</h2>
+    <div class="grid-2">
+      <div class="card">
+        <p class="body-text" style="margin:0;"><strong>Kyselina folinová (leukovorin)</strong> je kofaktor enzymu, který oxiduje kyselinu mravenčí na CO₂ a H₂O. Foláty tak zvyšují clearance mravenčanů (pojem clearance z přednášky 3) — podává se všem léčeným antidotem i.v. každé 4 hodiny.</p>
+      </div>
+      <div class="card">
+        <p class="body-text" style="margin:0;"><strong>Hemodialýza</strong> přímo odstraňuje methanol i kyselinu mravenčí z krve a koriguje acidózu — indikována při hladině methanolu nad 500 mg/l, těžké acidóze nebo očních/CNS příznacích.</p>
+      </div>
+    </div>
+    <blockquote class="quote" style="margin-top:16px;font-size:20px;">Buď zpomalíme vznik jedovatého metabolitu (kompetitivní inhibice ADH), nebo urychlíme jeho odbourání (folát) a vylučování (dialýza) — tři různé zásahy do téhož toxikokinetického řetězce.</blockquote>
+  </div>
+`);
+
+/* ================= 16. KVIZ METHANOL ================= */
+slide('kviz-methanol','Kontrolní kvíz: methanol', `
+  <div class="slide-inner">
+    <p class="eyebrow">Kontrolní zastávka · kvíz</p>
+    <h2 class="headline">Pravda, nebo nepravda?</h2>
+    <div class="quiz-card" id="qm1">
+      <div class="quiz-q">Trvalé poškození zraku při otravě methanolem je způsobeno RYCHLOU přeměnou kyseliny mravenčí na CO₂ a H₂O.</div>
+      <button class="quiz-opt" data-correct="false">Pravda</button>
+      <button class="quiz-opt" data-correct="true">Nepravda — přeměna je naopak velmi POMALÁ, proto se kyselina mravenčí kumuluje v sítnici a zrakovém nervu</button>
+      <div class="quiz-feedback" id="qm1-fb"></div>
+    </div>
+    <div class="quiz-card" id="qm2" style="margin-top:16px;">
+      <div class="quiz-q">Ethanol se používá jako antidotum, protože kinetika jeho metabolismu je výrazně POMALEJŠÍ než kinetika biotransformačních reakcí methanolu.</div>
+      <button class="quiz-opt" data-correct="false">Pravda</button>
+      <button class="quiz-opt" data-correct="true">Nepravda — ethanol se stejným enzymem metabolizuje naopak RYCHLEJI (má vyšší afinitu), a proto methanol z aktivního místa kompetitivně vytěsní</button>
+      <div class="quiz-feedback" id="qm2-fb"></div>
+    </div>
+    <div class="quiz-card" id="qm3" style="margin-top:16px;">
+      <div class="quiz-q">Přeměna kyseliny mravenčí na CO₂ a H₂O je katalyzována alkoholdehydrogenasou a jedná se o konjugační (II. fázi) reakci.</div>
+      <button class="quiz-opt" data-correct="false">Pravda</button>
+      <button class="quiz-opt" data-correct="true">Nepravda — jde o oxidaci (I. fáze), katalyzovanou jiným enzymovým systémem závislým na kyselině listové, nikoli o konjugaci</button>
+      <div class="quiz-feedback" id="qm3-fb"></div>
+    </div>
+  </div>
+`);
+
+/* ================= 17. FAZE 2 KONJUGACE OBECNE ================= */
+slide('faze-2-obecne','II. fáze — obecné principy', `
+  <div class="slide-inner">
+    <p class="eyebrow">II. fáze biotransformace</p>
+    <h2 class="headline">Konjugace — obecné vlastnosti</h2>
+    <ul class="plain">
+      <li>vznik konjugátu — <strong>menší biologická aktivita, vyšší hydrofilita</strong></li>
+      <li>konjugace vyžaduje dodání energie — aktivace vazbou s ATP</li>
+      <li>konjugát se z buňky dostává ven pomocí transportních membránových proteinů</li>
+      <li>nestabilita konjugátů — hydrolýza může vést ke vzniku reaktivních produktů (toxikologický problém)</li>
+      <li>jedno xenobiotikum často podléhá více typům konjugace současně — poměr produktů určuje koncentrace látky a kapacita/afinita enzymů</li>
+    </ul>
+  </div>
+`);
+
+/* ================= 18. TYPY REAKCI 2 FAZE ================= */
+slide('typy-reakci-2-faze','II. fáze — typy reakcí', `
+  <div class="slide-inner">
+    <p class="eyebrow">II. fáze biotransformace</p>
+    <h2 class="headline">Glukuronidace a sulfatace</h2>
+    <div class="grid-2">
+      <div class="card">
+        <p class="body-text" style="margin:0;"><strong>Glukuronidace</strong> — substráty: alkoholy, fenoly, thioly, karboxylové kyseliny, aminy… Připojením glukuronové kyseliny roste polarita → usnadnění vylučování močí či žlučí.</p>
+        <p class="calc-note" style="margin-top:8px;">ALE pozor — někdy slučování s glukuronovou kyselinou naopak usnadní transport toxického metabolitu do cílového orgánu (viz polycyklické uhlovodíky dále).</p>
+      </div>
+      <div class="card">
+        <p class="body-text" style="margin:0;"><strong>Sulfonace (sulfatace)</strong> — detoxikace fenolů, alkoholů a N-hydroxyaminů slučováním se sulfátem (kofaktor PAPS).</p>
+      </div>
+    </div>
+  </div>
+`);
+
+/* ================= 19. GSH ACETYLACE METHYLACE ================= */
+slide('gsh-acetylace-methylace','GSH, acetylace a methylace', `
+  <div class="slide-inner">
+    <p class="eyebrow">II. fáze biotransformace</p>
+    <h2 class="headline">Glutathion jako první linie obrany</h2>
+    <ul class="plain">
+      <li><strong>slučování s GSH</strong> — tripeptid glutathion (přednáška 2) je první linií buněčné obrany před elektrofily i radikály; vysoce reaktivní sulfanylová skupina reaguje často i spontánně, ale i katalyzovaně (glutathion-S-transferasy, GST)</li>
+      <li><strong>acetylace</strong> — N-acetyltransferasy (NAT), např. detoxikace aromatických aminů (anilin)</li>
+      <li><strong>methylace</strong> — v metabolismu xenobiotik výjimečná, zato zásadní pro endogenní látky</li>
+    </ul>
+    <div class="card" style="margin-top:14px;">
+      <p class="body-text" style="margin:0;">Konjugáty glutathionu se dále biotransformují odštěpením glutamátu a glycinu na <strong>konjugáty cysteinu</strong>, které se obvykle N-acetylují za vzniku <strong>kyselin merkapturových</strong>. Ty se zpravidla vylučují močí.<br><strong>Toxikologický význam:</strong> Stanovení specifických kyselin merkapturových v moči se využívá jako biomarker vnitřní expozice řadě reaktivních průmyslových a environmentálních látek.</p>
+    </div>
+  </div>
+`);
+
+/* ================= 20. STREVNI MIKROFLORA ================= */
+slide('strevni-mikroflora','Biotransformace střevní mikroflórou', `
+  <div class="slide-inner">
+    <p class="eyebrow">Doplněk</p>
+    <h2 class="headline">Biotransformační reakce ve střevní mikroflóře</h2>
+    <div class="card">
+      <ul class="plain" style="margin:0;">
+        <li>biotransformace mikroorganismy střevní mikroflóry má značný vliv na celkovou toxicitu látky</li>
+        <li>produkty těchto reakcí jsou často <strong>lipofilnější</strong> než výchozí látky → mohou se zpětně vstřebat střevní stěnou do oběhového systému</li>
+      </ul>
+    </div>
+  </div>
+`);
+
+/* ================= 21. PRIPAD VINYLCHLORID ================= */
+slide('pripad-vinylchlorid','Případ: vinylchlorid', `
+  <div class="slide-inner">
+    <p class="eyebrow">Konkrétní příklad biotransformace</p>
+    <h2 class="headline">Vinylchlorid — monomer PVC</h2>
+    <div class="grid-2">
+      <div>
+        <ul class="plain">
+          <li>významný průmyslový monomer, výroba PVC</li>
+          <li>metabolická oxidace cytochromem P450 → <strong>chloroxiran</strong> — reaktivní epoxid schopný tvořit DNA-adukty</li>
+          <li>chloroxiran přesmykuje na chloracetaldehyd → oxidace na kyselinu monochloroctovou</li>
+          <li>všechny tři reaktivní meziprodukty mohou reagovat s GSH → metabolická cesta merkapturových kyselin vylučovaných močí</li>
+          <li>epidemiologicky prokázáno: vinylchlorid u lidí způsobuje nádorové onemocnění <strong>jater</strong></li>
+        </ul>
+      </div>
+      <img src="biotransformace/web/vinylchlorid_schema.jpg" alt="Biotransformace vinylchloridu" class="scheme-img">
+    </div>
+    <div class="card" style="margin-top:14px;">
+      <p class="body-text" style="margin:0;"><strong>Úkoly:</strong> 1) V PubChem a bezpečnostním listu dohledejte vlastnosti a toxicitu vinylchloridu. 2) Které reakce ve schématu jsou metabolická aktivace a které patří do II. fáze? 3) Napište vzorce chloracetaldehydu a kyseliny chloroctové. 4) Proč vinylchlorid způsobuje nádorová onemocnění? 5) Které kroky biotransformace jsou detoxikační?</p>
+    </div>
+  </div>
+`);
+
+/* ================= 22. PRIPAD AKRYLONITRIL ================= */
+slide('pripad-akrylonitril','Případ: akrylonitril', `
+  <div class="slide-inner">
+    <p class="eyebrow">Konkrétní příklad biotransformace</p>
+    <h2 class="headline">Akrylonitril — proč nezpůsobuje rakovinu u lidí?</h2>
+    <div class="grid-2">
+      <div>
+        <ul class="plain">
+          <li>samotný akrylonitril je dostatečně elektrofilní — reaguje s GSH i s nukleofilními centry proteinů a nukleových kyselin</li>
+          <li>oxidací vzniká mnohem reaktivnější <strong>oxirankarbonitril</strong>, schopný tvořit DNA-adukty</li>
+          <li>detoxikace: hydrolýza epoxidhydrolasou (EH) a konjugace s GSH/GST → deriváty kyseliny merkapturové</li>
+          <li>toxikologicky významný je také vznik <strong>kyanidového iontu</strong> — detoxikován rhodanesou na SCN⁻</li>
+          <li>prokazatelně karcinogenní u zvířat, u lidí neprokázáno — pravděpodobně díky vyšší aktivitě detoxikačních enzymů (GST, EH)</li>
+        </ul>
+      </div>
+      <img src="biotransformace/web/akrylonitril_schema.jpg" alt="Biotransformace akrylonitrilu" class="scheme-img">
+    </div>
+    <p class="footer-note">Klíčový princip: výsledná karcinogenita závisí na poměru rychlosti bioaktivace (oxidace na epoxid) k rychlosti detoxikace (hydrolýza + konjugace s GSH) — ne na reaktivitě samotné.</p>
+  </div>
+`);
+
+/* ================= 23. KVIZ SROVNANI ================= */
+slide('kviz-vinylchlorid-akrylonitril','Kontrolní otázka', `
+  <div class="slide-inner">
+    <p class="eyebrow">Kontrolní zastávka · kvíz</p>
+    <h2 class="headline">Vinylchlorid vs. akrylonitril</h2>
+    <div class="quiz-card" id="qva1">
+      <div class="quiz-q">Vinylchlorid u lidí prokazatelně způsobuje rakovinu jater, karcinogenita akrylonitrilu u lidí neprokázána — ačkoliv jsou mechanismy bioaktivace (tvorba reaktivního epoxidu) velmi podobné. Co nejpravděpodobněji vysvětluje tento rozdíl?</div>
+      <button class="quiz-opt" data-correct="false">Akrylonitril se u lidí vůbec nemetabolizuje na epoxid</button>
+      <button class="quiz-opt" data-correct="true">U akrylonitrilu pravděpodobně převažuje rychlost detoxikačních reakcí (GST, EH) nad rychlostí tvorby reaktivního epoxidu, takže koncentrace aktivního metabolitu v cílové tkáni zůstává nízká</button>
+      <button class="quiz-opt" data-correct="false">Vinylchlorid je radioaktivní, akrylonitril ne</button>
+      <div class="quiz-feedback" id="qva1-fb"></div>
+    </div>
+  </div>
+`);
+
+/* ================= 24. PRIPAD BENZEN ================= */
+slide('pripad-benzen','Případ: benzen', `
+  <div class="slide-inner">
+    <p class="eyebrow">Konkrétní příklad biotransformace</p>
+    <h2 class="headline">Benzen — od epoxidu po poškození kostní dřeně</h2>
+    <div class="grid-2">
+      <div>
+        <ul class="plain">
+          <li>benzenové jádro se oxiduje jaterním P450 na <strong>benzenoxid</strong> — elektrofilní meziprodukt, ve vodném prostředí nestabilní (přesmykuje na fenol)</li>
+          <li>stabilita benzenoxidu ale stačí na transport z jater do <strong>kostní dřeně</strong> a do celého těla (poločas v krvi ≈ 8 min)</li>
+          <li>detoxikační reakce fenolu - konjugace s kyselinou glukuronovou a se sulfátem → vyloučení močí</li>
+          <li>fenol se dále oxiduje na dvojsytné fenoly (hydrochinon, pyrokatechol) → v kostní dřeni oxidují na <strong>benzochinony</strong> — vysoce elektrofilní metabolity reagující s GSH</li>
+          <li>oxidace fenolických metabolitů je provázena tvorbou <strong>volných radikálů</strong>, které mohou atakovat DNA přímo v cílovém orgánu</li>
+        </ul>
+      </div>
+      <img src="biotransformace/web/benzen_schema.jpg" alt="Biotransformace benzenu" class="scheme-img">
+    </div>
+ </div>
+`);
+
+/* ================= 25. PRIPAD BENZOAPYREN ================= */
+slide('pripad-benzoapyren','Případ: benzo[a]pyren', `
+  <div class="slide-inner">
+    <p class="eyebrow">Konkrétní příklad biotransformace</p>
+    <h2 class="headline">Polycyklické aromatické uhlovodíky (PAH)</h2>
+    <div class="grid-2">
+      <div>
+        <ul class="plain">
+          <li>PAH — toxikologicky významné, mnohé karcinogenní (vznikají při nedokonalém spalování — výfukové plyny, uzené potraviny, tabákový kouř)</li>
+          <li>sekvence reakcí: <strong>oxidace → hydrolýza → oxidace</strong></li>
+          <li>aktivní metabolity — <strong>dihydrodiolepoxidy</strong>, schopné kovalentní vazby na DNA</li>
+          <li>odolnost dihydrodiolepoxidů vůči hydrolýze epoxidhydrolasou (EH) je kritickým faktorem karcinogenity PAH</li>
+          <li>dihydrodiolepoxidy vznikající v „zátoce" molekuly jsou špatným substrátem pro EH — jejich dlouhá životnost jim umožní dostat se k DNA</li>
+        </ul>
+      </div>
+      <img src="biotransformace/web/benzo_a_pyren_schema.jpg" alt="Biotransformace benzo[a]pyrenu" class="scheme-img">
+      </div>
+  </div>
+`);
+
+/* ================= 26. PRIPAD STYREN ================= */
+slide('pripad-styren','Případ: styren a biomonitoring', `
+  <div class="slide-inner">
+    <p class="eyebrow">Konkrétní příklad biotransformace · pracovní lékařství</p>
+    <h2 class="headline">Styren — biologický monitoring expozice</h2>
+    <div class="grid-2">
+      <div>
+        <ul class="plain">
+          <li>styren (monomer polystyrenu) se oxiduje P450 na <strong>styren-7,8-oxid</strong> a dále hydrolyzuje epoxidhydrolasou na fenylethylenglykol</li>
+          <li><strong>styren-7,8-oxid</strong> - elektrofilní oxiranový derivát - schopný reagovat s nukleofilními centry v proteinech a DNA</li>
+          <li>přes mandlovou a fenylglyoxylovou kyselinu končí hlavní cesta jako <strong>kyselina hippurová</strong>, vedlejší cesta přes GSH jako merkapturové kyseliny</li>
+          <li><strong>reálná aplikace:</strong> koncentrace kyseliny mandlové a fenylglyoxylové v moči na konci směny se v pracovním lékařství běžně používá jako <strong>biomarker expozice</strong> styrenu u pracovníků ve sklolaminátových a plastikářských provozech</li>
+        </ul>
+      </div>
+      <img src="biotransformace/web/styren_schema.jpg" alt="Hlavní biotransformační cesta styrenu" class="scheme-img">
+    </div>
+    <p class="footer-note">Biologické expoziční limity (BEL) pro kyselinu mandlovou + fenylglyoxylovou v moči jsou součástí hygienických předpisů pro pracovní prostředí — přímé praktické využití znalosti biotransformační dráhy.</p>
+  </div>
+`);
+
+/* ================= 27. PRIPAD PARACETAMOL ================= */
+slide('pripad-paracetamol','Případ: paracetamol', `
+  <div class="slide-inner">
+    <p class="eyebrow">Konkrétní příklad biotransformace · léčivo</p>
+    <h2 class="headline">Paracetamol — bezpečný lék, nebezpečný jed</h2>
+    <div class="grid-2">
+      <div>
+        <ul class="plain">
+          <li>při správném dávkování (≤ 4 g/den) bezpečný lék — méně kyselý než kyselina acetylsalicylová, nehromadí se v žaludeční sliznici</li>
+          <li>většina dávky se detoxikuje přímou konjugací –OH skupiny (glukuronidace, sulfatace)</li>
+          <li>menší část se oxiduje P450 na vysoce reaktivní elektrofil<br><strong>N-acetyl-p-chinonimin (NAPQI)</strong> — I. fáze</li>
+          <li>NAPQI se za normálních okolností ihned deaktivuje konjugací s <strong>GSH</strong></li>
+          <li>při předávkování se zásoby jaterního GSH vyčerpají → NAPQI se kovalentně váže na proteiny jater a ledvin → buněčná smrt</li>
+        </ul>
+      </div>
+      <img src="biotransformace/web/paracetamol_schema.jpg" alt="Biotransformace paracetamolu" class="scheme-img">
+    </div>
+    <div class="card" style="margin-top:14px;">
+      <p class="body-text" style="margin:0;"><strong>Úkoly:</strong> 1) Který děj ve schématu je metabolická aktivace a které patří do II. fáze? <br>2) Proč inhibice cyklooxygenasy paracetamolem může vést k překyselení žaludku? <br>3) Je biotransformace paracetamolu ovlivněna přítomností jiných cizorodých látek (např. alkoholu)?</p>
+    </div>
+  </div>
+`);
+/*
+POZNÁMKA PRO PŘEDNÁŠEJÍCÍHO: současné užívání ethanolu - indukce enzymů tvořících N-acetyl-p-chinonimin (NAPQI) → vyšší riziko hepatotoxicity při stejné dávce paracetamolu. Chronický alkoholismus a hladovění navíc snižují zásoby jaterního GSH.
+*/
+
+/* ================= 28. PARACETAMOL ANTIDOTUM ================= */
+slide(
+  'paracetamol-antidotum',
+  'Paracetamol — antidotum a rizikové faktory',
+  `
+  <div class="slide-inner">
+    <p class="eyebrow">Terapie a rizikové faktory</p>
+    <h2 class="headline">N-acetylcystein — podpora detoxikace NAPQI</h2>
+
+    <div class="grid-2">
+      <div class="card">
+        <p class="body-text" style="margin:0;">
+          <strong>N-acetylcystein (NAC)</strong> dodává cystein,
+          který je potřebný pro syntézu glutathionu (GSH) v játrech.
+          NAC pomáhá obnovit zásoby GSH a podporuje detoxikaci
+          reaktivního metabolitu <strong>NAPQI</strong>.
+          Nejúčinnější je při časném podání, ideálně během prvních
+          8 hodin; přínos však může mít i při pozdějším zahájení léčby.
+        </p>
+      </div>
+
+      <div class="card">
+        <p class="body-text" style="margin:0;">
+          <strong>Rizikové faktory:</strong>
+          Chronická nadměrná konzumace alkoholu může indukovat
+          <strong>CYP2E1</strong>, a tím zvyšovat tvorbu NAPQI.
+          Riziko toxicity zvyšuje také hladovění,
+          které mohou omezit dostupnost substrátů pro syntézu GSH.
+          Účinek ethanolu závisí na kontextu: ethanol přítomný
+          současně může CYP2E1 dočasně kompetitivně inhibovat.
+        </p>
+      </div>
+    </div>
+
+    <blockquote class="quote" style="margin-top:16px;font-size:20px;">
+      <strong>Tři antidotální principy:</strong>
+      kompetitivní inhibice enzymu (fomepizol při otravě methanolem),
+      podpora metabolismu formiátu folátovou dráhou a podpora
+      detoxikace NAPQI pomocí N-acetylcysteinu.
+    </blockquote>
+  </div>
+  `
+);
+
+/* ================= 29. PEROXIDACE LIPIDU ================= */
+slide('peroxidace-lipidu','Peroxidace lipidů', `
+  <div class="slide-inner">
+    <p class="eyebrow">Vedlejší produkt biotransformace</p>
+    <h2 class="headline">Když biotransformace vytvoří radikál</h2>
+    <div class="grid-2">
+      <div>
+        <ul class="plain">
+          <li>látky, jejichž biotransformací vznikají volné radikály, mohou iniciovat <strong>řetězovou radikálovou reakci</strong> štěpící membránové lipidy (přednáška 2)</li>
+          <li><strong>tetrachlormethan (CCl₄)</strong> — redukcí cytochromem P450 vzniká radikál •CCl₃, který iniciuje lipoperoxidaci jaterních membrán</li>
+          <li>podobně působí i inhalační anestetikum <strong>halothan</strong></li>
+        </ul>
+      </div>
+      <img src="biotransformace/web/peroxidace_lipidu_schema.jpg" alt="Mechanismus peroxidace lipidů" class="scheme-img">
+    </div>
+    <p class="footer-note">Schéma ukazuje klasický řetězec: abstrakce vodíku radikálem (iniciace) → reakce s O₂ na peroxylový radikál → abstrakce dalšího vodíku (propagace) → rozpad na menší fragmenty (terminace/štěpení řetězce).</p>
+  </div>
+`);
+
+/* ================= 30. SHRNUTI PRINCIP ================= */
+slide(
+  'shrnuti-princip',
+  'Obecný princip: detoxikace vs. bioaktivace',
+  `
+  <div class="slide-inner">
+    <p class="eyebrow">Shrnutí mechanismu</p>
+    <h2 class="headline">Jedna látka, různé metabolické cesty</h2>
+
+    <div class="grid-2">
+      <div class="card" style="border-color:var(--tox-green);">
+        <div
+          class="tag"
+          style="border-color:var(--tox-green);color:var(--tox-green-deep);"
+        >
+          detoxikace
+        </div>
+
+        <p class="body-text" style="margin-top:6px;">
+          Metabolismus vede k méně reaktivním produktům,
+          které lze často snadněji vyloučit.
+          Příklad: paracetamol v terapeutické dávce —
+          převládá konjugace s glukuronidem a sulfátem;
+          vznikající NAPQI se detoxikuje glutathionem.
+        </p>
+      </div>
+
+      <div class="card" style="border-color:var(--danger);">
+        <div
+          class="tag"
+          style="border-color:var(--danger);color:var(--danger);"
+        >
+          bioaktivace
+        </div>
+
+        <p class="body-text" style="margin-top:6px;">
+          Metabolismus vytváří reaktivní meziprodukty,
+          které mohou poškodit buněčné struktury.
+          Příklady: vinylchlorid a benzo[a]pyren —
+          vznikají metabolity schopné tvořit adukty s DNA;
+          paracetamol při předávkování — může se hromadit
+          NAPQI, pokud nestačí jeho detoxikace glutathionem.
+        </p>
+      </div>
+    </div>
+
+    <p class="body-text" style="margin-top:14px;">
+      Rozhoduje <strong>rovnováha mezi tvorbou reaktivních
+      metabolitů a jejich detoxikací a odstraněním</strong>.
+      Stejný enzymový systém, například cytochromy P450,
+      může zahájit cestu vedoucí k detoxikaci i bioaktivaci.
+      Benzen se například oxiduje na fenol, ale jeho další
+      metabolismus může vytvářet také reaktivní produkty.
+      U methanolu se toxicita pojí zejména s tvorbou formiátu,
+      který přispívá k metabolické acidóze a poškození zraku.
+    </p>
+  </div>
+  `
+);
+
+/* ================= 31. DISKUSE ================= */
+slide('diskuse','Diskusní otázky', `
+  <div class="slide-inner">
+    <p class="eyebrow">Na závěr přednášky</p>
+    <h2 class="headline">Diskusní otázky pro studující</h2>
+    <div id="discussion-list" style="margin-top:14px;"></div>
+  </div>
+`);
+
+/* ================= 32. CLOSING ================= */
+slide('closing','Shrnutí a zdroje', `
+  <div class="slide-inner">
+    <p class="eyebrow">Na závěr</p>
+    <h2 class="headline">Shrnutí přednášky 4 a zdroje</h2>
+    <div class="grid-2">
+      <div class="card">
+        <p class="body-text" style="margin-top:0;"><strong>Z dnešní přednášky si odnášíme:</strong></p>
+        <ul class="plain">
+          <li>biotransformace probíhá ve dvou fázích — transformace (I.) a konjugace (II.); cytochrom P450 katalyzuje většinu I. fáze</li>
+          <li>stejný metabolický krok může znamenat detoxikaci i bioaktivaci — rozhoduje poměr rychlostí konkurenčních drah</li>
+          <li>otrava methanolem i otrava paracetamolem ukazují, že biotransformace je reálným terapeutickým cílem — kompetitivní inhibice enzymu, doplnění kofaktoru nebo substrátu</li>
+          <li>biomonitoring metabolitů (merkapturové kyseliny, kyselina hippurová) se v praxi používá k měření expozice chemikáliím</li>
+        </ul>
+      </div>
+      <div class="card sources">
+        <strong style="color:var(--ink); font-family:var(--sans); font-size:15px;">Zdroje</strong>
+        <br><br>
+        Linhart, I. (2020). <em>Toxikologie: Otázky vztahu chemických látek a živých organismů.</em> Vydavatelství VŠCHT Praha.
+        <br><br>
+        Toxikologické informační středisko VFN a 1. LF UK (2015). Odborné doporučení pro intoxikaci — methanol. <em>tis-cz.cz</em>
+        <br><br>
+        Klaassen, C. D. (ed.) (2019). <em>Casarett &amp; Doull's Toxicology.</em> McGraw-Hill.
+        <br><br>
+        PubChem (NCBI) a bezpečnostní listy výrobců — data ke konkrétním příkladům a skupinové práci.
+      </div>
+    </div>
+  </div>
+`);
+
+/* ================= RENDER ================= */
+const deck = document.getElementById('deck');
+slides.forEach((s,i)=>{
+  const el = document.createElement('div');
+  el.className='slide'; el.id='slide-'+i; el.innerHTML=s.html;
+  deck.appendChild(el);
+});
+const overlayList = document.getElementById('overlay-list');
+slides.forEach((s,i)=>{
+  const li = document.createElement('li');
+  li.innerHTML = '<span>'+String(i+1).padStart(2,'0')+'</span>'+s.title;
+  li.onclick = ()=>{ goTo(i); toggleOverlay(false); };
+  overlayList.appendChild(li);
+});
+
+let current = 0;
+function render(){
+  document.querySelectorAll('.slide').forEach((el,i)=> el.classList.toggle('active', i===current));
+  document.getElementById('progress-fill').style.width = ((current+1)/slides.length*100)+'%';
+  document.getElementById('counter').textContent = (current+1)+' / '+slides.length;
+  document.getElementById('prevBtn').disabled = current===0;
+  document.getElementById('nextBtn').disabled = current===slides.length-1;
+  initSlideWidgets(current);
+}
+function goTo(i){ current = Math.max(0, Math.min(slides.length-1, i)); render(); }
+function nextSlide(){ goTo(current+1); }
+function prevSlide(){ goTo(current-1); }
+document.addEventListener('keydown', (e)=>{
+  if(document.getElementById('lightbox').classList.contains('show')){ if(e.key==='Escape') closeLightbox(); return; }
+  if(document.getElementById('overlay').classList.contains('show')){ if(e.key==='Escape') toggleOverlay(false); return; }
+  if(e.key==='ArrowRight' || e.key===' ') nextSlide();
+  if(e.key==='ArrowLeft') prevSlide();
+  if(e.key==='Escape') toggleOverlay(false);
+});
+function toggleOverlay(show){ document.getElementById('overlay').classList.toggle('show', show); }
+
+/* ---- schema lightbox (click to enlarge) ---- */
+deck.addEventListener('click', (e)=>{
+  const img = e.target.closest('.scheme-img');
+  if(img){ openLightbox('<img src="'+img.getAttribute('src')+'" alt="'+(img.getAttribute('alt')||'')+'">'); return; }
+  const svg = e.target.closest('.diagram-box svg');
+  if(svg){ openLightbox(svg.outerHTML); return; }
+});
+function openLightbox(html){
+  document.getElementById('lightbox-inner').innerHTML = html;
+  document.getElementById('lightbox').classList.add('show');
+}
+function closeLightbox(){
+  document.getElementById('lightbox').classList.remove('show');
+  document.getElementById('lightbox-inner').innerHTML = '';
+}
+
+/* ================= WIDGETS ================= */
+const initialized = {};
+function initSlideWidgets(i){
+  const id = slides[i].id;
+  if(initialized[id]) return;
+  initialized[id] = true;
+  if(id==='kviz-cyklus-poradi') initCycleMatching();
+  if(id==='kviz-methanol') initSimpleQuizzes([
+    ['qm1','qm1-fb','Správně — přeměna je pomalá, proto kyselina mravenčí ve tkáních dlouho přetrvává a poškozuje je.','Zkuste znovu — text TIS výslovně uvádí, že se kyselina mravenčí oxiduje VELMI POMALU, proto se kumuluje.'],
+    ['qm2','qm2-fb','Správně — ethanol je pro ADH lepším substrátem, proto ji „obsadí" a zpomalí tvorbu formaldehydu a kyseliny mravenčí z methanolu.','Zkuste znovu — princip kompetitivní inhibice vyžaduje, aby ethanol byl pro enzym atraktivnější, ne pomalejší.'],
+    ['qm3','qm3-fb','Správně — jde o oxidaci v I. fázi závislou na kyselině listové, nikoli o konjugaci.','Zkuste znovu — konjugace (II. fáze) znamená připojení polárního zbytku, ne oxidaci na CO2 a H2O.']
+  ]);
+  if(id==='kviz-vinylchlorid-akrylonitril') initSimpleQuizzes([
+    ['qva1','qva1-fb','Přesně tak — karcinogenita závisí na poměru rychlosti bioaktivace a detoxikace, nikoli jen na existenci reaktivního meziproduktu.','Zkuste znovu — oba epoxidy vznikají podobným mechanismem; rozdíl je v tom, jak rychle jsou dál zneškodněny.']
+  ]);
+  if(id==='diskuse') initDiscussion();
+}
+
+function initSimpleQuizzes(list){
+  list.forEach(([cardId, fbId, correctMsg, wrongMsg])=>{
+    const card = document.getElementById(cardId);
+    const opts = card.querySelectorAll('.quiz-opt');
+    opts.forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const isCorrect = btn.dataset.correct==='true';
+        opts.forEach(o=>o.disabled=true);
+        btn.classList.add(isCorrect?'correct':'wrong');
+        if(!isCorrect){ opts.forEach(o=>{ if(o.dataset.correct==='true') o.classList.add('correct'); }); }
+        const fb = document.getElementById(fbId);
+        fb.textContent = isCorrect? correctMsg: wrongMsg;
+        fb.classList.add('show');
+      });
+    });
+  });
+}
+
+/* ---- discussion accordion ---- */
+function initDiscussion(){
+  const qa = [
+    {q:'Proč může konjugace s kyselinou glukuronovou u polycyklických aromatických uhlovodíků někdy ZVÝŠIT, nikoli snížit toxicitu, přestože je obecně konjugace detoxikační reakcí?',
+     a:'U některých reaktivních hydroxylovaných metabolitů PAH funguje glukuronidace jako „transportníештítek" — zvýší rozpustnost ve vodě natolik, že se metabolit snadno dostane krví do vzdálenějších tkání, kde může být lokálně hydrolyzován zpět na reaktivní formu v blízkosti citlivých buněk (např. v ledvinách nebo močovém měchýři). Obecné pravidlo „konjugace = detoxikace" tedy platí jen většinou, ne vždy.'},
+    {q:'Proč je u akrylonitrilu prokázaná karcinogenita u zvířat, ale ne u lidí, zatímco u vinylchloridu je karcinogenita prokázána u obou? Jak by se dalo toto tvrzení ověřit experimentálně?',
+     a:'Hypotéza je mezidruhový rozdíl v aktivitě detoxikačních enzymů (GST, epoxidhydrolasa) — člověk má pravděpodobně vyšší kapacitu detoxikace akrylonitrilového epoxidu než hlodavci používaní v testech. Ověřit by se to dalo srovnáním poměru vylučovaných merkapturových kyselin (ukazatel detoxikace) vůči DNA-aduktům (ukazatel bioaktivace) u lidských a zvířecích jaterních mikrozomů in vitro, případně porovnáním kinetických konstant (Km, Vmax) příslušných enzymů mezi druhy.'},
+    {q:'Proč se ethanol v nemocnici podává jako antidotum methanolu v koncentraci 1–1,5 promile — tedy v koncentraci, která by sama o sobě způsobila viditelnou opilost? Jaké riziko to přináší a jak se mu dá předejít?',
+     a:'Kompetitivní inhibice vyžaduje dostatečně vysokou koncentraci konkurenčního substrátu, aby účinně soutěžil o aktivní místo ADH s methanolem — nižší koncentrace by nebyla dostatečně účinná. Riziko: útlum CNS a dechu, zvláště v kombinaci s dalšími tlumivými látkami, a riziko hypoglykemie (zejména u dětí). Proto se pacient musí sledovat na JIP s monitorováním hladiny ethanolu, glykemie a vitálních funkcí po celou dobu léčby — přesně jako je popsáno v doporučení TIS.'},
+    {q:'Paracetamol i ethanol/methanol ukazují, že tentýž biotransformační systém může být jak ochranou, tak hrozbou. Jak by se dal tento princip využít při navrhování nových léčiv, aby se riziko bioaktivace minimalizovalo už ve fázi vývoje?',
+     a:'Při vývoji léčiv se dnes běžně testuje metabolická stabilita a tvorba reaktivních metabolitů in vitro (jaterní mikrozomy, hepatocyty) ještě před klinickými studiemi — pomocí GSH-trapping testů se zjišťuje, zda molekula tvoří elektrofilní meziprodukty vázající se na GSH. Strukturní úpravy (např. blokace citlivých pozic vůči oxidaci cytochromem P450, substituce metabolicky labilních skupin) mohou tvorbu reaktivního metabolitu omezit, aniž by se ztratila farmakologická účinnost — přesně to, co u paracetamolu chybí při vysokých dávkách.'}
+  ];
+  const wrap = document.getElementById('discussion-list');
+  qa.forEach((item,i)=>{
+    const div = document.createElement('div');
+    div.className='tl-item'; div.style.cssText='min-width:auto;width:100%;margin-bottom:10px;';
+    div.innerHTML = `<div class="tl-year">Otázka ${i+1}</div><div class="tl-title" style="font-size:20px;">${item.q}</div><div class="tl-detail"><strong>Řešení:</strong> ${item.a}</div>`;
+    div.onclick = ()=> div.classList.toggle('open');
+    wrap.appendChild(div);
+  });
+}
+
+/* ---- P450 cycle step matching ---- */
+function initCycleMatching(){
+  const pairs = [
+    {left:'Krok 1', right:'substrát RH se naváže na aktivní místo enzymu s hemovým železem Fe⁺ᴵᴵᴵ'},
+    {left:'Krok 2', right:'redukce elektronem z NADPH, vznik komplexu s dvojmocným Fe'},
+    {left:'Krok 3', right:'navázání kyslíku na hemové železo za vzniku hemoperoxidového komplexu'},
+    {left:'Krok 4', right:'redukce dalším elektronem z NADPH a protonizace za vzniku hemhydroperoxidového komplexu'},
+    {left:'Krok 5', right:'heterolytické štěpení peroxidické vazby za vzniku formálně pětimocného železa'},
+    {left:'Krok 6', right:'oxidace substrátu RH za současné redukce pětimocného železa na trojmocné'},
+    {left:'Krok 7', right:'uvolnění produktu ROH a obnova volného biokatalyzátoru'}
+  ];
+  const leftItems = pairs.map((p,i)=>({text:p.left, idx:i}));
+  const rightItems = pairs.map((p,i)=>({text:p.right, idx:i}));
+  for(let i=rightItems.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [rightItems[i],rightItems[j]]=[rightItems[j],rightItems[i]]; }
+
+  const leftEl = document.getElementById('match-left');
+  const rightEl = document.getElementById('match-right');
+  let selectedLeft = null;
+  let solved = 0;
+
+  leftItems.forEach(item=>{
+    const div = document.createElement('div');
+    div.className='match-item';
+    div.textContent = item.text;
+    div.dataset.idx = item.idx;
+    div.onclick = ()=>{
+      if(div.classList.contains('correct')) return;
+      leftEl.querySelectorAll('.match-item').forEach(x=>x.classList.remove('selected'));
+      div.classList.add('selected');
+      selectedLeft = div;
+    };
+    leftEl.appendChild(div);
+  });
+  rightItems.forEach(item=>{
+    const div = document.createElement('div');
+    div.className='match-item';
+    div.textContent = item.text;
+    div.dataset.idx = item.idx;
+    div.onclick = ()=>{
+      if(!selectedLeft || div.classList.contains('correct')) return;
+      const isMatch = selectedLeft.dataset.idx === div.dataset.idx;
+      if(isMatch){
+        selectedLeft.classList.remove('selected'); selectedLeft.classList.add('correct');
+        div.classList.add('correct');
+        solved++;
+        selectedLeft = null;
+        if(solved===pairs.length){
+          document.getElementById('match-result').textContent = 'Výborně — celý katalytický cyklus cytochromu P450 je teď ve správném pořadí!';
+        }
+      } else {
+        div.classList.add('wrong');
+        setTimeout(()=>div.classList.remove('wrong'), 500);
+      }
+    };
+    rightEl.appendChild(div);
+  });
+}
+
+render();
+</script>
+</body>
+</html>

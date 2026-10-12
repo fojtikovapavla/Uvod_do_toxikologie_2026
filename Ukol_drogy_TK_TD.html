@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Individuální úkol — toxikokinetika a toxikodynamika drog</title>
+<style>
+  :root{
+    --paper:#F4F5EF; --paper-deep:#ECEEE4; --ink:#1E2019; --ink-soft:#5A5D51;
+    --amber:#B9791E; --amber-deep:#8F5D14; --tox-green:#3E5C42; --tox-green-deep:#2A3F2D;
+    --danger:#9C3B2E; --blue:#3A5A72; --blue-deep:#233C4E; --line:#D6D6C6; --card:#FFFFFE;
+    --serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', 'Book Antiqua', serif;
+    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --mono: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{ margin:0; background:var(--paper); color:var(--ink); font-family:var(--sans); overflow:hidden; font-size:18px; }
+  ::selection{ background: var(--amber); color:#fff; }
+
+  #topbar{ position:fixed; top:0; left:0; right:0; height:54px; display:flex; align-items:center; gap:16px; padding:0 20px; z-index:50;
+    background:linear-gradient(to bottom, rgba(244,245,239,0.97), rgba(244,245,239,0.85)); border-bottom:1px solid var(--line); }
+  #topbar .brand{ font-family:var(--serif); font-size:16px; font-style:italic; color:var(--ink-soft); white-space:nowrap; }
+  #progress-track{ flex:1; height:3px; background:var(--line); border-radius:2px; overflow:hidden; }
+  #progress-fill{ height:100%; width:0%; background:var(--amber); transition:width .35s ease; }
+  #counter{ font-family:var(--mono); font-size:13px; color:var(--ink-soft); white-space:nowrap; }
+  #menu-btn{ font-family:var(--sans); font-size:14px; color:var(--ink); background:var(--card); border:1px solid var(--line); border-radius:6px; padding:6px 12px; cursor:pointer; }
+  #menu-btn:hover{ border-color:var(--amber); }
+
+  #deck{ position:relative; width:100%; height:100%; padding-top:54px; }
+  .slide{ position:absolute; inset:0; top:54px; display:flex; align-items:center; justify-content:center;
+    padding:36px 7vw 90px 7vw; opacity:0; visibility:hidden; transform:translateY(14px);
+    transition:opacity .4s ease, transform .4s ease; overflow-y:auto; }
+  .slide.active{ opacity:1; visibility:visible; transform:translateY(0); }
+  .slide-inner{ width:100%; max-width:1040px; }
+  .eyebrow{ font-family:var(--mono); font-size:16px; letter-spacing:.02em; color:var(--amber-deep); margin:0 0 12px 0; }
+  h1.headline{ font-family:var(--serif); font-weight:400; font-size:clamp(28px,4.2vw,46px); line-height:1.12; margin:0 0 16px 0; }
+  h2.headline{ font-family:var(--serif); font-weight:400; font-size:clamp(23px,3vw,32px); line-height:1.18; margin:0 0 16px 0; }
+  p.lede{ font-size:19px; line-height:1.55; color:var(--ink-soft); max-width:720px; }
+  .body-text{ font-size:18px; line-height:1.6; color:var(--ink); max-width:780px; }
+  .body-text + .body-text{ margin-top:10px; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:10px; padding:18px 20px; }
+  .grid-2{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .grid-3{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+  .grid-4{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+  @media (max-width:800px){ .grid-2,.grid-3,.grid-4{ grid-template-columns:1fr; } }
+  .tag{ display:inline-block; font-family:var(--mono); font-size:12px; padding:3px 9px; border-radius:20px; border:1px solid var(--line); color:var(--ink-soft); margin-bottom:10px; }
+  .tag.new{ border-color:var(--danger); color:var(--danger); }
+  ul.plain{ margin:0; padding-left:22px; font-size:17px; }
+  ul.plain li{ margin-bottom:8px; line-height:1.5; }
+  blockquote.quote{ font-family:var(--serif); font-style:italic; font-size:24px; line-height:1.4; color:var(--tox-green-deep); border-left:3px solid var(--amber); padding-left:22px; margin:20px 0; }
+  #navbtns{ position:fixed; bottom:22px; right:28px; display:flex; gap:10px; z-index:50; }
+  .navbtn{ width:46px; height:46px; border-radius:50%; border:1px solid var(--line); background:var(--card); color:var(--ink); font-size:19px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .navbtn:hover{ border-color:var(--amber); color:var(--amber-deep); }
+  .navbtn:disabled{ opacity:.3; cursor:default; }
+  #overlay{ position:fixed; inset:0; background:rgba(30,32,25,.94); z-index:100; display:none; padding:56px 8vw; overflow-y:auto; }
+  #overlay.show{ display:block; }
+  #overlay h3{ font-family:var(--serif); color:#fff; font-weight:400; font-size:23px; margin-bottom:20px; }
+  #overlay-list{ list-style:none; margin:0; padding:0; columns:2; column-gap:40px; }
+  @media (max-width:800px){ #overlay-list{ columns:1; } }
+  #overlay-list li{ color:#EDEEE6; font-size:15px; padding:8px 0; border-bottom:1px solid rgba(255,255,255,.12); cursor:pointer; break-inside:avoid; }
+  #overlay-list li span{ font-family:var(--mono); color:var(--amber); margin-right:10px; font-size:12px; }
+  #overlay-list li:hover{ color:var(--amber); }
+  #overlay-close{ position:absolute; top:22px; right:30px; color:#fff; font-size:28px; background:none; border:none; cursor:pointer; }
+
+  table.data-table{ width:100%; border-collapse:collapse; font-size:17px; margin-top:10px; }
+  table.data-table th{ text-align:left; font-family:var(--mono); font-size:15px; color:var(--ink-soft); padding:8px 9px; border-bottom:1px solid var(--ink); }
+  table.data-table td{ padding:9px 9px; border-bottom:1px solid var(--line); }
+  table.data-table tr.highlight td{ background:#FBF0DD; font-weight:600; }
+
+  .footer-note{ margin-top:18px; font-size:16px; color:var(--ink-soft); font-family:var(--mono); line-height:1.5; }
+  .diagram-box{ background:#fff; border:1px solid var(--line); border-radius:10px; padding:14px; margin-top:12px; }
+
+  .btn{ display:inline-flex; align-items:center; gap:8px; font-family:var(--sans); font-size:15px; font-weight:600; color:#fff; background:var(--tox-green); border:none; border-radius:8px; padding:10px 18px; cursor:pointer; text-decoration:none; }
+  .btn:hover{ background:var(--tox-green-deep); }
+  .btn.secondary{ background:var(--card); color:var(--ink); border:1px solid var(--line); }
+  .btn.secondary:hover{ border-color:var(--amber); color:var(--amber-deep); }
+  .btn-row{ display:flex; gap:10px; flex-wrap:wrap; margin-top:14px; }
+
+  /* match-wrap (literature quiz) */
+  .match-wrap{ display:grid; grid-template-columns:1fr 1fr; gap:22px; margin-top:14px; }
+  @media (max-width:760px){ .match-wrap{ grid-template-columns:1fr; } }
+  .match-col-title{ font-family:var(--mono); font-size:13px; color:var(--ink-soft); margin-bottom:8px; }
+  .match-item{ background:var(--card); border:1px solid var(--line); border-radius:8px; padding:11px 14px; margin-bottom:8px; font-size:17px; cursor:pointer; }
+  .match-item.selected{ border-color:var(--amber); background:#FBF0DD; }
+  .match-item.correct{ border-color:var(--tox-green); background:#EAF1EA; }
+  .match-item.wrong{ border-color:var(--danger); background:#F7EAE7; }
+  .match-result{ margin-top:12px; font-size:17px; color:var(--ink-soft); min-height:22px; }
+
+  /* 30-card grid */
+  .assign-grid{ display:grid; grid-template-columns:repeat(6,1fr); gap:9px; margin-top:14px; }
+  @media (max-width:900px){ .assign-grid{ grid-template-columns:repeat(5,1fr); } }
+  @media (max-width:620px){ .assign-grid{ grid-template-columns:repeat(3,1fr); } }
+  .assign-card{ background:var(--card); border:1px solid var(--line); border-radius:8px; padding:10px 6px; text-align:center; cursor:pointer; font-family:var(--mono); }
+  .assign-card:hover{ border-color:var(--amber); }
+  .assign-card .num{ font-size:20px; font-weight:700; color:var(--amber-deep); }
+  .assign-card .cls-dot{ display:inline-block; width:7px; height:7px; border-radius:50%; margin-top:4px; }
+  .assign-detail{ display:none; margin-top:14px; }
+  .assign-detail.show{ display:block; }
+  .assign-detail .card{ border-color:var(--amber); }
+
+  /* lottery */
+  .lottery-controls{ display:flex; gap:10px; align-items:center; margin-top:10px; flex-wrap:wrap; }
+  .lottery-groups{ display:grid; grid-template-columns:repeat(6,1fr); gap:10px; margin-top:18px; }
+  @media (max-width:900px){ .lottery-groups{ grid-template-columns:repeat(3,1fr); } }
+  @media (max-width:560px){ .lottery-groups{ grid-template-columns:repeat(2,1fr); } }
+  .lottery-group{ background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px 10px; text-align:center; }
+  .lottery-group h4{ font-family:var(--serif); font-size:17px; margin:0 0 8px 0; color:var(--tox-green-deep); }
+  .lottery-group .member{ font-family:var(--mono); font-size:19px; padding:5px 0; border-bottom:1px dashed var(--line); }
+  .lottery-group .member:last-child{ border-bottom:none; }
+
+  /* timers */
+  .timer-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:16px; }
+  @media (max-width:800px){ .timer-grid{ grid-template-columns:1fr; } }
+  .timer-card{ background:var(--card); border:1px solid var(--line); border-radius:12px; padding:18px; text-align:center; transition:border-color .3s, background .3s; }
+  .timer-card.done{ border-color:var(--danger); background:#F7EAE7; animation:pulse 1s infinite; }
+  @keyframes pulse{ 0%,100%{box-shadow:0 0 0 0 rgba(156,59,46,.4);} 50%{box-shadow:0 0 0 8px rgba(156,59,46,0);} }
+  .timer-card h4{ font-family:var(--serif); font-size:18px; margin:0 0 10px 0; }
+  .timer-display{ font-family:var(--mono); font-size:44px; font-weight:700; color:var(--tox-green-deep); margin:6px 0; }
+  .timer-card.done .timer-display{ color:var(--danger); }
+  .timer-bar-track{ height:6px; background:var(--line); border-radius:3px; overflow:hidden; margin:10px 0; }
+  .timer-bar-fill{ height:100%; background:var(--tox-green); width:100%; transition:width 1s linear; }
+  .timer-card.done .timer-bar-fill{ background:var(--danger); }
+  .timer-btns{ display:flex; gap:6px; justify-content:center; margin-top:8px; }
+  .timer-btns button{ font-family:var(--sans); font-size:13px; padding:6px 10px; border-radius:6px; border:1px solid var(--line); background:#fff; cursor:pointer; }
+  .timer-btns button:hover{ border-color:var(--amber); }
+  .timer-mins{ font-family:var(--mono); font-size:13px; color:var(--ink-soft); margin-top:6px; }
+  .timer-mins input{ width:40px; font-family:var(--mono); font-size:13px; border:1px solid var(--line); border-radius:4px; padding:2px 4px; }
+
+  /* lightbox for print sheets preview not needed; simple print system */
+  .sheet-note{ font-size:14px; color:var(--ink-soft); margin-top:8px; }
+
+  @media (prefers-reduced-motion: reduce){ .slide, .navbtn, #progress-fill{ transition:none !important; } }
+
+  /* ===== PRINT ===== */
+  .print-sheet{ display:none; }
+  @media print{
+    #topbar,#navbtns,#overlay,.btn-row,.timer-grid,.lottery-controls{ display:none !important; }
+    #deck{ display:none !important; }
+    body{ overflow:visible !important; background:#fff !important; font-size:12pt; }
+    body[data-print-sheet] .print-sheet{ display:none; }
+    body[data-print-sheet="individual"] .print-sheet.sheet-individual,
+    body[data-print-sheet="krokb"] .print-sheet.sheet-krokb,
+    body[data-print-sheet="krokc"] .print-sheet.sheet-krokc{ display:block !important; padding:20px; }
+    .print-sheet h1{ font-family:Georgia,serif; font-size:22pt; color:#2A3F2D; margin-bottom:4px; }
+    .print-sheet .sub{ font-size:10pt; color:#5A5D51; margin-bottom:16px; }
+    .print-sheet h2{ font-size:14pt; color:#8F5D14; border-bottom:1px solid #B9791E; padding-bottom:3px; margin-top:18px; }
+    .print-sheet ul{ font-size:11pt; }
+    .print-sheet .line{ border-bottom:1px solid #999; height:22px; margin-bottom:8px; }
+    .print-sheet table{ width:100%; border-collapse:collapse; margin-top:10px; }
+    .print-sheet table td,.print-sheet table th{ border:1px solid #999; padding:6px; font-size:10pt; vertical-align:top; height:50px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <div class="brand">Individuální úkol · Toxikokinetika a toxikodynamika drog</div>
+  <div id="progress-track"><div id="progress-fill"></div></div>
+  <div id="counter">1 / 1</div>
+  <button id="menu-btn" onclick="toggleOverlay(true)">Obsah</button>
+</div>
+
+<div id="deck"></div>
+
+<div id="navbtns">
+  <button class="navbtn" id="prevBtn" onclick="prevSlide()">←</button>
+  <button class="navbtn" id="nextBtn" onclick="nextSlide()">→</button>
+</div>
+
+<div id="overlay">
+  <button id="overlay-close" onclick="toggleOverlay(false)">×</button>
+  <h3>Přeskočit na</h3>
+  <ul id="overlay-list"></ul>
+</div>
+
+<!-- ============ PRINT SHEETS (hidden on screen, shown only via window.print) ============ -->
+<div class="print-sheet sheet-individual">
+  <h1>Toxikokinetika a toxikodynamika aktuálně užívané drogy (užívaných drog)</h1>
+  <div class="sub">Úvod do toxikologie 2026 · Individuální/skupinový úkol</div>
+  <p>Číslo studujícího: <strong>_____</strong> &nbsp;&nbsp; Přidělená látka: <strong>______________________</strong></p>
+  <h2>1. Identifikace látky</h2>
+  <ul><li>Název (čj/aj), chemická třída, CAS, legální status v ČR</li></ul>
+  <div class="line"></div><div class="line"></div><div class="line"></div>
+  <h2>2. Toxikokinetika</h2>
+  <ul><li>Cesta vstupu · ionizace/pKa a vstřebávání · distribuce a HEB · biotransformace (enzymy, aktivní metabolit) · eliminace a poločas</li></ul>
+  <div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div>
+  <h2>3. Toxikodynamika</h2>
+  <ul><li>Molekulární cíl · typ interakce · mechanismus akutní toxicity · tolerance/závislost</li></ul>
+  <div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div>
+  <h2>4. Reálný rozměr</h2>
+  <ul><li>Kazuistika/epidemiologie · lékové interakce · antidotum/léčba</li></ul>
+  <div class="line"></div><div class="line"></div><div class="line"></div>
+  <h2>5. Zdroje (min. 4)</h2>
+  <div class="line"></div><div class="line"></div><div class="line"></div>
+</div>
+
+<div class="print-sheet sheet-krokb">
+  <h1>Pracovní list — krok B</h1>
+  <div class="sub">Vzájemná výuka ve skupině · Úvod do toxikologie 2026</div>
+  <p>Skupina č.: <strong>_____</strong> &nbsp;&nbsp; Moje číslo a látka: <strong>______________________</strong></p>
+  <table>
+    <tr><th>Látka spolužáka</th><th>Hlavní mechanismus</th><th>Nejzajímavější riziko/fakt</th><th>Moje otázka</th></tr>
+    <tr><td></td><td></td><td></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td></tr>
+  </table>
+</div>
+
+<div class="print-sheet sheet-krokc">
+  <h1>Skupinová syntéza — krok C</h1>
+  <div class="sub">Úvod do toxikologie 2026 · Seminář 8. prosince</div>
+  <p>Skupina č.: <strong>_____</strong> &nbsp;&nbsp; Členové (čísla): <strong>______________________</strong></p>
+  <h2>Zvolte úhel syntézy</h2>
+  <ul>
+    <li>☐ 1. Časová osa účinku</li>
+    <li>☐ 2. Mapa cílů v těle</li>
+    <li>☐ 3. Žebříček rizika</li>
+    <li>☐ 4. Detoxikace vs. bioaktivace</li>
+    <li>☐ 5. „Co se stane, když…“</li>
+    <li>☐ 6. Vlastní nápad</li>
+  </ul>
+  <h2>Odůvodnění volby</h2>
+  <div class="line"></div><div class="line"></div>
+  <h2>Hlavní poznatek pro plénum</h2>
+  <div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div>
+</div>
+
+<script>
+const slides = [];
+function slide(id, title, html){ slides.push({id, title, html}); }
+
+/* ================= 0. TITLE ================= */
+slide('title','Titulní strana', `
+  <div class="slide-inner">
+    <p class="eyebrow">Úvod do toxikologie 2026 · Individuální nebo skupinový úkol</p>
+    <h1 class="headline">Toxikokinetika a toxikodynamika aktuálně užívaných drog</h1>
+    <p class="lede">Tento úkol nahrazuje odpadlé přednášky 20. října a 17. listopadu. Zpracujete samostatně nebo ve skupině (max 4 osoby) přidělené látky, každý studující má své číslo dle tabulky v Teams. <br>8. prosince proběhne společný seminář s losováním do skupin, vzájemnou výukou, syntézou informací a prezentacemi.</p>
+    <p class="footer-note">Procházejte stránku šipkami nebo tlačítkem „Obsah" vpravo nahoře.</p>
+  </div>
+`);
+
+/* ================= 1. HARMONOGRAM CELKOVY ================= */
+slide('harmonogram-celkovy','Harmonogram úkolu', `
+  <div class="slide-inner">
+    <p class="eyebrow">Přehled</p>
+    <h2 class="headline">Harmonogram celého úkolu</h2>
+    <table class="data-table">
+      <tr><th>Termín</th><th>Co se děje</th></tr>
+      <tr><td>nyní</td><td>zveřejnění zadání na této stránce</td></tr>
+      <tr><td>20. 10. (místo přednášky)</td><td>samostatná práce na individuálním zadání</td></tr>
+      <tr class="highlight"><td>do 17. 11. (místo přednášky)</td><td>odevzdání PRACOVNÍ verze individuálního zadání do Teams</td></tr>
+      <tr class="highlight"><td>do neděle 6. 12., 23:59</td><td>odevzdání FINÁLNÍ verze individuálního zadání do Teams</td></tr>
+      <tr><td><strong>8. 12.</strong></td><td><strong>seminář — losování skupin, vzájemná výuka, syntéza, prezentace</strong></td></tr>
+    </table>
+    <p class="footer-note"> Odevzdávejte vždy do své vlastní složky (jméno/jména) ve  vytvořeném adresáři Drogy_úkol v Teams.<br> V průběhu úkolu máte možnost konzultací.<br> Seminář 8.12. proběhne pouze s pracovním listem přípravy (bez možnosti dohledávání dalších informací a dat).</p>
+  </div>
+`);
+
+/* ================= 2. STRUKTURA UKOLU ================= */
+slide('struktura-ukolu','Jak je úkol strukturovaný', `
+  <div class="slide-inner">
+    <p class="eyebrow">Přehled</p>
+    <h2 class="headline">Tři fáze úkolu</h2>
+    <div class="grid-3">
+      <div class="card"><div class="tag">fáze 1 · individuálně/ve skupině</div><p class="body-text" style="margin:0;"><strong>Vlastní příprava</strong><br>Každý zpracuje svou přidělenou látku podle šablony — toxikokinetika, toxikodynamika, reálný případ.</p></div>
+      <div class="card"><div class="tag">fáze 2 · krok B</div><p class="body-text" style="margin:0;"><strong>Vzájemná výuka</strong><br>8. 12. ve skupině po 5 (losem) — každý vysvětlí svou látku ostatním, bez internetu, jen z poznámek.</p></div>
+      <div class="card"><div class="tag">fáze 3 · kroky C+D</div><p class="body-text" style="margin:0;"><strong>Syntéza a prezentace</strong><br>Skupina sestaví společný výstup a krátce ho odprezentuje celé třídě.</p></div>
+    </div>
+    <blockquote class="quote" style="margin-top:20px;font-size:21px;">Cílem není jen „umět svou látku", ale umět ji vysvětlit ostatním a propojit s látkami spolužáků pomocí konceptů z přednášek 1–4.</blockquote>
+  </div>
+`);
+
+/* ================= 3. LITERATURA UVOD ================= */
+slide('literatura-uvod','Práce s literaturou — úvod', `
+  <div class="slide-inner">
+    <p class="eyebrow">Jak pracovat s literaturou</p>
+    <h2 class="headline">Proč nestačí jeden zdroj</h2>
+    <p class="body-text">PubChem vám dá chemickou strukturu, ale obvykle ne klinický kontext. Google vám dá rychlou odpověď, ale ne nutně spolehlivou. Pro kvalitní zpracování své látky budete potřebovat zdroje ze čtyř různých vrstev — každá odpovídá na jinou část zadání.</p>
+    <div class="grid-4" style="margin-top:16px;">
+      <div class="card"><div class="tag">vrstva 1</div><p class="body-text" style="margin:0;font-size:16px;"><strong>Chemická data</strong></p></div>
+      <div class="card"><div class="tag">vrstva 2</div><p class="body-text" style="margin:0;font-size:16px;"><strong>Toxikologický kontext</strong></p></div>
+      <div class="card"><div class="tag">vrstva 3</div><p class="body-text" style="margin:0;font-size:16px;"><strong>Epidemiologický rozměr</strong></p></div>
+      <div class="card"><div class="tag">vrstva 4</div><p class="body-text" style="margin:0;font-size:16px;"><strong>S kritickým odstupem</strong></p></div>
+    </div>
+    <p class="footer-note">Následujících pět slidů rozebírá každou vrstvu podrobně.</p>
+  </div>
+`);
+
+/* ================= 4. LITERATURA VRSTVA 1 ================= */
+slide('literatura-vrstva1','Vrstva 1 — chemická data', `
+  <div class="slide-inner">
+    <p class="eyebrow">Práce s literaturou · vrstva 1 ze 4</p>
+    <h2 class="headline">Chemická data — kde začít</h2>
+    <div class="grid-2">
+      <div class="card">
+        <p class="body-text" style="margin:0;"><strong>PubChem</strong><br>Struktura, CAS číslo, SMILES, pKa, log P, GHS klasifikace. Všech 30 látek v zadání jsou reálné, chemicky definované sloučeniny s CAS číslem — měly by jít dohledat všechny.</p>
+      </div>
+      <div class="card">
+        <p class="body-text" style="margin:0;"><strong>DrugBank</strong><br>U látek s lékařským využitím (opioidy, benzodiazepiny, ketamin…) má přímo strukturovanou farmakokinetiku — poločas, biotransformaci, zapojené CYP enzymy. Pro toxikokinetickou část je to nejcennější zdroj.</p>
+      </div>
+    </div>
+    <div class="card" style="margin-top:14px;border-color:var(--danger);">
+      <p class="body-text" style="margin:0;"><strong>Tip:</strong> pokud PubChem nenajde látku podle slangového/tržního názvu, zkuste hledat podle CAS čísla nebo systematického chemického názvu.</p>
+    </div>
+  </div>
+`);
+
+/* ================= 5. LITERATURA VRSTVA 2 ================= */
+slide('literatura-vrstva2','Vrstva 2 — toxikologický kontext', `
+  <div class="slide-inner">
+    <p class="eyebrow">Práce s literaturou · vrstva 2 ze 4</p>
+    <h2 class="headline">Toxikologický a klinický kontext</h2>
+    <div class="grid-2">
+      <div class="card">
+        <p class="body-text" style="margin:0;"><strong>TIS — Toxikologické informační středisko (tis-cz.cz)</strong><br>Stejný zdroj, který jsme použili u methanolu v přednášce 4. Pokud pro vaši látku existuje odborné doporučení k léčbě otravy, najdete ho tady.</p>
+      </div>
+      <div class="card">
+        <p class="body-text" style="margin:0;"><strong>PubMed / Google Scholar</strong><br>Mechanistické studie, kazuistiky otrav, forenzní toxikologie. Hledejte anglicky, klíčová slova typu „pharmacokinetics", „case report intoxication", „fatal poisoning" + název látky.</p>
+      </div>
+    </div>
+    <p class="body-text" style="margin-top:14px;">Tahle vrstva vám dá odpovědi na otázky z bodu 3 a 4 zadání <br>— mechanismus toxicity, předávkování, léčba.</p>
+  </div>
+`);
+
+/* ================= 6. LITERATURA VRSTVA 3 ================= */
+slide('literatura-vrstva3','Vrstva 3 — epidemiologický rozměr', `
+  <div class="slide-inner">
+    <p class="eyebrow">Práce s literaturou · vrstva 3 ze 4</p>
+    <h2 class="headline">Reálný/epidemiologický rozměr</h2>
+    <div class="grid-2">
+      <div class="card">
+        <p class="body-text" style="margin:0;"><strong>EMCDDA</strong> (European Monitoring Centre for Drugs and Drug Addiction)<br>Klíčový zdroj zejména pro Nové psychoaktivní substance (NPS) a novější látky ve vašem zadání. Obsahuje „Risk Assessment" reporty a profily trhu s reálnými daty o otravách.</p>
+      </div>
+      <div class="card">
+        <p class="body-text" style="margin:0;"><strong>Národní monitorovací středisko pro drogy a závislosti (vláda ČR)</strong><br>České statistiky a výroční zprávy.<br><strong>EUDA - Agentura Evrospké unie pro drogy</strong><br>Nezávislé vědecké poznatky, statistiky a odborná doporučení.</p>
+      </div>
+    </div>
+    <p class="body-text" style="margin-top:14px;">Doplňkově: <strong>UNODC Early Warning Advisory</strong> pro NPS v globálním měřítku.</p>
+  </div>
+`);
+
+/* ================= 7. LITERATURA VRSTVA 4 ================= */
+slide('literatura-vrstva4','Vrstva 4 — s kritickým odstupem', `
+  <div class="slide-inner">
+    <p class="eyebrow">Práce s literaturou · vrstva 4 ze 4</p>
+    <h2 class="headline">Zdroje, se kterými pracujte kriticky</h2>
+    <div class="card" style="border-color:var(--danger);">
+      <p class="body-text" style="margin:0;"><strong>Erowid a diskusní fóra</strong><br>Subjektivní reporty uživatelů. <strong>Nejsou vědeckým zdrojem</strong> — nejde o kontrolované dávkování, chybí kontrolní skupina, silný survivorship bias (lidé, kteří zemřeli, report nenapíšou). Hodí se ale k pochopení subjektivních účinků a běžných kombinací u látek, kde chybí klinická literatura — typicky u novějších NPS.</p>
+    </div>
+    <blockquote class="quote" style="margin-top:18px;font-size:20px;">Pokud z Erowid něco použijete, napište to do textu výslovně jako „podle neověřených uživatelských reportů" — nikdy to neprezentujte jako klinický fakt.</blockquote>
+  </div>
+`);
+
+/* ================= 8. CHYBEJICI DATA ================= */
+slide('literatura-chybejici','Co dělat, když data chybí', `
+  <div class="slide-inner">
+    <p class="eyebrow">Práce s literaturou</p>
+    <h2 class="headline">Co dělat, když data chybí</h2>
+    <p class="body-text">U šesti látek v zadání (HHC, JWH-018, AB-PINACA, 2C-B, 25I-NBOMe, 3-MeO-PCP, U-47700) bude dat výrazně méně než u klasických látek — nejde o chybu vašeho hledání, je to realita nových/méně prostudovaných látek.</p>
+    <div class="grid-2" style="margin-top:14px;">
+      <div class="card"><p class="body-text" style="margin:0;"><strong>Strukturní analogie</strong> — podívejte se na chemicky příbuzné, lépe prostudované látky (např. JWH-018 vs. jiné syntetické kanabinoidy) a odhadněte mechanismus podle podobnosti struktury.</p></div>
+      <div class="card"><p class="body-text" style="margin:0;"><strong>Regulatorní risk assessment</strong> — EMCDDA zprávy často obsahují i to málo dat, co existuje, včetně forenzních kazuistik.</p></div>
+    </div>
+    <div class="card" style="margin-top:14px;">
+      <p class="body-text" style="margin:0;"><strong>Nejdůležitější:</strong> pokud data chybí, napište to do práce otevřeně („pro tuto látku nebyla dohledána klinická data o X") místo abyste si informaci domysleli. Schopnost pracovat s neúplnými daty je u nových látek součástí reálné toxikologické praxe.</p>
+    </div>
+  </div>
+`);
+
+/* ================= 9. LITERATURA KVIZ ================= */
+slide('literatura-kviz','Kontrolní úkol: spárujte zdroje', `
+  <div class="slide-inner">
+    <p class="eyebrow">Práce s literaturou · kontrolní úkol</p>
+    <h2 class="headline">Spárujte zdroj s typem informace</h2>
+    <div class="match-wrap">
+      <div>
+        <div class="match-col-title">ZDROJ</div>
+        <div id="match-left"></div>
+      </div>
+      <div>
+        <div class="match-col-title">CO TAM NAJDETE</div>
+        <div id="match-right"></div>
+      </div>
+    </div>
+    <div class="match-result" id="match-result"></div>
+  </div>
+`);
+
+/* ================= 10. SABLONA ZADANI ================= */
+slide('sablona-zadani','Šablona individuálního zadání', `
+  <div class="slide-inner">
+    <p class="eyebrow">Fáze 1 — individuální příprava</p>
+    <h2 class="headline">Co má obsahovat vaše individuální zadání</h2>
+    <ul class="plain">
+      <li><strong>1. Identifikace látky</strong> — název, chemická třída, CAS, legální status</li>
+      <li><strong>2. Toxikokinetika</strong> — cesta vstupu, ionizace/pKa, distribuce a HEB, biotransformace, eliminace (přednáška 3–4)</li>
+      <li><strong>3. Toxikodynamika</strong> — molekulární cíl, typ interakce, mechanismus toxicity, tolerance (přednáška 2)</li>
+      <li><strong>4. Reálný rozměr</strong> — kazuistika, interakce, antidotum</li>
+      <li><strong>5. Zdroje</strong> — min. 4, podle schématu z předchozích slidů</li>
+    </ul>
+    <p class="body-text" style="margin-top:12px;">Doporučený rozsah: 2–3 normostrany. Odkazujte se přímo na koncepty z přednášek (např. „viz Henderson–Hasselbalchova rovnice, přednáška 3").</p>
+    <div class="btn-row">
+      <a class="btn" href="ukol_drogy/sablony/Sablona_individualni_zadani.docx" download>⬇ Stáhnout šablonu (Word)</a>
+      <button class="btn secondary" onclick="printSheet('individual')">🖶 Tisk šablony</button>
+    </div>
+  </div>
+`);
+
+/* ================= 11. KARTY GRID ================= */
+slide('karty-grid','30 individuálních zadání', `
+  <div class="slide-inner">
+    <p class="eyebrow">Fáze 1 — přidělení látky</p>
+    <h2 class="headline">Vaše číslo, vaše látka</h2>
+    <p class="body-text">Najděte si své přidělené číslo a klikněte na kartu — zobrazí se vaše látka a krátká nápověda, na co se při zpracování konkrétně zaměřit.</p>
+    <div class="assign-grid" id="assign-grid"></div>
+    <div class="assign-detail" id="assign-detail"></div>
+  </div>
+`);
+
+/* ================= 12. KROK B ================= */
+slide('krok-b','Krok B — vzájemná výuka', `
+  <div class="slide-inner">
+    <p class="eyebrow">Seminář 8. 12. — krok B</p>
+    <h2 class="headline">Vzájemná výuka ve skupině</h2>
+    <ul class="plain">
+      <li>Ve skupině po 5 postupně vysvětlíte svou látku ostatním — <strong>bez internetu</strong>, jen z vlastních poznámek</li>
+      <li>Cca 4–5 minut na osobu, skupina klade doplňující otázky</li>
+      <li>Zatímco posloucháte spolužáky, vyplňujete pracovní list — pro každého spolužáka jeden řádek: hlavní mechanismus, nejzajímavější riziko, vaše otázka</li>
+    </ul>
+    <div class="card" style="margin-top:14px;">
+      <p class="body-text" style="margin:0;">List se po semináři odevzdává <strong>individuálně</strong> do Teams — je to hlavní podklad pro to, jak se pozná, kdo byl připravený a kdo aktivně poslouchal.</p>
+    </div>
+    <div class="btn-row">
+      <a class="btn" href="ukol_drogy/sablony/Pracovni_list_krok_B.docx" download>⬇ Stáhnout pracovní list (Word)</a>
+      <button class="btn secondary" onclick="printSheet('krokb')">🖶 Tisk pracovního listu</button>
+    </div>
+  </div>
+`);
+
+/* ================= 13. KROK C ================= */
+slide('krok-c','Krok C — skupinová syntéza', `
+  <div class="slide-inner">
+    <p class="eyebrow">Seminář 8. 12. — krok C</p>
+    <h2 class="headline">Skupinová syntéza — vyberte úhel pohledu</h2>
+    <ul class="plain">
+      <li><strong>1. Časová osa účinku</strong> — nástup, vrchol a odeznění účinku všech 5 látek na jedné ose</li>
+      <li><strong>2. Mapa cílů v těle</strong> — kde látky zasahují (receptory/enzymy/kanály), co mají společné a odlišné</li>
+      <li><strong>3. Žebříček rizika</strong> — seřadit podle letality/bezpečnostního okna s odůvodněním</li>
+      <li><strong>4. Detoxikace vs. bioaktivace</strong> — jak si tělo poradí s každou látkou, kde vzniká nebezpečný metabolit</li>
+      <li><strong>5. „Co se stane, když…"</strong> — fiktivní kazuistika kombinace dvou a více látek ze skupiny</li>
+      <li><strong>6. Vlastní nápad</strong> — musí použít min. 2 koncepty z přednášek a zahrnout všech 5 látek</li>
+    </ul>
+    <div class="btn-row">
+      <a class="btn" href="ukol_drogy/sablony/Synteticka_karta_krok_C.docx" download>⬇ Stáhnout syntézní kartu (Word)</a>
+      <button class="btn secondary" onclick="printSheet('krokc')">🖶 Tisk syntézní karty</button>
+    </div>
+  </div>
+`);
+
+/* ================= 14. KROK D ================= */
+slide('krok-d','Krok D — prezentace', `
+  <div class="slide-inner">
+    <p class="eyebrow">Seminář 8. 12. — krok D</p>
+    <h2 class="headline">Pravidla prezentace</h2>
+    <div class="grid-2">
+      <div class="card"><p class="body-text" style="margin:0;"><strong>Bez internetu</strong> — pouze vlastní poznámky a to, co jste se naučili ve skupině.</p></div>
+      <div class="card"><p class="body-text" style="margin:0;"><strong>4 minuty na skupinu</strong> — 6 skupin × 4 min = 24 minut celkem, plus krátké dotazy.</p></div>
+    </div>
+    <p class="body-text" style="margin-top:14px;">Mluvčího může skupina zvolit, nebo se může střídat — není nutné, aby mluvil jen jeden člověk. Cílem je srozumitelně předat hlavní poznatek syntézy (krok C), ne zopakovat všech pět individuálních zadání.</p>
+  </div>
+`);
+
+/* ================= 15. HODNOCENI ================= */
+slide('hodnoceni','Hodnocení', `
+  <div class="slide-inner">
+    <p class="eyebrow">Jak se úkol hodnotí</p>
+    <h2 class="headline">Čtyři nezávislé složky hodnocení</h2>
+    <table class="data-table">
+      <tr><th>Složka</th><th>Hodnoceno</th><th>Orientační váha</th></tr>
+      <tr><td>Individuální písemné zadání</td><td>individuálně</td><td>40 %</td></tr>
+      <tr><td>Pracovní list krok B</td><td>individuálně</td><td>20 %</td></tr>
+      <tr><td>Vaše připravenost při vzájemné výuce (pozorování)</td><td>individuálně</td><td>15 %</td></tr>
+      <tr class="highlight"><td>Skupinová syntéza (krok C + prezentace D)</td><td>sdíleně za skupinu</td><td>25 %</td></tr>
+    </table>
+</div>
+`);
+
+/* ================= 16. LOSOVACKA ================= */
+slide('losovacka','Losování skupin', `
+  <div class="slide-inner">
+    <p class="eyebrow">Seminář 8. 12. — živé losování</p>
+    <h2 class="headline">Losování do 6 skupin po 5</h2>
+    <p class="body-text">Losování je navržené tak, aby každá skupina dostala přesně jednu látku z každé ze 6 tříd (opioidy, stimulancia, kanabinoidy, sedativa, halucinogeny, NPS) — konkrétní přiřazení je ale plně náhodné.</p>
+    <div class="lottery-controls">
+      <button class="btn" onclick="runLottery()">🎲 Losovat skupiny</button>
+      <button class="btn secondary" id="relotteryBtn" onclick="runLottery()" style="display:none;">Losovat znovu</button>
+    </div>
+    <div class="lottery-groups" id="lottery-groups"></div>
+  </div>
+`);
+
+/* ================= 17. CASOVACE ================= */
+slide('casovace','Časovače pro seminář', `
+  <div class="slide-inner">
+    <p class="eyebrow">Seminář 8. 12. — časování</p>
+    <h2 class="headline">Časovače kroků B, C, D</h2>
+    <p class="body-text">Nezávislá tlačítka — spouštějte každou fázi ručně, podle toho, jak se skutečný průběh semináře posune.</p>
+    <div class="timer-grid">
+      <div class="timer-card" id="timer-B">
+        <h4>Krok B — vzájemná výuka</h4>
+        <div class="timer-display" id="timer-B-display">25:00</div>
+        <div class="timer-bar-track"><div class="timer-bar-fill" id="timer-B-bar"></div></div>
+        <div class="timer-btns">
+          <button onclick="timerStart('B')">Start</button>
+          <button onclick="timerPause('B')">Pauza</button>
+          <button onclick="timerReset('B')">Reset</button>
+        </div>
+        <div class="timer-mins">min: <input type="number" id="timer-B-mins" value="25" min="1" max="90" onchange="timerReset('B')"></div>
+      </div>
+      <div class="timer-card" id="timer-C">
+        <h4>Krok C — syntéza</h4>
+        <div class="timer-display" id="timer-C-display">20:00</div>
+        <div class="timer-bar-track"><div class="timer-bar-fill" id="timer-C-bar"></div></div>
+        <div class="timer-btns">
+          <button onclick="timerStart('C')">Start</button>
+          <button onclick="timerPause('C')">Pauza</button>
+          <button onclick="timerReset('C')">Reset</button>
+        </div>
+        <div class="timer-mins">min: <input type="number" id="timer-C-mins" value="20" min="1" max="90" onchange="timerReset('C')"></div>
+      </div>
+      <div class="timer-card" id="timer-D">
+        <h4>Krok D — prezentace</h4>
+        <div class="timer-display" id="timer-D-display">32:00</div>
+        <div class="timer-bar-track"><div class="timer-bar-fill" id="timer-D-bar"></div></div>
+        <div class="timer-btns">
+          <button onclick="timerStart('D')">Start</button>
+          <button onclick="timerPause('D')">Pauza</button>
+          <button onclick="timerReset('D')">Reset</button>
+        </div>
+        <div class="timer-mins">min: <input type="number" id="timer-D-mins" value="32" min="1" max="90" onchange="timerReset('D')"></div>
+      </div>
+    </div>
+  </div>
+`);
+
+/* ================= 18. HARMONOGRAM SEMINARE ================= */
+slide('harmonogram-seminare','Harmonogram semináře 8. 12.', `
+  <div class="slide-inner">
+    <p class="eyebrow">90 minut — minuta po minutě</p>
+    <h2 class="headline">Harmonogram semináře 8. prosince</h2>
+    <table class="data-table">
+      <tr><th>Čas</th><th>Co se děje</th></tr>
+      <tr><td>0–5 min</td><td>losování skupin, rozdání pracovních listů B a C</td></tr>
+      <tr><td>5–30 min</td><td>krok B — vzájemná výuka ve skupinách (souběžně ve všech 6)</td></tr>
+      <tr><td>30–50 min</td><td>krok C — skupina sestavuje syntézu</td></tr>
+      <tr><td>50–82 min</td><td>krok D — 6× 4min prezentace + dotazy</td></tr>
+      <tr><td>82–90 min</td><td>shrnutí, odevzdání pracovních listů B a C</td></tr>
+    </table>
+ </div>
+`);
+
+/* ================= 19. CLOSING ================= */
+slide('closing','Shrnutí', `
+  <div class="slide-inner">
+    <p class="eyebrow">Na závěr</p>
+    <h2 class="headline">Shrnutí a kontakt</h2>
+    <div class="grid-2">
+      <div class="card">
+        <p class="body-text" style="margin-top:0;"><strong>Nezapomeňte:</strong></p>
+        <ul class="plain">
+          <li>finální verze individuálního zadání do Teams nejpozději do neděle 6. 12., 23:59</li>
+          <li>8. 12. s sebou — vytištěné/ručně psané poznámky, bez notebooku/mobilu během prezentace</li>
+          <li>pracovní list B a syntézní kartu C odevzdáváte po semináři (foto/sken)</li>
+        </ul>
+      </div>
+      <div class="card">
+        <p class="body-text" style="margin:0;"><strong>Dotazy</strong><br>V případě nejasností k zadání nebo problémů s dohledáním zdrojů u vaší látky napište e-mailem nebo se zeptejte na konzultaci.</p>
+      </div>
+    </div>
+  </div>
+`);
+
+/* ================= RENDER ================= */
+const deck = document.getElementById('deck');
+slides.forEach((s,i)=>{
+  const el = document.createElement('div');
+  el.className='slide'; el.id='slide-'+i; el.innerHTML=s.html;
+  deck.appendChild(el);
+});
+const overlayList = document.getElementById('overlay-list');
+slides.forEach((s,i)=>{
+  const li = document.createElement('li');
+  li.innerHTML = '<span>'+String(i+1).padStart(2,'0')+'</span>'+s.title;
+  li.onclick = ()=>{ goTo(i); toggleOverlay(false); };
+  overlayList.appendChild(li);
+});
+
+let current = 0;
+function render(){
+  document.querySelectorAll('.slide').forEach((el,i)=> el.classList.toggle('active', i===current));
+  document.getElementById('progress-fill').style.width = ((current+1)/slides.length*100)+'%';
+  document.getElementById('counter').textContent = (current+1)+' / '+slides.length;
+  document.getElementById('prevBtn').disabled = current===0;
+  document.getElementById('nextBtn').disabled = current===slides.length-1;
+  initSlideWidgets(current);
+}
+function goTo(i){ current = Math.max(0, Math.min(slides.length-1, i)); render(); }
+function nextSlide(){ goTo(current+1); }
+function prevSlide(){ goTo(current-1); }
+document.addEventListener('keydown', (e)=>{
+  if(document.getElementById('overlay').classList.contains('show')){ if(e.key==='Escape') toggleOverlay(false); return; }
+  if(e.key==='ArrowRight' || e.key===' ') nextSlide();
+  if(e.key==='ArrowLeft') prevSlide();
+  if(e.key==='Escape') toggleOverlay(false);
+});
+function toggleOverlay(show){ document.getElementById('overlay').classList.toggle('show', show); }
+
+/* ================= PRINT ================= */
+function printSheet(which){
+  document.body.setAttribute('data-print-sheet', which);
+  window.print();
+}
+window.addEventListener('afterprint', ()=> document.body.removeAttribute('data-print-sheet'));
+
+/* ================= WIDGETS ================= */
+const initialized = {};
+function initSlideWidgets(i){
+  const id = slides[i].id;
+  if(initialized[id]) return;
+  initialized[id] = true;
+  if(id==='literatura-kviz') initSourceMatching();
+  if(id==='karty-grid') initAssignGrid();
+  if(id==='losovacka') initLottery();
+}
+
+/* ---- literature source matching ---- */
+function initSourceMatching(){
+  const pairs = [
+    {left:'PubChem', right:'chemická struktura, CAS, pKa, log P, GHS klasifikace'},
+    {left:'DrugBank', right:'farmakokinetika léčiv — poločas, biotransformace, CYP enzymy'},
+    {left:'TIS (tis-cz.cz)', right:'odborné postupy léčby akutní otravy'},
+    {left:'EMCDDA', right:'rizikové zprávy a epidemiologická data o NPS v Evropě'},
+    {left:'Erowid', right:'subjektivní uživatelské reporty — jen s kritickým odstupem'}
+  ];
+  const leftItems = pairs.map((p,i)=>({text:p.left, idx:i}));
+  const rightItems = pairs.map((p,i)=>({text:p.right, idx:i}));
+  for(let i=rightItems.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [rightItems[i],rightItems[j]]=[rightItems[j],rightItems[i]]; }
+  const leftEl = document.getElementById('match-left');
+  const rightEl = document.getElementById('match-right');
+  let selectedLeft = null, solved = 0;
+  leftItems.forEach(item=>{
+    const div = document.createElement('div');
+    div.className='match-item'; div.textContent = item.text; div.dataset.idx = item.idx;
+    div.onclick = ()=>{
+      if(div.classList.contains('correct')) return;
+      leftEl.querySelectorAll('.match-item').forEach(x=>x.classList.remove('selected'));
+      div.classList.add('selected'); selectedLeft = div;
+    };
+    leftEl.appendChild(div);
+  });
+  rightItems.forEach(item=>{
+    const div = document.createElement('div');
+    div.className='match-item'; div.textContent = item.text; div.dataset.idx = item.idx;
+    div.onclick = ()=>{
+      if(!selectedLeft || div.classList.contains('correct')) return;
+      const isMatch = selectedLeft.dataset.idx === div.dataset.idx;
+      if(isMatch){
+        selectedLeft.classList.remove('selected'); selectedLeft.classList.add('correct');
+        div.classList.add('correct'); solved++; selectedLeft = null;
+        if(solved===pairs.length){ document.getElementById('match-result').textContent = 'Výborně — teď víte, kde co hledat.'; }
+      } else {
+        div.classList.add('wrong'); setTimeout(()=>div.classList.remove('wrong'), 500);
+      }
+    };
+    rightEl.appendChild(div);
+  });
+}
+
+/* ---- 30 substance cards ---- */
+const SUBSTANCES = [
+  {num:1, name:'Heroin (diacetylmorfin)', cls:'Opioidy', color:'#9C3B2E', hint:'Rychlá deacetylace na 6-MAM a morfin — porovnejte, proč je to farmakokineticky „účinnější" cesta k mozku než morfin samotný.'},
+  {num:2, name:'Fentanyl', cls:'Opioidy', color:'#9C3B2E', hint:'Extrémně úzké terapeutické okno — zaměřte se na to, proč i mikrogramové rozdíly v dávce rozhodují o přežití.'},
+  {num:3, name:'Tramadol', cls:'Opioidy', color:'#9C3B2E', hint:'Proléčivo aktivované až biotransformací přes CYP2D6 — bez metabolizace má jen slabý účinek. Co to znamená pro lidi s pomalým CYP2D6?'},
+  {num:4, name:'Metadon', cls:'Opioidy', color:'#9C3B2E', hint:'Velmi dlouhý a individuálně proměnlivý poločas — vysvětlete riziko kumulace při zahájení substituční léčby.'},
+  {num:5, name:'Oxykodon', cls:'Opioidy', color:'#9C3B2E', hint:'Srovnejte perorální biologickou dostupnost s heroinem/fentanylem — proč je nástup účinku pomalejší.'},
+  {num:6, name:'Kokain', cls:'Stimulancia', color:'#B9791E', hint:'Zároveň lokální anestetikum i stimulans — všimněte si dvojí farmakodynamiky (blokáda Na⁺ kanálů i zpětného vychytávání monoaminů).'},
+  {num:7, name:'Metamfetamin (pervitin)', cls:'Stimulancia', color:'#B9791E', hint:'Český kontext: vysvětlete, proč je právě tahle látka dlouhodobě nejrozšířenější tvrdou drogou v ČR.'},
+  {num:8, name:'MDMA', cls:'Stimulancia', color:'#B9791E', hint:'Kombinuje stimulační a mírně halucinogenní účinek — zaměřte se na riziko hyponatremie a hypertermie.'},
+  {num:9, name:'Amfetamin', cls:'Stimulancia', color:'#B9791E', hint:'Srovnejte mechanismus s metamfetaminem — proč metamfetamin lipofilněji proniká do CNS.'},
+  {num:10, name:'Nikotin', cls:'Stimulancia', color:'#B9791E', hint:'Legální látka s jasným receptorovým mechanismem (nAChR) — ukažte, že legální neznamená bezpečné.'},
+  {num:11, name:'THC (konopí)', cls:'Kanabinoidy', color:'#3E5C42', hint:'Klasický kanabinoidní receptor CB1 — porovnejte kouření vs. perorální požití (first-pass efekt, přednáška 3).'},
+  {num:12, name:'HHC (hexahydrokanabinol)', cls:'Kanabinoidy', color:'#3E5C42', hint:'Aktuální česká kauza (2023–24) — očekávejte řídká data, cvičte práci s nejistotou.'},
+  {num:13, name:'JWH-018 (Spice)', cls:'Kanabinoidy', color:'#3E5C42', hint:'Syntetický kanabinoid s mnohem vyšší afinitou k CB1 než THC — vysvětlete, proč je to nebezpečnější.'},
+  {num:14, name:'AB-PINACA', cls:'Kanabinoidy', color:'#3E5C42', hint:'Další generace syntetických kanabinoidů — hledejte rozdíly v síle účinku oproti JWH-018.'},
+  {num:15, name:'CBD (kanabidiol)', cls:'Kanabinoidy', color:'#3E5C42', hint:'Nepsychoaktivní kanabinoid — ukažte, proč přesto může ovlivňovat biotransformaci jiných látek (CYP interakce).'},
+  {num:16, name:'Diazepam', cls:'Sedativa/hypnotika', color:'#3A5A72', hint:'Dlouhodobě působící benzodiazepin s aktivními metabolity — proč účinek přetrvává déle, než by odpovídalo jeho vlastnímu poločasu.'},
+  {num:17, name:'GHB', cls:'Sedativa/hypnotika', color:'#3A5A72', hint:'Při vyšších dávkách se blíží kinetice nultého řádu — propojte s Widmarkovou rovnicí z přednášky 3.'},
+  {num:18, name:'Zolpidem', cls:'Sedativa/hypnotika', color:'#3A5A72', hint:'Krátkodobě působící hypnotikum — všimněte si rizika kombinace s alkoholem.'},
+  {num:19, name:'Fenobarbital', cls:'Sedativa/hypnotika', color:'#3A5A72', hint:'Induktor jaterních CYP enzymů — ukažte, jak ovlivňuje biotransformaci jiných léčiv.'},
+  {num:20, name:'Alprazolam', cls:'Sedativa/hypnotika', color:'#3A5A72', hint:'Vysoká účinnost v malých dávkách — zaměřte se na riziko útlumu dechu v kombinaci s opioidy.'},
+  {num:21, name:'LSD', cls:'Halucinogeny/disociativa', color:'#6E4B73', hint:'Extrémně nízké účinné dávky (mikrogramy) — zaměřte se na vazbu na serotoninové 5-HT2A receptory.'},
+  {num:22, name:'Psilocybin', cls:'Halucinogeny/disociativa', color:'#6E4B73', hint:'Proléčivo — aktivní formou je až psilocin. Ukažte ten biotransformační krok.'},
+  {num:23, name:'Ketamin', cls:'Halucinogeny/disociativa', color:'#6E4B73', hint:'Disociativní anestetikum s NMDA-receptorovým mechanismem — všimněte si duálního využití (medicína i zneužívání).'},
+  {num:24, name:'PCP', cls:'Halucinogeny/disociativa', color:'#6E4B73', hint:'Historicky první rekreačně zneužívaný NMDA-antagonista — porovnejte s ketaminem.'},
+  {num:25, name:'DMT', cls:'Halucinogeny/disociativa', color:'#6E4B73', hint:'Extrémně krátký účinek při kouření kvůli rychlé biotransformaci MAO enzymem — proč se tradičně kombinuje s MAO-inhibitorem (ayahuasca)?'},
+  {num:26, name:'Mefedron', cls:'NPS/designer', color:'#8F5D14', hint:'Katinon s rychlým nástupem a krátkým účinkem — vysvětlete, proč časté opakované dávkování zvyšuje riziko.'},
+  {num:27, name:'2C-B', cls:'NPS/designer', color:'#8F5D14', hint:'Fenetylaminový halucinogen na pomezí stimulancií a psychedelik.'},
+  {num:28, name:'25I-NBOMe', cls:'NPS/designer', color:'#8F5D14', hint:'Extrémně účinný agonista 5-HT2A — časté záměny s LSD vedly k fatálním předávkováním kvůli nejasnému dávkování.'},
+  {num:29, name:'3-MeO-PCP', cls:'NPS/designer', color:'#8F5D14', hint:'Disociativum s delším účinkem než ketamin — hledejte rozdíly v riziku útlumu dechu.'},
+  {num:30, name:'U-47700', cls:'NPS/designer', color:'#8F5D14', hint:'Syntetický opioid vzniklý obcházením legislativy drobnou změnou struktury — ukažte princip vzniku „designer" drog.'}
+];
+
+function initAssignGrid(){
+  const grid = document.getElementById('assign-grid');
+  const detail = document.getElementById('assign-detail');
+  SUBSTANCES.forEach(s=>{
+    const div = document.createElement('div');
+    div.className='assign-card';
+    div.innerHTML = `<div class="num">${s.num}</div><div class="cls-dot" style="background:${s.color};"></div>`;
+    div.onclick = ()=>{
+      detail.className = 'assign-detail show';
+      detail.innerHTML = `<div class="card">
+        <div class="tag" style="border-color:${s.color};color:${s.color};">${s.cls} · úkol č. ${s.num}</div>
+        <h3 style="font-family:var(--serif);font-weight:400;font-size:24px;margin:6px 0 10px 0;">${s.name}</h3>
+        <p class="body-text" style="margin:0;"><strong>Na co se zaměřit:</strong> ${s.hint}</p>
+      </div>`;
+      detail.scrollIntoView({behavior:'smooth', block:'nearest'});
+    };
+    grid.appendChild(div);
+  });
+}
+
+/* ---- lottery ---- */
+function initLottery(){ /* nothing to pre-render */ }
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+  return a;
+}
+function runLottery(){
+  const classes = {};
+  SUBSTANCES.forEach(s=>{ (classes[s.cls] = classes[s.cls]||[]).push(s.num); });
+  const classNames = Object.keys(classes);
+  const shuffled = classNames.map(c => shuffle(classes[c]));
+  const groups = [[],[],[],[],[],[]];
+  for(let g=0; g<6; g++){
+    for(let c=0; c<shuffled.length; c++){ groups[g].push(shuffled[c][g]); }
+  }
+  const wrap = document.getElementById('lottery-groups');
+  wrap.innerHTML = '';
+  groups.forEach((members,i)=>{
+    const div = document.createElement('div');
+    div.className = 'lottery-group';
+    div.innerHTML = `<h4>Skupina ${i+1}</h4>` + members.map(n=>`<div class="member">${n}</div>`).join('');
+    wrap.appendChild(div);
+  });
+  document.getElementById('relotteryBtn').style.display = 'inline-flex';
+}
+
+/* ---- timers ---- */
+const timers = {};
+function timerInit(key){
+  if(timers[key]) return timers[key];
+  const mins = parseInt(document.getElementById('timer-'+key+'-mins').value, 10) || 25;
+  timers[key] = { total: mins*60, remaining: mins*60, handle: null };
+  return timers[key];
+}
+function timerRender(key){
+  const t = timers[key];
+  const mm = String(Math.floor(t.remaining/60)).padStart(2,'0');
+  const ss = String(t.remaining%60).padStart(2,'0');
+  document.getElementById('timer-'+key+'-display').textContent = mm+':'+ss;
+  document.getElementById('timer-'+key+'-bar').style.width = (100*t.remaining/t.total)+'%';
+  const card = document.getElementById('timer-'+key);
+  if(t.remaining<=0){ card.classList.add('done'); } else { card.classList.remove('done'); }
+}
+function beep(){
+  try{
+    const ctx = new (window.AudioContext||window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.frequency.value = 880;
+    osc.connect(gain); gain.connect(ctx.destination);
+    gain.gain.setValueAtTime(0.2, ctx.currentTime);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.6);
+  }catch(e){}
+}
+function timerStart(key){
+  const t = timerInit(key);
+  if(t.handle) return;
+  t.handle = setInterval(()=>{
+    t.remaining = Math.max(0, t.remaining-1);
+    timerRender(key);
+    if(t.remaining===0){ clearInterval(t.handle); t.handle=null; beep(); }
+  }, 1000);
+}
+function timerPause(key){
+  const t = timers[key];
+  if(t && t.handle){ clearInterval(t.handle); t.handle=null; }
+}
+function timerReset(key){
+  if(timers[key] && timers[key].handle){ clearInterval(timers[key].handle); }
+  const mins = parseInt(document.getElementById('timer-'+key+'-mins').value, 10) || 25;
+  timers[key] = { total: mins*60, remaining: mins*60, handle: null };
+  timerRender(key);
+}
+['B','C','D'].forEach(k=>{ timers[k] = null; });
+
+render();
+</script>
+</body>
+</html>
