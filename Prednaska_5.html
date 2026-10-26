@@ -1,0 +1,1699 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Metody měření expozice a biologický monitoring — Přednáška 5</title>
+<style>
+  :root{
+    --paper:#F4F5EF;
+    --paper-deep:#ECEEE4;
+    --ink:#1E2019;
+    --ink-soft:#5A5D51;
+    --amber:#B9791E;
+    --amber-deep:#8F5D14;
+    --tox-green:#3E5C42;
+    --tox-green-deep:#2A3F2D;
+    --danger:#9C3B2E;
+    --blue:#3A5A72;
+    --blue-deep:#233C4E;
+    --line:#D6D6C6;
+    --card:#FFFFFE;
+    --serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', 'Book Antiqua', serif;
+    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --mono: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0; background:var(--paper); color:var(--ink); font-family:var(--sans);
+    overflow:hidden; font-size:18px;
+  }
+  ::selection{ background: var(--amber); color:#fff; }
+
+  #topbar{
+    position:fixed; top:0; left:0; right:0; height:54px;
+    display:flex; align-items:center; gap:16px; padding:0 20px; z-index:50;
+    background:linear-gradient(to bottom, rgba(244,245,239,0.97), rgba(244,245,239,0.85));
+    border-bottom:1px solid var(--line);
+  }
+  #topbar .brand{ font-family:var(--serif); font-size:16px; font-style:italic; color:var(--ink-soft); white-space:nowrap; }
+  #progress-track{ flex:1; height:3px; background:var(--line); border-radius:2px; overflow:hidden; }
+  #progress-fill{ height:100%; width:0%; background:var(--amber); transition:width .35s ease; }
+  #counter{ font-family:var(--mono); font-size:13px; color:var(--ink-soft); white-space:nowrap; }
+  #menu-btn{
+    font-family:var(--sans); font-size:14px; color:var(--ink); background:var(--card);
+    border:1px solid var(--line); border-radius:6px; padding:6px 12px; cursor:pointer;
+  }
+  #menu-btn:hover{ border-color:var(--amber); }
+
+  #deck{ position:relative; width:100%; height:100%; padding-top:54px; }
+  .slide{
+    position:absolute; inset:0; top:54px; display:flex; align-items:center; justify-content:center;
+    padding:36px 7vw 90px 7vw; opacity:0; visibility:hidden; transform:translateY(14px);
+    transition:opacity .4s ease, transform .4s ease; overflow-y:auto;
+  }
+  .slide.active{ opacity:1; visibility:visible; transform:translateY(0); }
+  .slide-inner{ width:100%; max-width:1000px; }
+  .eyebrow{ font-family:var(--mono); font-size:16px; letter-spacing:.02em; color:var(--amber-deep); margin:0 0 12px 0; }
+  h1.headline{ font-family:var(--serif); font-weight:400; font-size:clamp(30px,4.6vw,50px); line-height:1.1; margin:0 0 16px 0; }
+  h2.headline{ font-family:var(--serif); font-weight:400; font-size:clamp(24px,3.2vw,34px); line-height:1.18; margin:0 0 16px 0; }
+  p.lede{ font-size:19px; line-height:1.55; color:var(--ink-soft); max-width:700px; }
+  .body-text{ font-size:19px; line-height:1.6; color:var(--ink); max-width:760px; }
+  .body-text + .body-text{ margin-top:10px; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:10px; padding:20px 22px; }
+  .grid-2{ display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+  .grid-3{ display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+  .grid-4{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+  @media (max-width:800px){ .grid-2,.grid-3,.grid-4{ grid-template-columns:1fr; } }
+  .tag{ display:inline-block; font-family:var(--mono); font-size:12px; padding:3px 9px; border-radius:20px; border:1px solid var(--line); color:var(--ink-soft); margin-bottom:10px; }
+  .tag.new{ border-color:var(--danger); color:var(--danger); }
+  ul.plain{ margin:0; padding-left:22px; font-size:18px; }
+  ul.plain li{ margin-bottom:9px; line-height:1.5; }
+  ol.plain{ margin:0; padding-left:24px; font-size:18px; }
+  ol.plain li{ margin-bottom:9px; line-height:1.5; }
+  blockquote.quote{ font-family:var(--serif); font-style:italic; font-size:26px; line-height:1.4; color:var(--tox-green-deep); border-left:3px solid var(--amber); padding-left:22px; margin:22px 0; }
+  blockquote.quote cite{ display:block; font-size:15px; font-style:normal; color:var(--ink-soft); margin-top:8px; }
+  #navbtns{ position:fixed; bottom:22px; right:28px; display:flex; gap:10px; z-index:50; }
+  .navbtn{ width:46px; height:46px; border-radius:50%; border:1px solid var(--line); background:var(--card); color:var(--ink); font-size:19px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .navbtn:hover{ border-color:var(--amber); color:var(--amber-deep); }
+  .navbtn:disabled{ opacity:.3; cursor:default; }
+  #overlay{ position:fixed; inset:0; background:rgba(30,32,25,.94); z-index:100; display:none; padding:56px 8vw; overflow-y:auto; }
+  #overlay.show{ display:block; }
+  #overlay h3{ font-family:var(--serif); color:#fff; font-weight:400; font-size:23px; margin-bottom:20px; }
+  #overlay-list{ list-style:none; margin:0; padding:0; columns:2; column-gap:40px; }
+  @media (max-width:800px){ #overlay-list{ columns:1; } }
+  #overlay-list li{ color:#EDEEE6; font-size:16px; padding:9px 0; border-bottom:1px solid rgba(255,255,255,.12); cursor:pointer; break-inside:avoid; }
+  #overlay-list li span{ font-family:var(--mono); color:var(--amber); margin-right:10px; font-size:13px; }
+  #overlay-list li:hover{ color:var(--amber); }
+  #overlay-close{ position:absolute; top:22px; right:30px; color:#fff; font-size:28px; background:none; border:none; cursor:pointer; }
+
+  .quiz-card{ background:var(--card); border:1px solid var(--line); border-radius:12px; padding:24px 26px; margin-top:10px; }
+  .quiz-q{ font-size:19px; font-weight:600; margin-bottom:16px; line-height:1.45; }
+  .quiz-opt{ display:block; width:100%; text-align:left; padding:13px 16px; margin-bottom:10px; border:1px solid var(--line); border-radius:8px; background:#fff; cursor:pointer; font-size:18px; font-family:var(--sans); color:var(--ink); }
+  .quiz-opt:hover{ border-color:var(--amber); }
+  .quiz-opt.correct{ border-color:var(--tox-green); background:#EAF1EA; color:var(--tox-green-deep); font-weight:600; }
+  .quiz-opt.wrong{ border-color:var(--danger); background:#F7EAE7; color:var(--danger); }
+  .quiz-opt[disabled]{ cursor:default; }
+  .quiz-feedback{ margin-top:14px; font-size:18px; line-height:1.55; color:var(--ink-soft); display:none; }
+  .quiz-feedback.show{ display:block; }
+
+  table.data-table{ width:100%; border-collapse:collapse; font-size:18px; margin-top:10px; }
+  table.data-table th{ text-align:left; font-family:var(--mono); font-size:16px; color:var(--ink-soft); padding:9px 10px; border-bottom:1px solid var(--ink); }
+  table.data-table td{ padding:10px 10px; border-bottom:1px solid var(--line); }
+  table.data-table tr.highlight td{ background:#FBF0DD; font-weight:600; }
+  table.data-table.compact{ font-size:16.5px; }
+  table.data-table.compact th{ font-size:14px; padding:7px 8px; }
+  table.data-table.compact td{ padding:6px 8px; }
+  table.data-table td.num, table.data-table th.num{ text-align:right; font-variant-numeric:tabular-nums; }
+  td.over{ color:var(--danger); font-weight:700; }
+  td.ok{ color:var(--tox-green-deep); font-weight:600; }
+
+  .tl-item{ min-width:200px; background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px 16px; cursor:pointer; flex-shrink:0; }
+  .tl-item .tl-year{ font-family:var(--mono); font-size:18px; color:var(--amber-deep); }
+  .tl-item .tl-title{ font-family:var(--serif); font-size:20px; margin:4px 0 8px 0; }
+  .tl-item .tl-detail{ font-size:19px; color:var(--ink-soft); line-height:1.5; display:none; }
+  .tl-item.open .tl-detail{ display:block; }
+  .tl-item.open{ border-color:var(--amber); }
+
+  .footer-note{ margin-top:20px; font-size:18px; color:var(--ink-soft); font-family:var(--mono); line-height:1.5; }
+
+  .sources{ font-size:14px; color:var(--ink-soft); line-height:1.7; }
+
+  .diagram-box{ background:#fff; border:1px solid var(--line); border-radius:10px; padding:14px; margin-top:12px; }
+  .scheme-img{ width:100%; max-width:720px; display:block; margin:0 auto; border:1px solid var(--line); border-radius:8px; background:#fff; cursor:zoom-in; }
+  .scheme-img.wide{ max-width:900px; }
+  .scheme-img.narrow{ max-width:520px; }
+  .diagram-box svg{ cursor:zoom-in; }
+  figure.fig{ margin:12px 0 0 0; }
+  figure.fig figcaption{ font-size:14.5px; color:var(--ink-soft); text-align:center; margin-top:6px; line-height:1.45; }
+
+  #lightbox{ position:fixed; inset:0; background:rgba(15,16,12,.95); z-index:300; display:none; align-items:center; justify-content:center; padding:4vh 4vw; cursor:zoom-out; }
+  #lightbox.show{ display:flex; }
+  #lightbox-inner{ max-width:100%; max-height:100%; cursor:default; }
+  #lightbox-inner img{ display:block; max-width:92vw; max-height:92vh; border-radius:10px; }
+  #lightbox-inner svg{ display:block; width:92vw; height:auto; max-height:92vh; background:#fff; border-radius:10px; padding:28px; }
+  #lightbox-hint{ position:absolute; bottom:22px; left:50%; transform:translateX(-50%); color:#B9B9A8; font-family:var(--mono); font-size:13px; }
+
+  .match-wrap{ display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-top:14px; }
+  @media (max-width:760px){ .match-wrap{ grid-template-columns:1fr; } }
+  .match-col-title{ font-family:var(--mono); font-size:13px; color:var(--ink-soft); margin-bottom:8px; }
+  .match-item{ background:var(--card); border:1px solid var(--line); border-radius:8px; padding:11px 14px; margin-bottom:8px; font-size:18px; cursor:pointer; }
+  .match-item.selected{ border-color:var(--amber); background:#FBF0DD; }
+  .match-item.correct{ border-color:var(--tox-green); background:#EAF1EA; }
+  .match-item.wrong{ border-color:var(--danger); background:#F7EAE7; }
+  .match-result{ margin-top:14px; font-size:18px; color:var(--ink-soft); min-height:24px; }
+
+  details.calc{ background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px 18px; margin-top:12px; }
+  details.calc summary{ cursor:pointer; font-family:var(--sans); font-weight:600; color:var(--amber-deep); font-size:18px; outline:none; }
+  details.calc summary:hover{ color:var(--amber); }
+  details.calc[open] summary{ margin-bottom:10px; border-bottom:1px dashed var(--line); padding-bottom:8px; }
+  .calc-step{ font-family:var(--mono); font-size:19px; line-height:1.9; color:var(--ink); }
+  .calc-step .res{ color:var(--tox-green-deep); font-weight:700; }
+  .calc-step .bad{ color:var(--danger); font-weight:700; }
+  .calc-note{ font-family:var(--sans); font-size:18px; line-height:1.5; color:var(--ink-soft); margin-top:8px; }
+
+  /* zadání / řešení */
+  .task-box{ background:var(--card); border:1px solid var(--line); border-left:4px solid var(--amber); border-radius:10px; padding:16px 20px; margin-top:12px; }
+  .task-box ol{ margin:0; padding-left:24px; font-size:18px; }
+  .task-box ol li{ margin-bottom:8px; line-height:1.5; }
+  .sol-box{ background:#F3F7F2; border:1px solid #C9D8CA; border-left:4px solid var(--tox-green); border-radius:10px; padding:16px 20px; margin-top:12px; }
+  .sol-box .calc-step{ font-size:18px; line-height:1.8; }
+  .sol-label{ font-family:var(--mono); font-size:13px; color:var(--tox-green-deep); letter-spacing:.03em; margin-bottom:6px; }
+  .hint{ font-size:16px; color:var(--ink-soft); margin-top:10px; line-height:1.5; }
+  .prompt-box{ font-family:var(--mono); white-space:pre-wrap; font-size:15px; line-height:1.6; background:#fff; border:1px solid var(--line); border-left:4px solid var(--blue); border-radius:8px; padding:14px 18px; margin-top:12px; color:var(--ink); }
+  .step-row{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-top:12px; }
+  @media (max-width:800px){ .step-row{ grid-template-columns:1fr 1fr; } }
+  .step{ background:var(--card); border:1px solid var(--line); border-radius:8px; padding:10px 12px; font-size:15.5px; line-height:1.4; }
+  .step b{ display:block; font-family:var(--mono); font-size:12.5px; color:var(--blue); margin-bottom:3px; font-weight:600; }
+  .step.loop{ border-color:var(--blue); background:#EEF3F6; }
+
+  .expert-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:14px; }
+  @media (max-width:900px){ .expert-grid{ grid-template-columns:repeat(2,1fr); } }
+  @media (max-width:560px){ .expert-grid{ grid-template-columns:1fr; } }
+  .expert-card{ background:var(--card); border:1px solid var(--line); border-radius:8px; padding:12px 14px; cursor:pointer; }
+  .expert-card:hover{ border-color:var(--amber); }
+  .expert-card .grp{ font-family:var(--mono); font-size:11.5px; color:var(--amber-deep); }
+  .expert-card .name{ font-family:var(--serif); font-size:19px; margin:3px 0 0 0; }
+  .expert-detail{ display:none; margin-top:8px; font-size:17px; color:var(--ink-soft); line-height:1.55; }
+  .expert-card.open .expert-detail{ display:block; }
+  .expert-card.open{ border-color:var(--amber); grid-column: span 3; }
+  @media (max-width:900px){ .expert-card.open{ grid-column: span 2; } }
+  @media (max-width:560px){ .expert-card.open{ grid-column: span 1; } }
+
+  @media (prefers-reduced-motion: reduce){ .slide, .navbtn, #progress-fill{ transition:none !important; } }
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <div class="brand">Metody měření expozice a biologický monitoring · Přednáška 5</div>
+  <div id="progress-track"><div id="progress-fill"></div></div>
+  <div id="counter">1 / 1</div>
+  <button id="menu-btn" onclick="toggleOverlay(true)">Obsah</button>
+</div>
+
+<div id="deck"></div>
+
+<div id="navbtns">
+  <button class="navbtn" id="prevBtn" onclick="prevSlide()">←</button>
+  <button class="navbtn" id="nextBtn" onclick="nextSlide()">→</button>
+</div>
+
+<div id="lightbox" onclick="closeLightbox()">
+  <div id="lightbox-inner" onclick="event.stopPropagation()"></div>
+  <div id="lightbox-hint">klikněte mimo obrázek nebo stiskněte Esc pro zavření</div>
+</div>
+
+<div id="overlay">
+  <button id="overlay-close" onclick="toggleOverlay(false)">×</button>
+  <h3>Přeskočit na</h3>
+  <ul id="overlay-list"></ul>
+</div>
+
+<script>
+const slides = [];
+function slide(id, title, html){ slides.push({id, title, html}); }
+
+/* ================= TITLE ================= */
+slide('title','Titulní strana', `
+  <div class="slide-inner">
+    <p class="eyebrow">Ing. Pavla Fojtíková, Ph.D. · Přírodovědecká fakulta JU</p>
+    <h1 class="headline">Metody měření expozice a biologický monitoring</h1>
+    <p class="lede">Přednáška 5 — jak odhadnout expozici, porovnat ji s limity a ověřit, co se do těla skutečně dostalo. Pracujeme s reálnými daty ČHMÚ a s laboratorním stanovením kofeinu a jeho metabolitů v moči.</p>
+    <p class="footer-note">Laboratoř analytické a environmentální chemie</p>
+  </div>
+`);
+
+/* ================= OUTLINE ================= */
+slide('outline','Osnova přednášky 5', `
+  <div class="slide-inner">
+    <p class="eyebrow">Dnes</p>
+    <h2 class="headline">Osnova přednášky 5</h2>
+    <ul class="plain">
+      <li>Vnější expozice vs. absorbovaná dávka <em>(úkol A)</em></li>
+      <li>Limity v pracovním ovzduší: PEL a NPK-P <em>(úkol B)</em></li>
+      <li>Imisní limity a data ČHMÚ <em>(úkoly C, D)</em></li>
+      <li>Biologické monitorování a BEL <em>(úkol E)</em></li>
+      <li>Laboratorní případ: kofein <em>(úkoly 1–3)</em></li>
+      <li>Práce s AI: prompt podle šablony <em>(úkol F)</em></li>
+    </ul>
+ </div>
+`);
+
+/* ================= PROC NAROCNE ================= */
+slide('proc-narocne','Proč je odhad expozice náročný', `
+  <div class="slide-inner">
+    <p class="eyebrow">Úvod</p>
+    <h2 class="headline">Proč je správný odhad expozice důležitý?</h2>
+    <ul class="plain">
+      <li>v experimentu dávku známe, v reálném prostředí ji musíme <strong>odhadnout</strong></li>
+      <li>na odhadu stojí hodnocení rizika, epidemiologické studie i legislativní limity</li>
+    </ul>
+    <div class="grid-2" style="margin-top:16px;">
+      <div class="card">
+        <p class="body-text" style="margin:0;"><strong>Dávka podaná (intake)</strong><br>množství látky, které se dostalo do kontaktu s organismem</p>
+      </div>
+      <div class="card">
+        <p class="body-text" style="margin:0;"><strong>Dávka absorbovaná (uptake)</strong><br>množství, které prošlo přes biologickou bariéru do organismu</p>
+      </div>
+    </div>
+    <blockquote class="quote" style="margin-top:20px;font-size:22px;">Stejná vnější expozice může u dvou lidí vést k velmi odlišné vnitřní dávce.</blockquote>
+  </div>
+`);
+
+/* ================= INHALACNI ================= */
+slide('inhalacni-expozice','Inhalační expozice — model', `
+  <div class="slide-inner">
+    <p class="eyebrow">Modely odhadu dávky</p>
+    <h2 class="headline">Inhalační expozice</h2>
+    <div class="card" style="margin-top:12px;">
+      <div class="calc-step" style="font-size:24px;">D<sub>inh</sub> = R · V<sub>inh</sub> · c<sub>inh</sub> · t</div>
+      <ul class="plain" style="margin-top:12px;">
+        <li><strong>R</strong> — retence v plicích, R = (c<sub>inh</sub> − c<sub>exh</sub>)/c<sub>inh</sub></li>
+        <li><strong>V<sub>inh</sub></strong> — plicní ventilace (m³/h), roste s námahou</li>
+        <li><strong>c<sub>inh</sub></strong> — koncentrace ve vdechovaném vzduchu (mg/m³)</li>
+        <li><strong>c<sub>exh</sub></strong> — koncentrace ve vydechovaném vzduchu (mg/m³)</li>
+        <li><strong>t</strong> — doba expozice (h)</li>
+      </ul>
+    </div>
+    <p class="body-text" style="margin-top:14px;">Přímo měříme jen koncentraci (osobní odběr v dýchací zóně); ostatní veličiny jsou tabelované.</p>
+    <p class="footer-note">20 l/min = 1,2 m³/h — s touto ventilací počítá definice PEL.</p>
+  </div>
+`);
+
+/* ================= KOZNI A PERORALNI ================= */
+slide('kozni-peroralni','Kožní a perorální expozice', `
+  <div class="slide-inner">
+    <p class="eyebrow">Modely odhadu dávky</p>
+    <h2 class="headline">Expozice kůží a ústy</h2>
+    <div class="grid-2">
+      <div class="card">
+        <p class="body-text" style="margin:0;"><strong>Kůže — 1. Fickův zákon</strong></p>
+        <div class="calc-step" style="margin-top:8px;">D<sub>derm</sub> = K<sub>p</sub> · c · A · t</div>
+        <p class="calc-note">K<sub>p</sub> permeabilitní koeficient (cm/h), c koncentrace na kůži, A plocha, t doba</p>
+      </div>
+      <div class="card">
+        <p class="body-text" style="margin:0;"><strong>Ústa — potrava, voda</strong></p>
+        <div class="calc-step" style="margin-top:8px;">D<sub>or</sub> = c · IR / BW</div>
+        <p class="calc-note">c koncentrace v potravě/vodě, IR denní spotřeba, BW tělesná hmotnost</p>
+      </div>
+    </div>
+    <p class="footer-note" style="margin-top:20px;">Látky s poznámkou „D" (NV 361/2007 Sb.) se významně vstřebávají kůží — měření ve vzduchu tuto část dávky nezachytí.</p>
+  </div>
+`);
+
+/* ================= UKOL A ================= */
+slide('ukolA-zadani','Úkol A — zadání', `
+  <div class="slide-inner">
+    <p class="eyebrow">Úkol A · zadání</p>
+    <h2 class="headline">Kolik toluenu pracovník za směnu vstřebá?</h2>
+    <p class="body-text">Lakýrník (70 kg), 8 h, toluen <strong>96 mg/m³</strong>, retence R ≈ 0,5.</p>
+    <div class="task-box">
+      <ol type="a">
+        <li>Vypočítejte dávku při lehké práci (20 l/min), i v mg/kg.</li>
+        <li>Jak se změní při těžké práci (40 l/min)?</li>
+        <li>Při 40 l/min platí PEL ve výši 50 %. Proč?</li>
+      </ol>
+    </div>
+    <p class="hint">Nápověda: převeďte ventilaci na m³/h.</p>
+  </div>
+`);
+
+slide('ukolA-reseni','Úkol A — řešení', `
+  <div class="slide-inner">
+    <p class="eyebrow">Úkol A · řešení</p>
+    <h2 class="headline">Dávka roste s ventilací</h2>
+    <div class="sol-box">
+      <div class="calc-step">
+a) D = 0,5 · 1,2 m³/h · 96 mg/m³ · 8 h = <span class="res">≈ 461 mg</span> (≈ 6,6 mg/kg)<br>
+b) D = 0,5 · 2,4 · 96 · 8 = <span class="res">≈ 922 mg</span> → dvojnásobek
+      </div>
+    </div>
+    <div class="sol-box">
+      <p class="body-text" style="margin:0;">c) Dávka je úměrná ventilaci. Snížením PEL na polovinu zůstane vstřebaná dávka na úrovni, kterou limit připouští.</p>
+    </div>
+    <p class="footer-note">Stejná koncentrace ve vzduchu ≠ stejná dávka.</p>
+  </div>
+`);
+
+/* ================= PEL a NPK-P ================= */
+slide('pel-npk','PEL a NPK-P — definice', `
+  <div class="slide-inner">
+    <p class="eyebrow">Pracovní ovzduší · NV č. 361/2007 Sb.</p>
+    <h2 class="headline">PEL a NPK-P</h2>
+    <div class="grid-2">
+      <div class="card">
+        <p class="body-text" style="margin:0;"><strong>PEL</strong> — přípustný expoziční limit</p>
+        <ul class="plain" style="margin-top:10px;">
+          <li><strong>průměr za celou směnu</strong> (8 h)</li>
+          <li>chrání i při celoživotní pracovní expozici</li>
+          <li>pro ventilaci ≤ 20 l/min</li>
+        </ul>
+      </div>
+      <div class="card">
+        <p class="body-text" style="margin:0;"><strong>NPK-P</strong> — nejvyšší přípustná koncentrace</p>
+        <ul class="plain" style="margin-top:10px;">
+          <li><strong>limit krátkodobé expozice</strong></li>
+          <li>hodnotí se časově vážený průměr koncentrace za dobu nejvýše 15 minut </li>
+          <li>chrání před akutními účinky (dráždění)</li>
+        </ul>
+      </div>
+    </div>
+    <p class="footer-note">V praxi se často říká jen „NPK". Limity platí pro zdravé dospělé zaměstnance.</p>
+  </div>
+`);
+
+slide('pel-pocitani','Jak se s limity počítá', `
+  <div class="slide-inner">
+    <p class="eyebrow">Pracovní ovzduší · pravidla hodnocení</p>
+    <h2 class="headline">Jak se s PEL a NPK-P počítá</h2>
+    <div class="card">
+      <p class="body-text" style="margin:0;"><strong>Směnový průměr</strong></p>
+      <div class="calc-step">c<sub>TWA</sub> = Σ (c<sub>i</sub> · t<sub>i</sub>) / 8 h</div>
+    </div>
+    <div class="card" style="margin-top:12px;">
+      <p class="body-text" style="margin:0;"><strong>Převod ppm → mg/m³</strong> (20 °C, 101,3 kPa)</p>
+      <div class="calc-step">c [mg/m³] = c [ppm] · M / 24,06</div>
+    </div>
+    <div class="card" style="margin-top:12px;">
+      <p class="body-text" style="margin:0;"><strong>Krátkodobé úseky nad PEL</strong> (ale ≤ NPK-P): max. 4 za směnu, s odstupem ≥ 1 h</p>
+    </div>
+  </div>
+`);
+
+slide('pel-tabulka','Vybrané hodnoty PEL a NPK-P', `
+  <div class="slide-inner">
+    <p class="eyebrow">NV č. 361/2007 Sb., příloha č. 2</p>
+    <h2 class="headline">Vybrané hygienické limity</h2>
+    <table class="data-table">
+      <tr><th>Látka</th><th class="num">PEL (mg/m³)</th><th class="num">NPK-P (mg/m³)</th><th>Poznámky</th></tr>
+      <tr><td>ethanol</td><td class="num">1000</td><td class="num">3000</td><td>—</td></tr>
+      <tr><td>aceton</td><td class="num">800</td><td class="num">1500</td><td>I</td></tr>
+      <tr><td>xyleny</td><td class="num">200</td><td class="num">400</td><td>B, D, I</td></tr>
+      <tr class="highlight"><td>toluen</td><td class="num">192</td><td class="num">384</td><td>B, D, I, P</td></tr>
+      <tr><td>benzen</td><td class="num">0,66</td><td class="num">—</td><td>B, D, I, K, M, P</td></tr>
+    </table>
+    <p class="calc-note">B biologický expoziční test · D vstup kůží · I dráždivost · K karcinogen · M mutagen · P pozdní účinky</p>
+    <p class="footer-note">Proč je limit benzenu o tři řády nižší než u ethanolu?</p>
+  </div>
+`);
+
+/* ================= UKOL B ================= */
+slide('ukolB-zadani','Úkol B — zadání', `
+  <div class="slide-inner">
+    <p class="eyebrow">Úkol B · zadání</p>
+    <h2 class="headline">Dodržel provoz limity pro toluen?</h2>
+    <table class="data-table compact">
+      <tr><th>Úsek směny</th><th class="num">Doba (h)</th><th class="num">Toluen (mg/m³)</th></tr>
+      <tr><td>6:00–9:00 ředění barev</td><td class="num">3</td><td class="num">150</td></tr>
+      <tr><td>9:00–9:15 plnění zásobníku</td><td class="num">0,25</td><td class="num">360</td></tr>
+      <tr><td>9:15–12:00 stříkání</td><td class="num">2,75</td><td class="num">170</td></tr>
+      <tr><td>12:00–12:30 přestávka mimo</td><td class="num">0,5</td><td class="num">0</td></tr>
+      <tr><td>12:30–14:00 úklid</td><td class="num">1,5</td><td class="num">120</td></tr>
+    </table>
+    <div class="task-box">
+      <ol type="a">
+        <li>Směnový průměr vs. PEL (192 mg/m³)?</li>
+        <li>Výsledek v ppm (M = 92,14 g/mol)?</li>
+        <li>Dodržena NPK-P (384)? A při špičce 420 mg/m³?</li>
+        <li>Navíc xyleny 110 mg/m³ (PEL 200). Je limit pro směs dodržen?</li>
+      </ol>
+    </div>
+  </div>
+`);
+
+slide('ukolB-reseni-1','Úkol B — řešení (a, b)', `
+  <div class="slide-inner">
+    <p class="eyebrow">Úkol B · řešení 1/2</p>
+    <h2 class="headline">Směnový průměr a převod jednotek</h2>
+    <div class="sol-box">
+      <div class="sol-label">a) směnový průměr</div>
+      <div class="calc-step">
+(3·150 + 0,25·360 + 2,75·170 + 0 + 1,5·120) / 8<br>
+= 1187,5 / 8 = <span class="res">148,4 mg/m³ &lt; 192 → PEL dodržen</span>
+      </div>
+    </div>
+    <div class="sol-box">
+      <div class="sol-label">b) převod na ppm</div>
+      <div class="calc-step">148,4 · 24,06 / 92,14 = <span class="res">38,8 ppm</span></div>
+    </div>
+    <p class="footer-note">Přestávka se započítá s nulovou koncentrací — dělíme vždy 8 h.</p>
+  </div>
+`);
+
+slide('ukolB-reseni-2','Úkol B — řešení (c, d)', `
+  <div class="slide-inner">
+    <p class="eyebrow">Úkol B · řešení 2/2</p>
+    <h2 class="headline">Špičky a směsi</h2>
+    <div class="sol-box">
+      <div class="sol-label">c) NPK-P</div>
+      <div class="calc-step">
+360 ≤ 384 → <span class="res">dodržena</span><br>
+420 &gt; 384 → <span class="bad">překročena</span>, i když průměr je pod PEL
+      </div>
+    </div>
+    <div class="sol-box">
+      <div class="sol-label">d) směs (aditivní účinek na CNS)</div>
+      <div class="calc-step">148,4/192 + 110/200 = 0,77 + 0,55 = <span class="bad">1,32 &gt; 1 → překročeno</span></div>
+    </div>
+    <p class="footer-note">Každá látka zvlášť je pod limitem — směs ale ne.</p>
+  </div>
+`);
+
+/* ================= IMISNI LIMITY ================= */
+slide('imisni-limity','Imisní limity', `
+  <div class="slide-inner">
+    <p class="eyebrow">Venkovní ovzduší · zákon č. 201/2012 Sb.</p>
+    <h2 class="headline">Imisní limity pro ochranu zdraví</h2>
+    <table class="data-table">
+      <tr><th>Látka</th><th>Průměrování</th><th class="num">Limit</th><th class="num">Povoleno překročení / rok</th></tr>
+      <tr class="highlight"><td>PM10</td><td>24 h</td><td class="num">50 µg/m³</td><td class="num">35</td></tr>
+      <tr><td>PM10</td><td>rok</td><td class="num">40 µg/m³</td><td class="num">0</td></tr>
+      <tr><td>PM2,5</td><td>rok</td><td class="num">20 µg/m³</td><td class="num">0</td></tr>
+      <tr><td>NO₂</td><td>1 h</td><td class="num">200 µg/m³</td><td class="num">18</td></tr>
+      <tr><td>benzen</td><td>rok</td><td class="num">5 µg/m³</td><td class="num">0</td></tr>
+      <tr><td>benzo[a]pyren</td><td>rok</td><td class="num">1 ng/m³</td><td class="num">0</td></tr>
+    </table>
+    <p class="footer-note">Limity stanoví zákon; ČHMÚ ovzduší měří a plnění limitů vyhodnocuje.</p>
+  </div>
+`);
+
+slide('limity-who','Limity ČR vs. WHO a EU', `
+  <div class="slide-inner">
+    <p class="eyebrow">Porovnání</p>
+    <h2 class="headline">Jak přísné jsou české limity?</h2>
+    <table class="data-table">
+      <tr><th>Ukazatel</th><th class="num">ČR dnes</th><th class="num">EU od 2030</th><th class="num">WHO 2021</th></tr>
+      <tr><td>PM10, roční průměr</td><td class="num">40</td><td class="num">20</td><td class="num">15</td></tr>
+      <tr><td>PM2,5, roční průměr</td><td class="num">20</td><td class="num">10</td><td class="num">5</td></tr>
+      <tr><td>NO₂, roční průměr</td><td class="num">40</td><td class="num">20</td><td class="num">10</td></tr>
+      <tr><td>PM10, 24 h</td><td class="num">50</td><td class="num">45</td><td class="num">45</td></tr>
+    </table>
+    <p class="calc-note">(µg/m³; EU = směrnice 2024/2881)</p>
+    <p class="body-text" style="margin-top:14px;">Legislativní limit je kompromis mezi zdravím a dosažitelností; WHO vychází čistě ze zdravotních dat.</p>
+  </div>
+`);
+
+
+slide('porovnani-limitu','PEL × imisní limit × BET', `
+  <div class="slide-inner">
+    <p class="eyebrow">Porozumění pojmům</p>
+    <h2 class="headline">Tři způsoby hodnocení expozice</h2>
+
+    <table class="data-table">
+      <tr>
+        <th></th>
+        <th>Pracovní limity</th>
+        <th>Imisní limit</th>
+        <th>Biologický expoziční test (BET)</th>
+      </tr>
+      <tr>
+        <td><strong>Co se hodnotí</strong></td>
+        <td>Koncentrace v pracovním ovzduší</td>
+        <td>Koncentrace ve venkovním ovzduší</td>
+        <td>Metabolit v biologickém materiálu</td>
+      </tr>
+      <tr>
+        <td><strong>Účel</strong></td>
+        <td>Ochrana zaměstnanců při práci</td>
+        <td>Ochrana zdraví obyvatel</td>
+        <td>Hodnocení vnitřní expozice pracovníka</td>
+      </tr>
+      <tr>
+        <td><strong>Časové hledisko</strong></td>
+        <td>
+          PEL: celosměnový průměr<br>
+          NPK-P: krátkodobá expozice
+        </td>
+        <td>Benzen: průměr za kalendářní rok</td>
+        <td>Benzen: moč odebraná na konci směny</td>
+      </tr>
+      <tr>
+        <td><strong>Předpis</strong></td>
+        <td>NV č. 361/2007 Sb.</td>
+        <td>Zákon č. 201/2012 Sb.</td>
+        <td>Vyhláška č. 432/2003 Sb.</td>
+      </tr>
+      <tr class="highlight">
+        <td><strong>Benzen</strong></td>
+        <td>
+          PEL: 660 µg/m³<br>
+          NPK-P: 10 000 µg/m³
+        </td>
+        <td>5 µg/m³</td>
+        <td>
+          0,05 mg/g kreatininu<br>
+          <span class="small">S-fenylmerkapturová kyselina v moči</span>
+        </td>
+      </tr>
+    </table>
+
+    <p class="footer-note">
+      PEL benzenu je číselně 132× vyšší než roční imisní limit.
+      Nejde však o přímo srovnatelné hodnoty: liší se expoziční scénář,
+      doba průměrování i regulační účel. Ani dodržení limitu
+      neznamená nulové zdravotní riziko.
+    </p>
+  </div>
+`);
+
+
+/* ================= CHMU ================= */
+slide('chmu-data','Data ČHMÚ — kde je najdeme', `
+  <div class="slide-inner">
+    <p class="eyebrow">Práce s reálnými daty</p>
+    <h2 class="headline">Kde najdeme data o ovzduší?</h2>
+    <div class="grid-2">
+      <div class="card">
+        <p class="body-text" style="margin:0;"><strong>chmi.cz → Kvalita ovzduší</strong></p>
+        <ul class="plain" style="margin-top:10px;">
+          <li>aktuální hodinové hodnoty</li>
+          <li>přehled překročení limitů</li>
+          <li>ročenky</li>
+        </ul>
+      </div>
+      <div class="card">
+        <p class="body-text" style="margin:0;"><strong>opendata.chmi.cz</strong></p>
+        <ul class="plain" style="margin-top:10px;">
+          <li>hodinová data ze všech stanic (CSV)</li>
+          <li>metadata stanic</li>
+          <li>pro vlastní zpracování</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+`);
+
+
+slide('chmu-pozor','Data ČHMÚ — na co si dát pozor', `
+  <div class="slide-inner">
+    <p class="eyebrow">Kritické čtení dat</p>
+    <h2 class="headline">Na co si dát pozor</h2>
+    <ul class="plain" style="font-size:20px;">
+      <li>
+        <strong>Operativní × verifikovaná data</strong> —
+        operativní údaje jsou předběžné; po kontrole se mohou změnit.
+        Pro závěrečné hodnocení preferujeme verifikovaná data.
+      </li>
+      <li>
+        <strong>Úplnost</strong> —
+        ověř, zda je k dispozici dostatek platných měření.
+        Kritériem může být ≥ 75 % hodinových hodnot (18 z 24),
+        záleží však na použité metodice.
+      </li>
+      <li>
+        <strong>Typ stanice</strong> —
+        pozaďová × dopravní × průmyslová.
+        Stanice reprezentují odlišné podmínky; porovnávej
+        srovnatelné lokality.
+      </li>
+      <li>
+        <strong>Čas</strong> —
+        ověř časové pásmo a interval průměrování.
+        UTC se od českého času liší o 1 h v zimě a o 2 h v létě.
+      </li>
+    </ul>
+    <p class="footer-note">
+      Před interpretací ověř zdroj, kvalitu, úplnost,
+      reprezentativnost a časové vymezení dat.
+    </p>
+  </div>
+`);
+
+
+/* ================= UKOL C ================= */
+
+slide('ukolC-zadani','Úkol C — zadání (data ČHMÚ)', `
+  <div class="slide-inner">
+    <p class="eyebrow">Úkol C · reálná data ČHMÚ</p>
+    <h2 class="headline">Karviná vs. České Budějovice, leden 2026</h2>
+    <p class="calc-note">
+      Denní průměry PM₁₀ (µg/m³), 19.–25. 1. 2026.
+      Hodnoty zaokrouhleny na celá čísla.
+    </p>
+    <table class="data-table compact">
+      <tr>
+        <th>Stanice</th>
+        <th class="num">19. 1.</th><th class="num">20. 1.</th>
+        <th class="num">21. 1.</th><th class="num">22. 1.</th>
+        <th class="num">23. 1.</th><th class="num">24. 1.</th>
+        <th class="num">25. 1.</th>
+      </tr>
+      <tr>
+        <td>Karviná (TKARA)</td>
+        <td class="num">72</td><td class="num">38</td>
+        <td class="num">33</td><td class="num">169</td>
+        <td class="num">121</td><td class="num">89</td>
+        <td class="num">69</td>
+      </tr>
+      <tr>
+        <td>Č. Budějovice (CCBDA)</td>
+        <td class="num">21</td><td class="num">26</td>
+        <td class="num">27</td><td class="num">40</td>
+        <td class="num">46</td><td class="num">32</td>
+        <td class="num">24</td>
+      </tr>
+    </table>
+    <div class="task-box">
+      <ol type="a">
+        <li>Kolikrát byl překročen denní limit 50 µg/m³? Vypočítej týdenní průměry a jejich poměr.</li>
+        <li>Kolik dnů byla překročena 24hodinová směrná úroveň WHO 45 µg/m³?</li>
+        <li>ČHMÚ uváděl pro Karvinou k 16. 9. 2026 celkem 22 překročení. Je možné již rozhodnout, zda bude překročen roční povolený počet 35?</li>
+        <li>ČHMÚ uvádí u stanice Karviná úplnost dat 100 %. Co tento údaj znamená? Zaručuje také správnost každé naměřené hodnoty?</li>
+        <li>Jaké faktory mohou vysvětlit rozdíl mezi městy? Co lze a nelze vyvodit pouze z těchto dat?</li>
+      </ol>
+    </div>
+    <p class="footer-note">
+      Zdroj: ČHMÚ, denní data PM₁₀ a přehled překročení imisních limitů.
+      Přehled překročení aktualizován 16. 9. 2026.
+      Hodnoty v tabulce jsou zaokrouhleny; při práci s daty vždy ověř jejich verzi.
+    </p>
+  </div>
+`);
+
+slide('ukolC-reseni-1','Úkol C — řešení (a, b)', `
+  <div class="slide-inner">
+    <p class="eyebrow">Úkol C · řešení 1/3</p>
+    <h2 class="headline">Překročení a týdenní průměry</h2>
+    <table class="data-table compact">
+      <tr>
+        <th>Stanice</th>
+        <th class="num">19. 1.</th><th class="num">20. 1.</th>
+        <th class="num">21. 1.</th><th class="num">22. 1.</th>
+        <th class="num">23. 1.</th><th class="num">24. 1.</th>
+        <th class="num">25. 1.</th>
+      </tr>
+      <tr>
+        <td>Karviná</td>
+        <td class="num over">72</td><td class="num">38</td>
+        <td class="num">33</td><td class="num over">169</td>
+        <td class="num over">121</td><td class="num over">89</td>
+        <td class="num over">69</td>
+      </tr>
+      <tr>
+        <td>Č. Budějovice</td>
+        <td class="num">21</td><td class="num">26</td>
+        <td class="num">27</td><td class="num">40</td>
+        <td class="num" style="color:var(--amber-deep);font-weight:700;">46</td>
+        <td class="num">32</td><td class="num">24</td>
+      </tr>
+    </table>
+    <div class="sol-box">
+      <div class="calc-step">
+        <strong>a) Zákonný denní limit: 50 µg/m³</strong><br>
+        Karviná: <span class="bad">5 překročení</span><br>
+        Č. Budějovice: <span class="res">0 překročení</span><br><br>
+        Karviná: 591 / 7 = <span class="res">84,4 µg/m³</span><br>
+        Č. Budějovice: 216 / 7 = <span class="res">30,9 µg/m³</span><br>
+        Poměr průměrů: 84,4 / 30,9 ≈ <span class="res">2,7×</span>
+      </div>
+      <div class="calc-step">
+        <strong>b) Doporučení WHO: 45 µg/m³ za 24 h</strong><br>
+        Karviná: <span class="res">5 dnů</span><br>
+        Č. Budějovice: <span class="res">1 den</span> (23. 1.)
+      </div>
+    </div>
+    <p class="footer-note">
+      Jde o aritmetické průměry sedmi zaokrouhlených denních hodnot,
+      nikoli o roční průměry. Doporučení WHO není totožné se zákonným limitem.
+    </p>
+  </div>
+`);
+
+slide('ukolC-reseni-2','Úkol C — řešení (c, d)', `
+  <div class="slide-inner">
+    <p class="eyebrow">Úkol C · řešení 2/3</p>
+    <h2 class="headline">Roční limit a úplnost dat</h2>
+    <div class="sol-box">
+      <p class="body-text" style="margin:0;">
+        <strong>c) Roční počet překročení</strong><br>
+        Limit dovoluje nejvýše 35 překročení za kalendářní rok.
+        K 16. 9. 2026 uváděl ČHMÚ pro Karvinou 22 překročení.
+        Do hranice 35 zbývá 13 dalších překročení.
+        Z dosavadního počtu nelze s jistotou určit konečný výsledek roku.
+        Zimní epizody mohou počet překročení výrazně ovlivnit.
+      </p>
+    </div>
+    <div class="sol-box">
+      <p class="body-text" style="margin:0;">
+        <strong>d) Úplnost dat</strong><br>
+        Údaj 100 % znamená, že k datu aktualizace byla v databázi
+        ČHMÚ k dispozici všechna očekávaná měření podle použitého
+        ukazatele úplnosti. Neznamená to automaticky, že každá
+        hodnota je bez chyby nebo že měření prošla všemi kontrolami.
+      </p>
+    </div>
+    <p class="footer-note">
+      Počet překročení se vztahuje k přehledu ČHMÚ aktualizovanému
+      16. 9. 2026, nikoli k výsledku za celý rok.
+    </p>
+  </div>
+`);
+
+slide('ukolC-reseni-3','Úkol C — řešení (e)', `
+  <div class="slide-inner">
+    <p class="eyebrow">Úkol C · řešení 3/3</p>
+    <h2 class="headline">Proč se koncentrace liší?</h2>
+    <div class="sol-box">
+      <ul class="plain">
+        <li>emise z lokálního vytápění a dopravy</li>
+        <li>průmyslové zdroje v širším regionu</li>
+        <li>dálkový a přeshraniční přenos znečištění</li>
+        <li>meteorologické podmínky: inverze, slabé proudění</li>
+        <li>charakter okolí a reprezentativnost měřicích stanic</li>
+      </ul>
+    </div>
+    <div class="sol-box">
+      <p class="body-text" style="margin:0;">
+        <strong>Co z dat skutečně víme?</strong><br>
+        V tomto týdnu byly denní koncentrace v Karviné vyšší.
+        Samotné srovnání však neurčuje podíl jednotlivých zdrojů
+        ani neprokazuje příčinu rozdílu. Pro její určení by bylo
+        nutné doplnit informace o emisích, počasí, okolí stanic
+        a případně o chemickém složení částic.
+      </p>
+    </div>
+  </div>
+`);
+
+
+/* ================= UKOL D ================= */
+slide('ukolD-zadani','Úkol D — zadání (samostatná práce)', `
+  <div class="slide-inner">
+    <p class="eyebrow">Úkol D · zadání · aktuální data ČHMÚ</p>
+    <h2 class="headline">Jaké ovzduší dýcháte právě teď?</h2>
+    <div class="task-box">
+      <ol>
+        <li>Na chmi.cz najděte stanici nejblíže vašemu bydlišti. Jaký je to typ stanice?</li>
+        <li>Zapište aktuální PM10, PM2,5, NO₂ a O₃.</li>
+        <li>V přehledu překročení limitů zjistěte letošní počet překročení PM10 a O₃.</li>
+        <li>Porovnejte s Českými Budějovicemi.</li>
+        <li>Lze z jedné hodinové hodnoty usuzovat na plnění limitu?</li>
+      </ol>
+    </div>
+  </div>
+`);
+
+slide('ukolD-reseni','Úkol D — postup a interpretace', `
+  <div class="slide-inner">
+    <p class="eyebrow">Úkol D · řešení (čísla se liší podle stanice a data)</p>
+    <h2 class="headline">Jak výsledky číst</h2>
+    <div class="sol-box">
+      <ul class="plain">
+        <li><strong>Hodinová hodnota ≠ plnění limitu</strong> — hodnotí se denní průměry a roční počet překročení.</li>
+        <li><strong>Typ stanice</strong> určuje, co hodnota reprezentuje.</li>
+        <li><strong>Sezónnost:</strong> PM10 a NO₂ v zimě, O₃ v létě. ČB: 0 překročení PM10, ale 11 dnů nad limitem O₃ (k 26. 10. 2026).</li>
+      </ul>
+    </div>
+    <p class="footer-note">Imisní koncentrace je vnější expozice; dávka závisí i na době venku a ventilaci (sport!).</p>
+  </div>
+`);
+
+/* ================= BIOMONITORING ================= */
+slide('biomonitoring-princip','Princip biologického monitorování', `
+  <div class="slide-inner">
+    <p class="eyebrow">Od vnější expozice k vnitřnímu ukazateli</p>
+    <h2 class="headline">Biologické monitorování</h2>
+    <div class="card">
+      <p class="body-text" style="margin:0;"><strong>Princip:</strong> nepřímé určení absorbované dávky nebo odezvy organismu pomocí <strong>vnitřního ukazatele</strong> v moči, krvi či vydechovaném vzduchu.</p>
+    </div>
+    <p class="body-text" style="margin-top:16px;"><strong>Vnitřním ukazatelem může být:</strong></p>
+    <ul class="plain">
+      <li>látka samotná — rtuť v moči</li>
+      <li>metabolit — kyselina hippurová po toluenu</li>
+      <li>adukt s biomolekulou — karbonylhemoglobin po CO</li>
+      <li>biochemický parametr — aktivita acetylcholinesterázy</li>
+    </ul>
+  </div>
+`);
+
+slide('biomarkery-typy','Tři typy biomarkerů', `
+  <div class="slide-inner">
+    <p class="eyebrow">Klasifikace biomarkerů</p>
+    <h2 class="headline">Biologické indikátory (biomarkery)</h2>
+    <div class="diagram-box">
+      <svg viewBox="0 0 800 160" style="width:100%;max-width:820px;">
+        <rect x="10" y="55" width="150" height="50" rx="6" fill="#FBF0DD" stroke="#B9791E"/>
+        <text x="85" y="84" font-size="16" text-anchor="middle">Expozice</text>
+        <line x1="160" y1="80" x2="186" y2="80" stroke="#5A5D51" stroke-width="2" marker-end="url(#a5)"/>
+        <rect x="189" y="45" width="190" height="70" rx="6" fill="#F7EAE7" stroke="#9C3B2E"/>
+        <text x="284" y="72" font-size="16" text-anchor="middle" font-weight="600">Absorbovaná dávka</text>
+        <text x="284" y="92" font-size="14" text-anchor="middle">(indikátor dávky)</text>
+        <line x1="379" y1="80" x2="405" y2="80" stroke="#5A5D51" stroke-width="2" marker-end="url(#a5)"/>
+        <rect x="408" y="45" width="210" height="70" rx="6" fill="#EAF1EA" stroke="#3E5C42"/>
+        <text x="513" y="68" font-size="16" text-anchor="middle" font-weight="600">Časný biologický</text>
+        <text x="513" y="88" font-size="16" text-anchor="middle" font-weight="600">účinek</text>
+        <text x="513" y="106" font-size="14" text-anchor="middle">(indikátor účinku)</text>
+        <line x1="618" y1="80" x2="644" y2="80" stroke="#5A5D51" stroke-width="2" marker-end="url(#a5)"/>
+        <rect x="647" y="55" width="145" height="50" rx="6" fill="#EAF0F4" stroke="#3A5A72"/>
+        <text x="719" y="84" font-size="16" text-anchor="middle">Onemocnění</text>
+        <rect x="408" y="130" width="210" height="28" rx="6" fill="#fff" stroke="#D6D6C6"/>
+        <text x="513" y="149" font-size="13" text-anchor="middle" fill="#5A5D51">indikátor vnímavosti ovlivňuje celou dráhu</text>
+        <defs><marker id="a5" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#5A5D51"/></marker></defs>
+      </svg>
+    </div>
+    <div class="grid-3" style="margin-top:14px;">
+      <div class="card"><p class="body-text" style="margin:0;"><strong>Dávky</strong><br>látka nebo metabolit v těle; adukty s DNA</p></div>
+      <div class="card"><p class="body-text" style="margin:0;"><strong>Účinku</strong><br>měřitelná změna před onemocněním</p></div>
+      <div class="card"><p class="body-text" style="margin:0;"><strong>Vnímavosti</strong><br>např. polymorfismus enzymů</p></div>
+    </div>
+  </div>
+`);
+
+slide('idealni-biomarker','Ideální biomarker', `
+  <div class="slide-inner">
+    <p class="eyebrow">Praktická stránka biomonitoringu</p>
+    <h2 class="headline">Jaký je „ideální biomarker"?</h2>
+    <ul class="plain" style="font-size:20px;">
+      <li><strong>citlivý</strong> — zachytí i nízké expozice</li>
+      <li><strong>neinvazivní</strong> odběr</li>
+      <li><strong>specifický</strong> pro látku nebo účinek</li>
+      <li><strong>kvantitativní</strong> vztah k expozici</li>
+      <li><strong>snadno měřitelný</strong></li>
+    </ul>
+  </div>
+`);
+
+slide('standardizace','Standardizace na kreatinin', `
+  <div class="slide-inner">
+    <p class="eyebrow">Moč jako biologický materiál</p>
+    <h2 class="headline">Standardizace na kreatinin</h2>
+    <div class="grid-2">
+      <div class="card">
+        <p class="body-text" style="margin:0;"><strong>Problém</strong><br>koncentrace v moči závisí na pitném režimu</p>
+      </div>
+      <div class="card">
+        <p class="body-text" style="margin:0;"><strong>Řešení</strong><br>výsledek vztáhnout na kreatinin → <strong>mg/g kreatininu</strong></p>
+      </div>
+    </div>
+    <div class="card" style="margin-top:14px;border-left:4px solid var(--danger);">
+      <p class="body-text" style="margin:0;"><strong>Podmínka platnosti</strong> (vyhl. č. 432/2003 Sb.): kreatinin <strong>0,3–3 g/l</strong>. Jinak se vzorek nehodnotí a odběr se opakuje.</p>
+    </div>
+    <p class="footer-note">Kreatinin vzniká ve svalech z kreatinu a vylučuje se přibližně konstantní rychlostí.</p>
+  </div>
+`);
+
+slide('bel-definice','BEL — co to je', `
+  <div class="slide-inner">
+    <p class="eyebrow">Biologický expoziční limit</p>
+    <h2 class="headline">BEL</h2>
+    <p class="body-text">Limitní hodnota ukazatele v moči nebo krvi. V české legislativě: <em>limitní hodnota ukazatele biologického expozičního testu (BET)</em>, vyhl. č. 432/2003 Sb.</p>
+    <div class="grid-2" style="margin-top:16px;">
+      <div class="card"><p class="body-text" style="margin:0;"><strong>Rychlé vylučování</strong><br>odběr na konci směny — jinak se expozice podcení</p></div>
+      <div class="card"><p class="body-text" style="margin:0;"><strong>Pomalé vylučování</strong> (Cd, Hg, Pb)<br>doba odběru nerozhoduje</p></div>
+    </div>
+  </div>
+`);
+
+slide('bel-tabulka','Vybrané limity BET', `
+  <div class="slide-inner">
+    <p class="eyebrow">Vyhláška č. 432/2003 Sb., příloha č. 2</p>
+    <h2 class="headline">Vybrané biologické limity</h2>
+    <table class="data-table">
+      <tr><th>Látka</th><th>Ukazatel</th><th>Limit</th><th>Odběr</th></tr>
+      <tr><td>benzen</td><td>S-fenylmerkapturová k. (moč)</td><td>0,05 mg/g kreat.</td><td>konec směny</td></tr>
+      <tr class="highlight"><td>toluen</td><td>kyselina hippurová (moč)</td><td>1600 mg/g kreat.</td><td>konec směny</td></tr>
+      <tr><td>xyleny</td><td>k. methylhippurová (moč)</td><td>1400 mg/g kreat.</td><td>konec směny</td></tr>
+      <tr><td>rtuť</td><td>Hg (moč)</td><td>0,1 mg/g kreat.</td><td>kdykoli</td></tr>
+      <tr><td>olovo</td><td>Pb (krev)</td><td>0,3 mg/l</td><td>kdykoli</td></tr>
+      <tr><td>oxid uhelnatý</td><td>karbonylhemoglobin</td><td>5 % Hb</td><td>konec směny</td></tr>
+    </table>
+    <p class="footer-note">Limit olova v krvi se od roku 2029 snižuje na 0,15 mg/l.</p>
+  </div>
+`);
+
+/* ================= UKOL E ================= */
+slide('ukolE-zadani','Úkol E — zadání (BET)', `
+  <div class="slide-inner">
+    <p class="eyebrow">Úkol E · zadání</p>
+    <h2 class="headline">Kyselina hippurová u pracovníků lakovny</h2>
+    <p class="body-text">Limit 1600 mg/g kreatininu; 1600–2500 → doplnit test na o-kresol; nad 2500 → expozice nad PEL prokázána.</p>
+    <table class="data-table compact">
+      <tr><th>Pracovník</th><th class="num">Hippurová k. (mg/l)</th><th class="num">Kreatinin (g/l)</th></tr>
+      <tr><td>1</td><td class="num">2100</td><td class="num">1,2</td></tr>
+      <tr><td>2</td><td class="num">450</td><td class="num">0,25</td></tr>
+      <tr><td>3</td><td class="num">3900</td><td class="num">1,5</td></tr>
+      <tr><td>4</td><td class="num">1300</td><td class="num">2,0</td></tr>
+    </table>
+    <div class="task-box">
+      <ol type="a">
+        <li>Přepočtěte na mg/g kreatininu a vyhodnoťte.</li>
+        <li>Pracovník 1 měl ve vzduchu průměr pod PEL. Jak to, že BET je nad limitem?</li>
+        <li>Proč se kyselina hippurová doplňuje o-kresolem?</li>
+      </ol>
+    </div>
+  </div>
+`);
+
+slide('ukolE-reseni-1','Úkol E — řešení (a)', `
+  <div class="slide-inner">
+    <p class="eyebrow">Úkol E · řešení 1/2</p>
+    <h2 class="headline">Přepočet a hodnocení</h2>
+    <table class="data-table">
+      <tr><th>Pracovník</th><th class="num">mg/g kreatininu</th><th>Hodnocení</th></tr>
+      <tr><td>1</td><td class="num">2100/1,2 = 1750</td><td class="over">nad limitem → doplnit o-kresol</td></tr>
+      <tr><td>2</td><td class="num">—</td><td class="over">kreatinin &lt; 0,3 g/l → odběr opakovat</td></tr>
+      <tr><td>3</td><td class="num">3900/1,5 = 2600</td><td class="over">&gt; 2500 → expozice nad PEL</td></tr>
+      <tr><td>4</td><td class="num">1300/2,0 = 650</td><td class="ok">v pořádku</td></tr>
+    </table>
+    <p class="footer-note">Pracovník 2 by po přepočtu „vyšel" 1800 mg/g — jen kvůli zředěné moči.</p>
+  </div>
+`);
+
+slide('ukolE-reseni-2','Úkol E — řešení (b, c)', `
+  <div class="slide-inner">
+    <p class="eyebrow">Úkol E · řešení 2/2</p>
+    <h2 class="headline">Proč vzduch a moč nesouhlasí</h2>
+    <div class="sol-box">
+      <p class="body-text" style="margin:0;"><strong>b)</strong> Toluen se vstřebává i kůží (poznámka D), vyšší ventilace při námaze, další zdroje. BET zachytí <strong>všechny cesty vstupu</strong>, měření ve vzduchu jen inhalaci.</p>
+    </div>
+    <div class="sol-box">
+      <p class="body-text" style="margin:0;"><strong>c)</strong> Kyselina hippurová vzniká i z benzoátů v potravě — <strong>není specifická</strong>. o-Kresol je specifičtější metabolit toluenu.</p>
+    </div>
+  </div>
+`);
+
+/* ================= KVIZ BIOMARKERY ================= */
+slide('kviz-biomarkery','Kontrolní kvíz: limity a biomarkery', `
+  <div class="slide-inner">
+    <p class="eyebrow">Kontrolní zastávka · kvíz</p>
+    <h2 class="headline">Limity a biomarkery</h2>
+    <div class="quiz-card" id="qb1">
+      <div class="quiz-q">Proč se koncentrace látky v moči vztahuje na kreatinin?</div>
+      <button class="quiz-opt" data-correct="true">Koriguje se tím ředění moči pitným režimem — kreatinin se vylučuje přibližně konstantní rychlostí</button>
+      <button class="quiz-opt" data-correct="false">Kreatinin je toxický metabolit, který se od výsledku odečítá</button>
+      <div class="quiz-feedback" id="qb1-fb"></div>
+    </div>
+    <div class="quiz-card" id="qb2" style="margin-top:16px;">
+      <div class="quiz-q">Směnový průměr toluenu je pod PEL, ale 15min odběr překročil NPK-P. Je provoz v pořádku?</div>
+      <button class="quiz-opt" data-correct="true">Ne — NPK-P je překročena</button>
+      <button class="quiz-opt" data-correct="false">Ano — rozhoduje jen směnový průměr</button>
+      <div class="quiz-feedback" id="qb2-fb"></div>
+    </div>
+    <div class="quiz-card" id="qb3" style="margin-top:16px;">
+      <div class="quiz-q">Proč je imisní limit benzenu mnohem nižší než jeho PEL?</div>
+      <button class="quiz-opt" data-correct="true">Chrání celou populaci při nepřetržité expozici, PEL zdravé zaměstnance 8 h denně</button>
+      <button class="quiz-opt" data-correct="false">Venkovní benzen je toxičtější forma</button>
+      <div class="quiz-feedback" id="qb3-fb"></div>
+    </div>
+  </div>
+`);
+
+/* ================= KOFEIN ================= */
+slide('kofein-uvod','Laboratorní případ: kofein', `
+  <div class="slide-inner">
+    <p class="eyebrow">Případová studie</p>
+    <h2 class="headline">Kofein jako modelové xenobiotikum</h2>
+    <div class="grid-2">
+      <div class="card">
+        <p class="body-text" style="margin:0;"><strong>Co to je</strong><br>1,3,7-trimethylxantin, purinový alkaloid; nejrozšířenější psychoaktivní látka</p>
+      </div>
+      <div class="card">
+        <p class="body-text" style="margin:0;"><strong>Jak působí</strong><br>antagonista adenosinových receptorů → oddálení spánku, vyšší tep</p>
+      </div>
+    </div>
+    <div class="card" style="margin-top:14px;">
+      <p class="body-text" style="margin:0;"><strong>EFSA (2015), zdraví dospělí:</strong> do 200 mg najednou, do 400 mg denně; těhotné do 200&nbsp;mg denně.</p>
+    </div>
+  </div>
+`);
+
+slide('kofein-rostliny','Rostliny s kofeinem', `
+  <div class="slide-inner">
+    <p class="eyebrow">Zdroje kofeinu</p>
+    <h2 class="headline">Rostliny obsahující kofein</h2>
+    <figure class="fig">
+      <img class="scheme-img" src="obrázky_5/kofein_rostliny.jpg" alt="Cesmína paraguayská, kávovník arabský, kakaovník pravý, čajovník čínský">
+      <figcaption><em>Ilex paraguariensis</em> (maté), <em>Coffea arabica</em>, <em>Theobroma cacao</em>, <em>Camellia sinensis</em></figcaption>
+    </figure>
+  </div>
+`);
+
+slide('kofein-napoje','Potraviny s kofeinem', `
+  <div class="slide-inner">
+    <p class="eyebrow">Zdroje kofeinu</p>
+    <h2 class="headline">Kde kofein přijímáme</h2>
+    <figure class="fig">
+      <img class="scheme-img wide" src="obrázky_5/kofein_napoje.jpg" alt="Energetický nápoj, čokoláda, káva, matcha, černý čaj, cola">
+    </figure>
+    <p class="footer-note">Kakao obsahuje hlavně teobromin — tedy i metabolit kofeinu. Při biomonitoringu je třeba znát stravu.</p>
+  </div>
+`);
+
+slide('pavuciny','Zajímavost: pavučiny', `
+  <div class="slide-inner">
+    <p class="eyebrow">Zajímavost · alternativní testy toxicity</p>
+    <h2 class="headline">Pavučina „pod vlivem"</h2>
+    <figure class="fig">
+      <img class="scheme-img wide" src="obrázky_5/pavuciny.jpg" alt="Pavučiny pavouků vystavených různým látkám">
+      <figcaption>NASA (Noever et al., 1995): kofein vedl k nejvíce narušené síti. Panel LSD pochází ze starších pokusů P. N. Witta.</figcaption>
+    </figure>
+    <p class="footer-note">Jen jednoduchý model — o toxicitě pro člověka nic neříká (testy toxicity: přednáška 6).</p>
+  </div>
+`);
+
+slide('kofein-metabolismus','Biotransformace kofeinu — schéma', `
+  <div class="slide-inner">
+    <p class="eyebrow">Návaznost na přednášku 4</p>
+    <h2 class="headline">Biotransformace kofeinu</h2>
+    <figure class="fig">
+      <img class="scheme-img narrow" src="obrázky_5/kofein_metabolismus.png" alt="Schéma biotransformace kofeinu">
+      <figcaption>CAFF kofein · THBM teobromin · DMX paraxantin · THEO teofylin · 3X, 7X monomethylxantiny</figcaption>
+    </figure>
+  </div>
+`);
+
+slide('kofein-metabolismus-2','Biotransformace kofeinu — fakta', `
+  <div class="slide-inner">
+    <p class="eyebrow">Návaznost na přednášku 4</p>
+    <h2 class="headline">Co se s kofeinem v těle děje</h2>
+    <ul class="plain" style="font-size:20px;">
+      <li>rychlé a téměř úplné vstřebání z GIT</li>
+      <li>hlavní enzym <strong>CYP1A2</strong>; N-demethylace</li>
+      <li>paraxantin ~84 %, teobromin ~12 %, teofylin ~4 %</li>
+      <li>nezměněný v moči jen ~1–3 %</li>
+      <li>poločas 3–6 h; kouření ho zkracuje</li>
+    </ul>
+  </div>
+`);
+
+slide('hplc-princip','HPLC — princip separace', `
+  <div class="slide-inner">
+    <p class="eyebrow">Analytická metoda</p>
+    <h2 class="headline">Kapalinová chromatografie (HPLC)</h2>
+    <figure class="fig">
+      <img class="scheme-img wide" src="obrázky_5/chromatograficka_separace.png" alt="Separace složek vzorku v chromatografické koloně a výsledný chromatogram">
+      <figcaption>Každá látka opouští kolonu v jiném retenčním čase t<sub>R</sub>.</figcaption>
+    </figure>
+  </div>
+`);
+
+slide('detektory','UV vs. MS detektor', `
+  <div class="slide-inner">
+    <p class="eyebrow">Analytická metoda</p>
+    <h2 class="headline">Detektory: UV vs. MS</h2>
+    <div class="grid-2">
+      <div class="card">
+        <p class="body-text" style="margin:0;"><strong>UV/VIS</strong></p>
+        <ul class="plain" style="margin-top:10px;">
+          <li>absorbance (kofein ~270 nm, kreatinin ~237 nm)</li>
+          <li>jednoduchý</li>
+          <li>málo selektivní</li>
+        </ul>
+      </div>
+      <div class="card">
+        <p class="body-text" style="margin:0;"><strong>Hmotnostní spektrometr</strong></p>
+        <ul class="plain" style="margin-top:10px;">
+          <li>dělí ionty podle m/z</li>
+          <li>vysoce citlivý</li>
+          <li>selektivní</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+`);
+
+slide('kalibrace','Kalibrační křivka', `
+  <div class="slide-inner">
+    <p class="eyebrow">Kvantitativní vyhodnocení</p>
+    <h2 class="headline">Metoda kalibrační křivky</h2>
+    <figure class="fig">
+      <img class="scheme-img wide" src="obrázky_5/kalibrace.png" alt="Kalibrační křivka kofeinu 1–100 mg/l">
+    </figure>
+    <p class="footer-note">Výsledek platí jen v ověřeném rozsahu (1–100 mg/l). Mimo něj vzorek ředíme, neextrapolujeme.</p>
+  </div>
+`);
+
+/* ================= UKOL 1 ================= */
+slide('ukol1-zadani','Úkol 1 — zadání (kofein v nápoji)', `
+  <div class="slide-inner">
+    <p class="eyebrow">Úkol 1 · zadání</p>
+    <h2 class="headline">Kolik kofeinu jsme vypili?</h2>
+    <p class="body-text">HPLC/UV, lineární rozsah 1–100 mg/l. Koncentrace ve vialce (mg/l):</p>
+    <table class="data-table compact">
+      <tr><th>Ředění</th><th class="num">1</th><th class="num">2</th><th class="num">3</th></tr>
+      <tr><td>neředěno</td><td class="num">316,0</td><td class="num">317,5</td><td class="num">305,6</td></tr>
+      <tr><td>10×</td><td class="num">31,39</td><td class="num">27,76</td><td class="num">30,54</td></tr>
+      <tr><td>100×</td><td class="num">3,362</td><td class="num">3,315</td><td class="num">3,293</td></tr>
+    </table>
+    <div class="task-box">
+      <ol type="a">
+        <li>Které ředění použijete?</li>
+        <li>Průměrná koncentrace v nápoji?</li>
+        <li>Dávka při vypití 250 ml?</li>
+        <li>Kolik nápoje odpovídá 400 mg/den a 200 mg najednou?</li>
+      </ol>
+    </div>
+  </div>
+`);
+
+slide('ukol1-reseni-1','Úkol 1 — řešení (a, b)', `
+  <div class="slide-inner">
+    <p class="eyebrow">Úkol 1 · řešení 1/2</p>
+    <h2 class="headline">Výběr ředění a koncentrace</h2>
+    <div class="sol-box">
+      <div class="calc-step">
+a) neředěný ≈ 316 mg/l → <span class="bad">mimo rozsah</span><br>
+&nbsp;&nbsp;&nbsp;10× ředění ≈ 30 mg/l → <span class="res">vhodné</span><br>
+b) (31,39 + 27,76 + 30,54)/3 = 29,90 mg/l<br>
+&nbsp;&nbsp;&nbsp;× 10 = <span class="res">299 mg/l v nápoji</span>
+      </div>
+    </div>
+    <p class="footer-note">100× ředění je v rozsahu také, ale blízko dolní hranice; dává 332 mg/l — rozdíl ~11 % ukazuje nejistotu postupu.</p>
+  </div>
+`);
+
+slide('ukol1-reseni-2','Úkol 1 — řešení (c, d)', `
+  <div class="slide-inner">
+    <p class="eyebrow">Úkol 1 · řešení 2/2</p>
+    <h2 class="headline">Dávka a doporučený příjem</h2>
+    <div class="sol-box">
+      <div class="calc-step">
+c) 299 mg/l · 0,250 l = <span class="res">≈ 74,7 mg</span> (≈ 19 % ze 400 mg)<br>
+d) 400 / 299 = <span class="res">1,34 l za den</span> (≈ 5 porcí)<br>
+&nbsp;&nbsp;&nbsp;200 / 299 = <span class="res">0,67 l najednou</span>
+      </div>
+    </div>
+  </div>
+`);
+
+/* ================= UKOL 2 ================= */
+slide('ukol2-zadani','Úkol 2 — zadání (metabolity v moči)', `
+  <div class="slide-inner">
+    <p class="eyebrow">Úkol 2 · zadání</p>
+    <h2 class="headline">Kofein a metabolity v moči</h2>
+    <p class="body-text">HPLC/MS, kolona C18 (hydrofobní stacionární fáze). Retenční časy:</p>
+    <table class="data-table compact">
+      <tr><th class="num">t<sub>R</sub> (min)</th><th>Látka</th></tr>
+      <tr><td class="num">2,64</td><td>teobromin</td></tr>
+      <tr><td class="num">3,42</td><td>paraxantin</td></tr>
+      <tr><td class="num">3,64</td><td>teofylin</td></tr>
+      <tr><td class="num">5,22</td><td>kofein</td></tr>
+    </table>
+    <div class="task-box">
+      <ol type="a">
+        <li>Jaké reakce probíhají? Vznikají metabolity ve stejném množství?</li>
+        <li>Vysvětlete pořadí eluce.</li>
+        <li>Proč pro moč HPLC/MS a pro nápoj stačí HPLC/UV?</li>
+      </ol>
+    </div>
+  </div>
+`);
+
+slide('ukol2-reseni-1','Úkol 2 — řešení (a, b)', `
+  <div class="slide-inner">
+    <p class="eyebrow">Úkol 2 · řešení 1/2</p>
+    <h2 class="headline">Polarita roste — retenční čas klesá</h2>
+    <div class="sol-box">
+      <p class="body-text" style="margin:0;"><strong>a)</strong> N-demethylace (CYP1A2), dále oxidace na methylmočové kyseliny. Množství <strong>není stejné</strong>: paraxantin ~84 %, teobromin ~12 %, teofylin ~4 %.</p>
+    </div>
+    <div class="sol-box">
+      <p class="body-text" style="margin:0;"><strong>b)</strong> Po odštěpení methylu vzniká N–H skupina → metabolit je polárnější → na C18 eluuje dříve. Biotransformace zvyšuje hydrofilitu.</p>
+    </div>
+  </div>
+`);
+
+slide('ukol2-reseni-2','Úkol 2 — řešení (c)', `
+  <div class="slide-inner">
+    <p class="eyebrow">Úkol 2 · řešení 2/2</p>
+    <h2 class="headline">Nápoj vs. moč</h2>
+    <div class="grid-2">
+      <div class="sol-box" style="margin-top:0;">
+        <p class="body-text" style="margin:0;"><strong>Nápoj</strong><br>jedna látka, vysoká koncentrace, jednoduchá matrice → UV stačí</p>
+      </div>
+      <div class="sol-box" style="margin-top:0;">
+        <p class="body-text" style="margin:0;"><strong>Moč</strong><br>více podobných látek, nízké koncentrace, složitá matrice → MS</p>
+      </div>
+    </div>
+    <p class="footer-note">Paraxantin a teofylin mají stejnou m/z — musí je oddělit chromatografie.</p>
+  </div>
+`);
+
+/* ================= UKOL 3 ================= */
+slide('ukol3-zadani','Úkol 3 — zadání (reálná data studentů)', `
+  <div class="slide-inner">
+    <p class="eyebrow">Úkol 3 · zadání · data z laboratorního cvičení</p>
+    <h2 class="headline">Standardizace u šesti studentů</h2>
+    <table class="data-table compact">
+      <tr><th>Student</th><th>Nápoj</th><th class="num">Dávka (mg)</th><th class="num">Kofein v moči (mg/l)</th><th class="num">Kreatinin (mg/l)</th></tr>
+      <tr><td>1</td><td>káva</td><td class="num">262,6</td><td class="num">3,12</td><td class="num">1386</td></tr>
+      <tr><td>4</td><td>káva</td><td class="num">79,7</td><td class="num">4,23</td><td class="num">163</td></tr>
+      <tr><td>7</td><td>káva</td><td class="num">312,0</td><td class="num">3,36</td><td class="num">300</td></tr>
+      <tr><td>11</td><td>kofola</td><td class="num">30,2</td><td class="num">0,68</td><td class="num">1893</td></tr>
+      <tr><td>14</td><td>káva</td><td class="num">329,6</td><td class="num">10,7</td><td class="num">2839</td></tr>
+      <tr><td>19</td><td>cola</td><td class="num">33,7</td><td class="num">1,07</td><td class="num">185</td></tr>
+    </table>
+    <div class="task-box">
+      <ol type="a">
+        <li>Přepočtěte na mg/g kreatininu.</li>
+        <li>Jak se změní pořadí studentů?</li>
+        <li>Které vzorky nelze hodnotit?</li>
+        <li>Odpovídá kofein v moči dávce?</li>
+      </ol>
+    </div>
+  </div>
+`);
+
+slide('ukol3-reseni-1','Úkol 3 — řešení (a–c)', `
+  <div class="slide-inner">
+    <p class="eyebrow">Úkol 3 · řešení 1/2</p>
+    <h2 class="headline">Pořadí se po standardizaci mění</h2>
+    <table class="data-table">
+      <tr><th>Student</th><th class="num">mg/l</th><th class="num">mg/g kreat.</th><th>Platný vzorek?</th></tr>
+      <tr><td>14</td><td class="num">10,7 (1.)</td><td class="num">3,77 (4.)</td><td class="ok">ano</td></tr>
+      <tr><td>4</td><td class="num">4,23 (2.)</td><td class="num">25,9 (1.)</td><td class="over">ne — 0,16 g/l</td></tr>
+      <tr><td>7</td><td class="num">3,36 (3.)</td><td class="num">11,2 (2.)</td><td class="ok">ano (na hraně)</td></tr>
+      <tr><td>1</td><td class="num">3,12 (4.)</td><td class="num">2,25 (5.)</td><td class="ok">ano</td></tr>
+      <tr><td>19</td><td class="num">1,07 (5.)</td><td class="num">5,78 (3.)</td><td class="over">ne — 0,19 g/l</td></tr>
+      <tr><td>11</td><td class="num">0,68 (6.)</td><td class="num">0,36 (6.)</td><td class="ok">ano</td></tr>
+    </table>
+    <p class="footer-note">Pozor na jednotky: kreatinin v mg/l → ÷ 1000 → g/l. „Nejvyšší" výsledek studenta 4 je artefakt zředěné moči.</p>
+  </div>
+`);
+
+slide('ukol3-reseni-2','Úkol 3 — řešení (d)', `
+  <div class="slide-inner">
+    <p class="eyebrow">Úkol 3 · řešení 2/2</p>
+    <h2 class="headline">Proč kofein v moči neodpovídá dávce?</h2>
+    <div class="sol-box">
+      <ul class="plain">
+        <li>nezměněný kofein = jen ~1–3 % dávky</li>
+        <li>různá doba od příjmu do odběru</li>
+        <li>různá aktivita CYP1A2 (geny, kouření, antikoncepce)</li>
+        <li>tělesná hmotnost, jiné zdroje (čokoláda)</li>
+        <li>vypitý objem udávali studenti sami</li>
+      </ul>
+    </div>
+    <p class="footer-note">Data: laboratorní cvičení PřF JU (2025), vybráno 6 z 21 vzorků.</p>
+  </div>
+`);
+
+/* ================= KVIZ KOFEIN ================= */
+slide('kviz-kofein','Kontrolní kvíz: kofeinový experiment', `
+  <div class="slide-inner">
+    <p class="eyebrow">Kontrolní zastávka · kvíz</p>
+    <h2 class="headline">Shrnutí laboratorního případu</h2>
+    <div class="quiz-card" id="qk1">
+      <div class="quiz-q">Neředěný vzorek má 316 mg/l, rozsah metody je 1–100 mg/l. Co uděláte?</div>
+      <button class="quiz-opt" data-correct="true">Vzorek naředím, aby spadl do kalibračního rozsahu</button>
+      <button class="quiz-opt" data-correct="false">Výsledek použiji, jen ho vydělím deseti</button>
+      <div class="quiz-feedback" id="qk1-fb"></div>
+    </div>
+    <div class="quiz-card" id="qk2" style="margin-top:16px;">
+      <div class="quiz-q">Proč metabolity kofeinu eluují z C18 kolony dříve než kofein?</div>
+      <button class="quiz-opt" data-correct="true">Jsou polárnější, se stacionární fází interagují slaběji</button>
+      <button class="quiz-opt" data-correct="false">Mají vyšší molekulovou hmotnost</button>
+      <div class="quiz-feedback" id="qk2-fb"></div>
+    </div>
+    <div class="quiz-card" id="qk3" style="margin-top:16px;">
+      <div class="quiz-q">Moč má kreatinin 0,16 g/l a po přepočtu nejvyšší kofein ve skupině. Co dál?</div>
+      <button class="quiz-opt" data-correct="true">Vzorek je příliš zředěný — nehodnotit, opakovat odběr</button>
+      <button class="quiz-opt" data-correct="false">Výsledek je spolehlivý, byl přece standardizován</button>
+      <div class="quiz-feedback" id="qk3-fb"></div>
+    </div>
+  </div>
+`);
+
+/* ================= AI ================= */
+slide('ai-sablona','Práce s AI — šablona', `
+  <div class="slide-inner">
+    <p class="eyebrow">Práce s AI · od promptu k ověřenému výstupu</p>
+    <h2 class="headline">Šablona: 8 kroků</h2>
+    <div class="step-row">
+      <div class="step"><b>0 · Než začnu</b>hodí se AI? smím použít data?</div>
+      <div class="step"><b>1 · Analýza</b>cíl, publikum, kritéria úspěchu</div>
+      <div class="step loop"><b>2 · Návrh</b>stavební bloky promptu</div>
+      <div class="step loop"><b>3 · Vývoj</b>technika, nástroj, režim</div>
+      <div class="step loop"><b>4 · Ladění</b>navazující prompty</div>
+      <div class="step loop"><b>5 · Hodnocení</b>AI sama + ověřuji já</div>
+      <div class="step"><b>6 · Skill</b>uložit ověřený prompt</div>
+      <div class="step"><b>7 · Záznam</b>prohlášení o použití AI</div>
+    </div>
+    <p class="footer-note">Modré kroky se opakují, dokud výstup nesplní kritéria z kroku 1.</p>
+  </div>
+`);
+
+slide('ai-kdy','Kdy AI ano a kdy ne', `
+  <div class="slide-inner">
+    <p class="eyebrow">Práce s AI · krok 0</p>
+    <h2 class="headline">AI je pomocník, ne zdroj</h2>
+    <div class="grid-2">
+      <div class="card" style="border-left:4px solid var(--tox-green);">
+        <p class="body-text" style="margin:0;"><strong>Hodí se na</strong></p>
+        <ul class="plain" style="margin-top:10px;">
+          <li>návrh struktury textu</li>
+          <li>vysvětlení pojmu</li>
+          <li>návrh kódu pro zpracování dat</li>
+        </ul>
+      </div>
+      <div class="card" style="border-left:4px solid var(--danger);">
+        <p class="body-text" style="margin:0;"><strong>Nehodí se jako</strong></p>
+        <ul class="plain" style="margin-top:10px;">
+          <li>zdroj limitů a toxikologických hodnot</li>
+          <li>zdroj citací bez ověření</li>
+          <li>místo pro osobní a zdravotní data</li>
+        </ul>
+      </div>
+    </div>
+    <p class="footer-note">Šablona je v materiálech kurzu.</p>
+  </div>
+`);
+
+slide('ukolF-zadani','Úkol F — zadání (prompt)', `
+  <div class="slide-inner">
+    <p class="eyebrow">Úkol F · zadání · ve dvojicích, 10 min</p>
+    <h2 class="headline">Nechte AI napsat skript pro data ČHMÚ</h2>
+    <p class="body-text">Cíl: z hodinových CSV ČHMÚ spočítat denní průměry PM10 a počet překročení limitu — tedy zautomatizovat úkol C.</p>
+    <div class="task-box">
+      <ol>
+        <li><strong>Krok 0:</strong> Smíte do AI vložit data ČHMÚ? A data z úkolu 3?</li>
+        <li><strong>Krok 1:</strong> Cíl, publikum, alespoň 4 kritéria úspěchu.</li>
+        <li><strong>Krok 2–3:</strong> Sestavte prompt z bloků, zvolte techniku a režim.</li>
+        <li><strong>Krok 5:</strong> Jak výstup ověříte?</li>
+      </ol>
+    </div>
+    <p class="hint">Data: sloupce idRegistration, startTime (UTC), idValueType, value; PM10 ČB = 40742, Karviná = 40635; platné typy 8 a 9.</p>
+  </div>
+`);
+
+slide('ukolF-reseni-1','Úkol F — řešení (krok 0 a 1)', `
+  <div class="slide-inner">
+    <p class="eyebrow">Úkol F · vzorové řešení 1/4</p>
+    <h2 class="headline">Krok 0 a analýza</h2>
+    <div class="sol-box">
+      <p class="body-text" style="margin:0;"><strong>Krok 0:</strong> data ČHMÚ jsou veřejná → ano. Data z moči studentů jsou <strong>zdravotní údaje</strong> → do AI ne.</p>
+    </div>
+    <table class="data-table" style="margin-top:12px;">
+      <tr><td><strong>Cíl</strong></td><td>skript: denní průměry PM10 a počet překročení</td></tr>
+      <tr><td><strong>Publikum</strong></td><td>studenti, začátečníci v Pythonu</td></tr>
+      <tr><td><strong>Kontext</strong></td><td>limit dle zákona 201/2012 Sb.; čas UTC → SEČ</td></tr>
+      <tr><td><strong>Forma</strong></td><td>okomentovaný kód + tabulka + souhrn</td></tr>
+    </table>
+  </div>
+`);
+
+slide('ukolF-reseni-2','Úkol F — řešení (kritéria)', `
+  <div class="slide-inner">
+    <p class="eyebrow">Úkol F · vzorové řešení 2/4</p>
+    <h2 class="headline">Kritéria úspěchu</h2>
+    <div class="sol-box">
+      <ul class="plain">
+        <li><strong>správnost:</strong> pro 19.–25. 1. 2026 vrátí Karviná 5 / 84,9 µg/m³, ČB 0 / 30,6 µg/m³</li>
+        <li><strong>jednotky a čas:</strong> µg/m³, převod UTC → SEČ</li>
+        <li><strong>úplnost:</strong> den s &lt; 18 h dat označí jako neplatný</li>
+        <li><strong>limit</strong> převezme ze zadání, nevymýšlí ho</li>
+      </ul>
+    </div>
+  </div>
+`);
+
+slide('ukolF-reseni-3','Úkol F — řešení (vzorový prompt)', `
+  <div class="slide-inner">
+    <p class="eyebrow">Úkol F · vzorové řešení 3/4 · řetězení, režim spouštějící kód</p>
+    <h2 class="headline">Vzorový prompt</h2>
+    <div class="prompt-box"><b>[Role]</b> Postupuj jako analytik kvality ovzduší, který programuje v Pythonu.
+<b>[Úkol]</b> Napiš skript, který z přiložených CSV ČHMÚ spočítá denní průměry PM10 a počet dnů nad limitem.
+<b>[Publikum]</b> Pro studenty-začátečníky; komentáře česky.
+<b>[Data]</b> Sloupce idRegistration, startTime (UTC), idValueType, value. Stanice 40742 = ČB, 40635 = Karviná. Jen idValueType 8 nebo 9.
+<b>[Kontext]</b> Limit 50 µg/m³ (24 h), dny počítej v SEČ (UTC+1).
+<b>[Formát]</b> Nejdřív postup v bodech, pak kód. Výstup: datum | stanice | počet hodin | průměr | překročení.
+<b>[Omezení]</b> Den s &lt; 18 hodinovými hodnotami nezapočítávej. Limit neměň. Když si nejsi jistý, zeptej se.</div>
+  </div>
+`);
+
+slide('ukolF-reseni-4','Úkol F — řešení (ověření)', `
+  <div class="slide-inner">
+    <p class="eyebrow">Úkol F · vzorové řešení 4/4</p>
+    <h2 class="headline">Ověření: AI nevěříme, kontrolujeme</h2>
+    <div class="grid-2">
+      <div class="sol-box" style="margin-top:0;">
+        <div class="sol-label">VRSTVA A — AI SAMA</div>
+        <ul class="plain">
+          <li>„Jaké předpoklady jsi udělal?"</li>
+          <li>„Co skript udělá s neúplným dnem?"</li>
+        </ul>
+      </div>
+      <div class="sol-box" style="margin-top:0;">
+        <div class="sol-label">VRSTVA B — JÁ</div>
+        <ul class="plain">
+          <li>spustit na týdnu z úkolu C</li>
+          <li>porovnat s přehledem ČHMÚ</li>
+          <li>limit ověřit v zákoně</li>
+        </ul>
+      </div>
+    </div>
+    <p class="footer-note">Typické chyby: průměr v UTC místo SEČ, započítání chybových kódů (−5003).</p>
+  </div>
+`);
+
+/* ================= ZDROJE ================= */
+slide('zdroje-informaci','Kam se obrátit — informační zdroje', `
+  <div class="slide-inner">
+    <p class="eyebrow">Praktická dovednost</p>
+    <h2 class="headline">Kde hledat data a limity</h2>
+    <table class="data-table">
+      <tr><td><strong>e-Sbírka</strong></td><td>aktuální znění předpisů (PEL, BET, imisní limity)</td></tr>
+      <tr><td><strong>ČHMÚ</strong></td><td>kvalita ovzduší, překročení limitů, otevřená data</td></tr>
+      <tr><td><strong>TIS</strong></td><td>nepřetržitá konzultace při akutních otravách</td></tr>
+      <tr><td><strong>PubChem</strong></td><td>vlastnosti a toxicita látek (NIH)</td></tr>
+      <tr><td><strong>GESTIS</strong></td><td>nebezpečné látky, limity na pracovišti (IFA)</td></tr>
+      <tr><td><strong>ECHA CHEM</strong></td><td>látky v EU, klasifikace CLP, REACH</td></tr>
+    </table>
+    <p class="footer-note">Podrobněji v přednášce 6.</p>
+  </div>
+`);
+
+slide('kviz-zdroje-poradi','Kontrolní úkol: přiřaďte zdroj', `
+  <div class="slide-inner">
+    <p class="eyebrow">Kontrolní zastávka · úkol</p>
+    <h2 class="headline">Spárujte zdroj s tím, co nabízí</h2>
+    <p class="body-text">Klikněte na zdroj vlevo a pak na popis vpravo.</p>
+    <div class="match-wrap">
+      <div>
+        <div class="match-col-title">ZDROJ</div>
+        <div id="match-left"></div>
+      </div>
+      <div>
+        <div class="match-col-title">CO NABÍZÍ</div>
+        <div id="match-right"></div>
+      </div>
+    </div>
+    <div class="match-result" id="match-result"></div>
+  </div>
+`);
+
+slide('diskuse','Diskusní otázky', `
+  <div class="slide-inner">
+    <p class="eyebrow">Na závěr přednášky</p>
+    <h2 class="headline">Diskusní otázky</h2>
+    <div id="discussion-list" style="margin-top:14px;"></div>
+  </div>
+`);
+
+slide('shrnuti','Shrnutí', `
+  <div class="slide-inner">
+    <p class="eyebrow">Na závěr</p>
+    <h2 class="headline">Co si odnášíme</h2>
+    <ul class="plain" style="font-size:20px;">
+      <li>Vnější expozice ≠ absorbovaná dávka.</li>
+      <li>PEL = směnový průměr, NPK-P = krátkodobé maximum; u směsí se poměry sčítají.</li>
+      <li>Imisní limity chrání celou populaci, proto jsou nižší než PEL.</li>
+      <li>Biomonitoring zachytí všechny cesty vstupu; moč standardizujeme na kreatinin.</li>
+      <li>AI je pomocník — výsledky ověřujeme mimo AI.</li>
+    </ul>
+  </div>
+`);
+
+slide('closing','Zdroje', `
+  <div class="slide-inner">
+    <p class="eyebrow">Zdroje a doporučená literatura</p>
+    <h2 class="headline">Zdroje</h2>
+    <div class="card sources" style="font-size:15px;">
+      <p style="margin-top:0;">Linhart, I.: Toxikologie: interakce škodlivých látek s živými organismy, jejich mechanismy, projevy a důsledky. 2., upr. a rozš. vyd. Praha: VŠCHT Praha, 2014. ISBN 978-80-7080-877-1.</p>
+      <p>Nařízení vlády č. 361/2007 Sb.; vyhláška č. 432/2003 Sb.; zákon č. 201/2012 Sb. — aktuální znění (e-sbirka.gov.cz).</p>
+      <p>ČHMÚ: otevřená data kvality ovzduší (opendata.chmi.cz); Přehled překročení imisních limitů (ovzdusi.chmi.cz), staženo 26. 10. 2026.</p>
+      <p>WHO Global Air Quality Guidelines, 2021; směrnice (EU) 2024/2881.</p>
+      <p>EFSA NDA Panel: Scientific Opinion on the safety of caffeine. EFSA Journal 13(5):4102, 2015.</p>
+      <p>Arnaud, M. J.: Pharmacokinetics and metabolism of natural methylxanthines in animal and man. Handb. Exp. Pharmacol. 200:33–91, 2011.</p>
+      <p>Noever, D. A., Cronise, R. J., Relwani, R. A.: Using spider-web patterns to determine toxicity. NASA Tech Briefs 19(4), 1995.</p>
+      <p style="margin-bottom:0;">TIS; PubChem (NCBI, NIH); GESTIS (IFA, DGUV); ECHA CHEM.</p>
+    </div>
+  </div>
+`);
+
+
+const deck = document.getElementById('deck');
+slides.forEach((s,i)=>{
+  const el = document.createElement('div');
+  el.className='slide'; el.id='slide-'+i; el.innerHTML=s.html;
+  deck.appendChild(el);
+});
+const overlayList = document.getElementById('overlay-list');
+slides.forEach((s,i)=>{
+  const li = document.createElement('li');
+  li.innerHTML = '<span>'+String(i+1).padStart(2,'0')+'</span>'+s.title;
+  li.onclick = ()=>{ goTo(i); toggleOverlay(false); };
+  overlayList.appendChild(li);
+});
+
+let current = 0;
+function render(){
+  document.querySelectorAll('.slide').forEach((el,i)=> el.classList.toggle('active', i===current));
+  document.getElementById('progress-fill').style.width = ((current+1)/slides.length*100)+'%';
+  document.getElementById('counter').textContent = (current+1)+' / '+slides.length;
+  document.getElementById('prevBtn').disabled = current===0;
+  document.getElementById('nextBtn').disabled = current===slides.length-1;
+  initSlideWidgets(current);
+}
+function goTo(i){ current = Math.max(0, Math.min(slides.length-1, i)); render(); }
+function nextSlide(){ goTo(current+1); }
+function prevSlide(){ goTo(current-1); }
+document.addEventListener('keydown', (e)=>{
+  if(document.getElementById('lightbox').classList.contains('show')){ if(e.key==='Escape') closeLightbox(); return; }
+  if(document.getElementById('overlay').classList.contains('show')){ if(e.key==='Escape') toggleOverlay(false); return; }
+  if(e.key==='ArrowRight' || e.key===' ') nextSlide();
+  if(e.key==='ArrowLeft') prevSlide();
+  if(e.key==='Escape') toggleOverlay(false);
+});
+function toggleOverlay(show){ document.getElementById('overlay').classList.toggle('show', show); }
+
+/* ---- schema lightbox (click to enlarge) ---- */
+deck.addEventListener('click', (e)=>{
+  const img = e.target.closest('.scheme-img');
+  if(img){ openLightbox('<img src="'+img.getAttribute('src')+'" alt="'+(img.getAttribute('alt')||'')+'">'); return; }
+  const svg = e.target.closest('.diagram-box svg');
+  if(svg){ openLightbox(svg.outerHTML); return; }
+});
+function openLightbox(html){
+  document.getElementById('lightbox-inner').innerHTML = html;
+  document.getElementById('lightbox').classList.add('show');
+}
+function closeLightbox(){
+  document.getElementById('lightbox').classList.remove('show');
+  document.getElementById('lightbox-inner').innerHTML = '';
+}
+
+/* ================= WIDGETS ================= */
+const initialized = {};
+function initSlideWidgets(i){
+  const id = slides[i].id;
+  if(initialized[id]) return;
+  initialized[id] = true;
+  if(id==='kviz-biomarkery') initSimpleQuizzes([
+    ['qb1','qb1-fb','Správně — kreatinin se vylučuje víceméně konstantní rychlostí, takže poměr látka/kreatinin koriguje vliv ředění moči pitným režimem.','Zkuste znovu — kreatinin sám o sobě není sledovaným toxikantem, slouží jako standardizační veličina.'],
+    ['qb2','qb2-fb','Správně — PEL a NPK-P se hodnotí samostatně; překročení NPK-P nelze „vyrovnat" nízkým směnovým průměrem.','Zkuste znovu — NV 361/2007 Sb. vyžaduje dodržení obou limitů; NPK-P chrání před akutními účinky krátkodobých špiček.'],
+    ['qb3','qb3-fb','Správně — rozdíl plyne z exponované populace a doby expozice, nikoli z jiné toxicity látky.','Zkuste znovu — jde o tutéž látku; rozhoduje, koho a jak dlouho limit chrání.']
+  ]);
+  if(id==='kviz-kofein') initSimpleQuizzes([
+    ['qk1','qk1-fb','Správně — hodnota mimo kalibrační rozsah metody není spolehlivá; vzorek je nutné naředit tak, aby odezva spadla do ověřeného rozsahu.','Zkuste znovu — jednoduché vydělení neřeší to, že mimo kalibrační rozsah odezva detektoru nemusí být lineární.'],
+    ['qk2','qk2-fb','Správně — polárnější látky mají na nepolární (C18) koloně slabší interakci se stacionární fází, a proto eluují dříve.','Zkuste znovu — metabolity mají naopak nižší molekulovou hmotnost; retenci na obrácené fázi určuje především polarita.'],
+    ['qk3','qk3-fb','Správně — vyhláška č. 432/2003 Sb. připouští k hodnocení jen moč s kreatininem 0,3–3 g/l; u silně zředěné moči standardizace selhává.','Zkuste znovu — standardizace na kreatinin má své meze; příliš zředěný vzorek se nehodnotí.']
+  ]);
+  if(id==='kviz-zdroje-poradi') initCycleMatching();
+  if(id==='diskuse') initDiscussion();
+}
+
+function initSimpleQuizzes(list){
+  list.forEach(([cardId, fbId, correctMsg, wrongMsg])=>{
+    const card = document.getElementById(cardId);
+    const opts = card.querySelectorAll('.quiz-opt');
+    opts.forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const isCorrect = btn.dataset.correct==='true';
+        opts.forEach(o=>o.disabled=true);
+        btn.classList.add(isCorrect?'correct':'wrong');
+        if(!isCorrect){ opts.forEach(o=>{ if(o.dataset.correct==='true') o.classList.add('correct'); }); }
+        const fb = document.getElementById(fbId);
+        fb.textContent = isCorrect? correctMsg: wrongMsg;
+        fb.classList.add('show');
+      });
+    });
+  });
+}
+
+/* ---- discussion accordion ---- */
+function initDiscussion(){
+  const qa = [
+    {q:'U kofeinového experimentu se poměr metabolitů (teobromin, paraxantin, teofylin, kofein) mezi studenty výrazně lišil. Čím to může být způsobeno?',
+     a:'Hlavní enzym metabolizující kofein, CYP1A2, vykazuje výrazné interindividuální rozdíly — genetický polymorfismus, indukci kouřením, inhibici některými léčivy a hormonální antikoncepcí (přednáška 4). Dále záleží na době mezi konzumací a odběrem (metabolity vznikají a vylučují se různou rychlostí), na dalších zdrojích methylxantinů ve stravě (čokoláda → teobromin) a na individuálních rozdílech v ledvinné exkreci.'},
+    {q:'Pracovník má směnový průměr toluenu ve vzduchu pod PEL, a přesto má zvýšenou kyselinu hippurovou v moči. Uveďte co nejvíce možných vysvětlení.',
+     a:'Kožní absorpce (toluen má poznámku D), vyšší plicní ventilace při fyzické práci, nereprezentativní měření ve vzduchu (jiné pracovní místo, krátký odběr), mimopracovní expozice (domácí kutilství, kouření), a hlavně nespecifičnost ukazatele — kyselina hippurová vzniká i z benzoátů v potravě. Proto se při nálezu 1600–2500 mg/g doplňuje specifičtější o-kresol.'},
+    {q:'Proč nelze z jedné hodinové hodnoty PM10 na webu ČHMÚ rozhodnout, zda je v daném místě dodržen imisní limit?',
+     a:'Imisní limit PM10 je definován pro 24h průměr s povoleným počtem 35 překročení za kalendářní rok a dále pro roční průměr. Hodinová hodnota je jen okamžitý údaj, navíc operativní (neověřený). Pro hodnocení je třeba spočítat platné denní průměry (≥ 75 % hodinových dat) a sečíst překročení za celý rok, ideálně z verifikovaných dat.'},
+    {q:'Vzorek moči má kreatinin 0,15 g/l. Po přepočtu na mg/g kreatininu vyjde nejvyšší koncentrace kofeinu ze skupiny. Je to důkaz nejvyšší expozice?',
+     a:'Ne. Tak zředěná moč nevyhovuje podmínce 0,3–3 g/l kreatininu (vyhl. č. 432/2003 Sb.). Při velmi nízkém kreatininu se dělí malým číslem a i malá absolutní chyba měření se výrazně zvětší; vylučování kreatininu ani látky navíc při velkém příjmu tekutin nemusí probíhat úměrně. Výsledek se nehodnotí a odběr se opakuje.'},
+    {q:'V úkolu s kofeinovým nápojem byl neředěný vzorek mimo kalibrační rozsah metody. Proč nelze kalibrační přímku extrapolovat?',
+     a:'Odezva detektoru je lineární jen v ověřeném rozsahu koncentrací — při vysokých koncentracích dochází k saturaci detektoru nebo přetížení kolony a vztah přestává být lineární. Extrapolace by vedla k systematické chybě (obvykle podhodnocení). Vzorek se proto ředí zpět do ověřeného rozsahu.'}
+  ];
+  const wrap = document.getElementById('discussion-list');
+  qa.forEach((item,i)=>{
+    const div = document.createElement('div');
+    div.className='tl-item'; div.style.cssText='min-width:auto;width:100%;margin-bottom:10px;';
+    div.innerHTML = `<div class="tl-year">Otázka ${i+1}</div><div class="tl-title" style="font-size:20px;">${item.q}</div><div class="tl-detail"><strong>Řešení:</strong> ${item.a}</div>`;
+    div.onclick = ()=> div.classList.toggle('open');
+    wrap.appendChild(div);
+  });
+}
+
+/* ---- information-source matching ---- */
+function initCycleMatching(){
+  const pairs = [
+    {left:'ČHMÚ', right:'měření kvality venkovního ovzduší, přehled překročení imisních limitů a otevřená data'},
+    {left:'e-Sbírka', right:'aktuální znění předpisů, např. NV č. 361/2007 Sb. s hodnotami PEL a NPK-P'},
+    {left:'TIS', right:'nepřetržitá telefonní konzultační služba pro akutní otravy v ČR'},
+    {left:'PubChem', right:'volně dostupná databáze NIH/NCBI se strukturou, vlastnostmi a souhrny toxicity látek'},
+    {left:'GESTIS', right:'databáze nebezpečných látek a mezinárodních expozičních limitů na pracovišti (IFA, Německo)'},
+    {left:'ECHA CHEM', right:'databáze chemických látek v EU, klasifikace a registrační údaje dle REACH/CLP'}
+  ];
+  const leftItems = pairs.map((p,i)=>({text:p.left, idx:i}));
+  const rightItems = pairs.map((p,i)=>({text:p.right, idx:i}));
+  for(let i=rightItems.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [rightItems[i],rightItems[j]]=[rightItems[j],rightItems[i]]; }
+
+  const leftEl = document.getElementById('match-left');
+  const rightEl = document.getElementById('match-right');
+  let selectedLeft = null;
+  let solved = 0;
+
+  leftItems.forEach(item=>{
+    const div = document.createElement('div');
+    div.className='match-item';
+    div.textContent = item.text;
+    div.dataset.idx = item.idx;
+    div.onclick = ()=>{
+      if(div.classList.contains('correct')) return;
+      leftEl.querySelectorAll('.match-item').forEach(x=>x.classList.remove('selected'));
+      div.classList.add('selected');
+      selectedLeft = div;
+    };
+    leftEl.appendChild(div);
+  });
+  rightItems.forEach(item=>{
+    const div = document.createElement('div');
+    div.className='match-item';
+    div.textContent = item.text;
+    div.dataset.idx = item.idx;
+    div.onclick = ()=>{
+      if(!selectedLeft || div.classList.contains('correct')) return;
+      const isMatch = selectedLeft.dataset.idx === div.dataset.idx;
+      if(isMatch){
+        selectedLeft.classList.remove('selected'); selectedLeft.classList.add('correct');
+        div.classList.add('correct');
+        solved++;
+        selectedLeft = null;
+        if(solved===pairs.length){
+          document.getElementById('match-result').textContent = 'Výborně — všechny zdroje jsou správně přiřazeny!';
+        }
+      } else {
+        div.classList.add('wrong');
+        setTimeout(()=>div.classList.remove('wrong'), 500);
+      }
+    };
+    rightEl.appendChild(div);
+  });
+}
+
+render();
+</script>
+</body>
+</html>
