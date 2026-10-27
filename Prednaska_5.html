@@ -236,7 +236,6 @@ slide('outline','Osnova přednášky 5', `
       <li>Imisní limity a data ČHMÚ <em>(úkoly C, D)</em></li>
       <li>Biologické monitorování a BEL <em>(úkol E)</em></li>
       <li>Laboratorní případ: kofein <em>(úkoly 1–3)</em></li>
-      <li>Práce s AI: prompt podle šablony <em>(úkol F)</em></li>
     </ul>
  </div>
 `);
@@ -1315,154 +1314,45 @@ slide('kviz-kofein','Kontrolní kvíz: kofeinový experiment', `
   </div>
 `);
 
-/* ================= AI ================= */
-slide('ai-sablona','Práce s AI — šablona', `
-  <div class="slide-inner">
-    <p class="eyebrow">Práce s AI · od promptu k ověřenému výstupu</p>
-    <h2 class="headline">Šablona: 8 kroků</h2>
-    <div class="step-row">
-      <div class="step"><b>0 · Než začnu</b>hodí se AI? smím použít data?</div>
-      <div class="step"><b>1 · Analýza</b>cíl, publikum, kritéria úspěchu</div>
-      <div class="step loop"><b>2 · Návrh</b>stavební bloky promptu</div>
-      <div class="step loop"><b>3 · Vývoj</b>technika, nástroj, režim</div>
-      <div class="step loop"><b>4 · Ladění</b>navazující prompty</div>
-      <div class="step loop"><b>5 · Hodnocení</b>AI sama + ověřuji já</div>
-      <div class="step"><b>6 · Skill</b>uložit ověřený prompt</div>
-      <div class="step"><b>7 · Záznam</b>prohlášení o použití AI</div>
-    </div>
-    <p class="footer-note">Modré kroky se opakují, dokud výstup nesplní kritéria z kroku 1.</p>
-  </div>
-`);
-
-slide('ai-kdy','Kdy AI ano a kdy ne', `
-  <div class="slide-inner">
-    <p class="eyebrow">Práce s AI · krok 0</p>
-    <h2 class="headline">AI je pomocník, ne zdroj</h2>
-    <div class="grid-2">
-      <div class="card" style="border-left:4px solid var(--tox-green);">
-        <p class="body-text" style="margin:0;"><strong>Hodí se na</strong></p>
-        <ul class="plain" style="margin-top:10px;">
-          <li>návrh struktury textu</li>
-          <li>vysvětlení pojmu</li>
-          <li>návrh kódu pro zpracování dat</li>
-        </ul>
-      </div>
-      <div class="card" style="border-left:4px solid var(--danger);">
-        <p class="body-text" style="margin:0;"><strong>Nehodí se jako</strong></p>
-        <ul class="plain" style="margin-top:10px;">
-          <li>zdroj limitů a toxikologických hodnot</li>
-          <li>zdroj citací bez ověření</li>
-          <li>místo pro osobní a zdravotní data</li>
-        </ul>
-      </div>
-    </div>
-    <p class="footer-note">Šablona je v materiálech kurzu.</p>
-  </div>
-`);
-
-slide('ukolF-zadani','Úkol F — zadání (prompt)', `
-  <div class="slide-inner">
-    <p class="eyebrow">Úkol F · zadání · ve dvojicích, 10 min</p>
-    <h2 class="headline">Nechte AI napsat skript pro data ČHMÚ</h2>
-    <p class="body-text">Cíl: z hodinových CSV ČHMÚ spočítat denní průměry PM10 a počet překročení limitu — tedy zautomatizovat úkol C.</p>
-    <div class="task-box">
-      <ol>
-        <li><strong>Krok 0:</strong> Smíte do AI vložit data ČHMÚ? A data z úkolu 3?</li>
-        <li><strong>Krok 1:</strong> Cíl, publikum, alespoň 4 kritéria úspěchu.</li>
-        <li><strong>Krok 2–3:</strong> Sestavte prompt z bloků, zvolte techniku a režim.</li>
-        <li><strong>Krok 5:</strong> Jak výstup ověříte?</li>
-      </ol>
-    </div>
-    <p class="hint">Data: sloupce idRegistration, startTime (UTC), idValueType, value; PM10 ČB = 40742, Karviná = 40635; platné typy 8 a 9.</p>
-  </div>
-`);
-
-slide('ukolF-reseni-1','Úkol F — řešení (krok 0 a 1)', `
-  <div class="slide-inner">
-    <p class="eyebrow">Úkol F · vzorové řešení 1/4</p>
-    <h2 class="headline">Krok 0 a analýza</h2>
-    <div class="sol-box">
-      <p class="body-text" style="margin:0;"><strong>Krok 0:</strong> data ČHMÚ jsou veřejná → ano. Data z moči studentů jsou <strong>zdravotní údaje</strong> → do AI ne.</p>
-    </div>
-    <table class="data-table" style="margin-top:12px;">
-      <tr><td><strong>Cíl</strong></td><td>skript: denní průměry PM10 a počet překročení</td></tr>
-      <tr><td><strong>Publikum</strong></td><td>studenti, začátečníci v Pythonu</td></tr>
-      <tr><td><strong>Kontext</strong></td><td>limit dle zákona 201/2012 Sb.; čas UTC → SEČ</td></tr>
-      <tr><td><strong>Forma</strong></td><td>okomentovaný kód + tabulka + souhrn</td></tr>
-    </table>
-  </div>
-`);
-
-slide('ukolF-reseni-2','Úkol F — řešení (kritéria)', `
-  <div class="slide-inner">
-    <p class="eyebrow">Úkol F · vzorové řešení 2/4</p>
-    <h2 class="headline">Kritéria úspěchu</h2>
-    <div class="sol-box">
-      <ul class="plain">
-        <li><strong>správnost:</strong> pro 19.–25. 1. 2026 vrátí Karviná 5 / 84,9 µg/m³, ČB 0 / 30,6 µg/m³</li>
-        <li><strong>jednotky a čas:</strong> µg/m³, převod UTC → SEČ</li>
-        <li><strong>úplnost:</strong> den s &lt; 18 h dat označí jako neplatný</li>
-        <li><strong>limit</strong> převezme ze zadání, nevymýšlí ho</li>
-      </ul>
-    </div>
-  </div>
-`);
-
-slide('ukolF-reseni-3','Úkol F — řešení (vzorový prompt)', `
-  <div class="slide-inner">
-    <p class="eyebrow">Úkol F · vzorové řešení 3/4 · řetězení, režim spouštějící kód</p>
-    <h2 class="headline">Vzorový prompt</h2>
-    <div class="prompt-box"><b>[Role]</b> Postupuj jako analytik kvality ovzduší, který programuje v Pythonu.
-<b>[Úkol]</b> Napiš skript, který z přiložených CSV ČHMÚ spočítá denní průměry PM10 a počet dnů nad limitem.
-<b>[Publikum]</b> Pro studenty-začátečníky; komentáře česky.
-<b>[Data]</b> Sloupce idRegistration, startTime (UTC), idValueType, value. Stanice 40742 = ČB, 40635 = Karviná. Jen idValueType 8 nebo 9.
-<b>[Kontext]</b> Limit 50 µg/m³ (24 h), dny počítej v SEČ (UTC+1).
-<b>[Formát]</b> Nejdřív postup v bodech, pak kód. Výstup: datum | stanice | počet hodin | průměr | překročení.
-<b>[Omezení]</b> Den s &lt; 18 hodinovými hodnotami nezapočítávej. Limit neměň. Když si nejsi jistý, zeptej se.</div>
-  </div>
-`);
-
-slide('ukolF-reseni-4','Úkol F — řešení (ověření)', `
-  <div class="slide-inner">
-    <p class="eyebrow">Úkol F · vzorové řešení 4/4</p>
-    <h2 class="headline">Ověření: AI nevěříme, kontrolujeme</h2>
-    <div class="grid-2">
-      <div class="sol-box" style="margin-top:0;">
-        <div class="sol-label">VRSTVA A — AI SAMA</div>
-        <ul class="plain">
-          <li>„Jaké předpoklady jsi udělal?"</li>
-          <li>„Co skript udělá s neúplným dnem?"</li>
-        </ul>
-      </div>
-      <div class="sol-box" style="margin-top:0;">
-        <div class="sol-label">VRSTVA B — JÁ</div>
-        <ul class="plain">
-          <li>spustit na týdnu z úkolu C</li>
-          <li>porovnat s přehledem ČHMÚ</li>
-          <li>limit ověřit v zákoně</li>
-        </ul>
-      </div>
-    </div>
-    <p class="footer-note">Typické chyby: průměr v UTC místo SEČ, započítání chybových kódů (−5003).</p>
-  </div>
-`);
-
 /* ================= ZDROJE ================= */
+
 slide('zdroje-informaci','Kam se obrátit — informační zdroje', `
   <div class="slide-inner">
     <p class="eyebrow">Praktická dovednost</p>
     <h2 class="headline">Kde hledat data a limity</h2>
     <table class="data-table">
-      <tr><td><strong>e-Sbírka</strong></td><td>aktuální znění předpisů (PEL, BET, imisní limity)</td></tr>
-      <tr><td><strong>ČHMÚ</strong></td><td>kvalita ovzduší, překročení limitů, otevřená data</td></tr>
-      <tr><td><strong>TIS</strong></td><td>nepřetržitá konzultace při akutních otravách</td></tr>
-      <tr><td><strong>PubChem</strong></td><td>vlastnosti a toxicita látek (NIH)</td></tr>
-      <tr><td><strong>GESTIS</strong></td><td>nebezpečné látky, limity na pracovišti (IFA)</td></tr>
-      <tr><td><strong>ECHA CHEM</strong></td><td>látky v EU, klasifikace CLP, REACH</td></tr>
+      <tr>
+        <td><strong><a href="https://www.e-sbirka.cz/" target="_blank" rel="noopener">e-Sbírka</a></strong></td>
+        <td>Platné právní předpisy; např. PEL a NPK-P pro pracovní ovzduší, BET a imisní limity.</td>
+      </tr>
+      <tr>
+        <td><strong><a href="https://www.chmi.cz/" target="_blank" rel="noopener">ČHMÚ</a></strong></td>
+        <td>Naměřené koncentrace znečišťujících látek ve venkovním ovzduší, imisní limity a hodnocení kvality ovzduší.</td>
+      </tr>
+      <tr>
+        <td><strong><a href="https://www.tis-cz.cz/" target="_blank" rel="noopener">TIS</a></strong></td>
+        <td>Nepřetržitá telefonická konzultace při akutních otravách lidí a zvířat.</td>
+      </tr>
+      <tr>
+        <td><strong><a href="https://pubchem.ncbi.nlm.nih.gov/" target="_blank" rel="noopener">PubChem</a></strong></td>
+        <td>Identita, vlastnosti, biologické účinky a toxikologické údaje o látkách; ověřovat původ dat.</td>
+      </tr>
+      <tr>
+        <td><strong><a href="https://gestis-database.dguv.de/" target="_blank" rel="noopener">GESTIS</a></strong></td>
+        <td>Vlastnosti a nebezpečnost látek, bezpečnostní informace a pracovní expoziční limity.</td>
+      </tr>
+      <tr>
+        <td><strong><a href="https://chem.echa.europa.eu/" target="_blank" rel="noopener">ECHA CHEM</a></strong></td>
+        <td>Informace o látkách v EU, klasifikace a označování podle CLP, registrační údaje REACH.</td>
+      </tr>
     </table>
-    <p class="footer-note">Podrobněji v přednášce 6.</p>
-  </div>
+    <p class="footer-note">
+      Pozor: nebezpečnost látky ≠ riziko při konkrétní expozici.
+      Limity vždy posuzujte v kontextu účelu, doby průměrování
+      a způsobu měření.
+</div>
 `);
+
 
 slide('kviz-zdroje-poradi','Kontrolní úkol: přiřaďte zdroj', `
   <div class="slide-inner">
@@ -1500,7 +1390,6 @@ slide('shrnuti','Shrnutí', `
       <li>PEL = směnový průměr, NPK-P = krátkodobé maximum; u směsí se poměry sčítají.</li>
       <li>Imisní limity chrání celou populaci, proto jsou nižší než PEL.</li>
       <li>Biomonitoring zachytí všechny cesty vstupu; moč standardizujeme na kreatinin.</li>
-      <li>AI je pomocník — výsledky ověřujeme mimo AI.</li>
     </ul>
   </div>
 `);
