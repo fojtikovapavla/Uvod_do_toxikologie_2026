@@ -1,0 +1,1597 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Metody zjišťování a predikce toxicity — Přednáška 6 (obsáhlá verze)</title>
+<style>
+  :root{
+    --paper:#F4F5EF;
+    --paper-deep:#ECEEE4;
+    --ink:#1E2019;
+    --ink-soft:#5A5D51;
+    --amber:#B9791E;
+    --amber-deep:#8F5D14;
+    --tox-green:#3E5C42;
+    --tox-green-deep:#2A3F2D;
+    --danger:#9C3B2E;
+    --blue:#3A5A72;
+    --blue-deep:#233C4E;
+    --line:#D6D6C6;
+    --card:#FFFFFE;
+    --serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', 'Book Antiqua', serif;
+    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --mono: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0; background:var(--paper); color:var(--ink); font-family:var(--sans);
+    overflow:hidden; font-size:18px;
+  }
+  ::selection{ background: var(--amber); color:#fff; }
+
+  #topbar{
+    position:fixed; top:0; left:0; right:0; height:54px;
+    display:flex; align-items:center; gap:16px; padding:0 20px; z-index:50;
+    background:linear-gradient(to bottom, rgba(244,245,239,0.97), rgba(244,245,239,0.85));
+    border-bottom:1px solid var(--line);
+  }
+  #topbar .brand{ font-family:var(--serif); font-size:16px; font-style:italic; color:var(--ink-soft); white-space:nowrap; }
+  #progress-track{ flex:1; height:3px; background:var(--line); border-radius:2px; overflow:hidden; }
+  #progress-fill{ height:100%; width:0%; background:var(--amber); transition:width .35s ease; }
+  #counter{ font-family:var(--mono); font-size:13px; color:var(--ink-soft); white-space:nowrap; }
+  #menu-btn{
+    font-family:var(--sans); font-size:14px; color:var(--ink); background:var(--card);
+    border:1px solid var(--line); border-radius:6px; padding:6px 12px; cursor:pointer;
+  }
+  #menu-btn:hover{ border-color:var(--amber); }
+
+  #deck{ position:relative; width:100%; height:100%; padding-top:54px; }
+  .slide{
+    position:absolute; inset:0; top:54px; display:flex; align-items:center; justify-content:center;
+    padding:36px 7vw 90px 7vw; opacity:0; visibility:hidden; transform:translateY(14px);
+    transition:opacity .4s ease, transform .4s ease; overflow-y:auto;
+  }
+  .slide.active{ opacity:1; visibility:visible; transform:translateY(0); }
+  .slide-inner{ width:100%; max-width:1000px; }
+  .eyebrow{ font-family:var(--mono); font-size:16px; letter-spacing:.02em; color:var(--amber-deep); margin:0 0 12px 0; }
+  h1.headline{ font-family:var(--serif); font-weight:400; font-size:clamp(30px,4.6vw,50px); line-height:1.1; margin:0 0 16px 0; }
+  h2.headline{ font-family:var(--serif); font-weight:400; font-size:clamp(24px,3.2vw,34px); line-height:1.18; margin:0 0 16px 0; }
+  p.lede{ font-size:19px; line-height:1.55; color:var(--ink-soft); max-width:700px; }
+  .body-text{ font-size:19px; line-height:1.6; color:var(--ink); max-width:760px; }
+  .body-text + .body-text{ margin-top:10px; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:10px; padding:20px 22px; }
+  .grid-2{ display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+  .grid-3{ display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+  @media (max-width:800px){ .grid-2,.grid-3{ grid-template-columns:1fr; } }
+  ul.plain{ margin:0; padding-left:22px; font-size:18px; }
+  ul.plain li{ margin-bottom:9px; line-height:1.5; }
+  blockquote.quote{ font-family:var(--serif); font-style:italic; font-size:26px; line-height:1.4; color:var(--tox-green-deep); border-left:3px solid var(--amber); padding-left:22px; margin:22px 0; }
+  blockquote.quote cite{ display:block; font-size:15px; font-style:normal; color:var(--ink-soft); margin-top:8px; }
+  #navbtns{ position:fixed; bottom:22px; right:28px; display:flex; gap:10px; z-index:50; }
+  .navbtn{ width:46px; height:46px; border-radius:50%; border:1px solid var(--line); background:var(--card); color:var(--ink); font-size:19px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .navbtn:hover{ border-color:var(--amber); color:var(--amber-deep); }
+  .navbtn:disabled{ opacity:.3; cursor:default; }
+  #overlay{ position:fixed; inset:0; background:rgba(30,32,25,.94); z-index:100; display:none; padding:56px 8vw; overflow-y:auto; }
+  #overlay.show{ display:block; }
+  #overlay h3{ font-family:var(--serif); color:#fff; font-weight:400; font-size:23px; margin-bottom:20px; }
+  #overlay-list{ list-style:none; margin:0; padding:0; columns:2; column-gap:40px; }
+  @media (max-width:800px){ #overlay-list{ columns:1; } }
+  #overlay-list li{ color:#EDEEE6; font-size:16px; padding:9px 0; border-bottom:1px solid rgba(255,255,255,.12); cursor:pointer; break-inside:avoid; }
+  #overlay-list li span{ font-family:var(--mono); color:var(--amber); margin-right:10px; font-size:13px; }
+  #overlay-list li:hover{ color:var(--amber); }
+  #overlay-close{ position:absolute; top:22px; right:30px; color:#fff; font-size:28px; background:none; border:none; cursor:pointer; }
+
+  .quiz-card{ background:var(--card); border:1px solid var(--line); border-radius:12px; padding:22px 26px; margin-top:10px; }
+  .quiz-q{ font-size:19px; font-weight:600; margin-bottom:16px; line-height:1.45; }
+  .quiz-opt{ display:block; width:100%; text-align:left; padding:13px 16px; margin-bottom:10px; border:1px solid var(--line); border-radius:8px; background:#fff; cursor:pointer; font-size:18px; font-family:var(--sans); color:var(--ink); }
+  .quiz-opt:hover{ border-color:var(--amber); }
+  .quiz-opt.correct{ border-color:var(--tox-green); background:#EAF1EA; color:var(--tox-green-deep); font-weight:600; }
+  .quiz-opt.wrong{ border-color:var(--danger); background:#F7EAE7; color:var(--danger); }
+  .quiz-opt[disabled]{ cursor:default; }
+  .quiz-feedback{ margin-top:14px; font-size:18px; line-height:1.55; color:var(--ink-soft); display:none; }
+  .quiz-feedback.show{ display:block; }
+
+  table.data-table{ width:100%; border-collapse:collapse; font-size:18px; margin-top:10px; }
+  table.data-table th{ text-align:left; font-family:var(--mono); font-size:16px; color:var(--ink-soft); padding:9px 10px; border-bottom:1px solid var(--ink); }
+  table.data-table td{ padding:10px 10px; border-bottom:1px solid var(--line); }
+  table.data-table tr.highlight td{ background:#FBF0DD; font-weight:600; }
+  table.data-table.compact{ font-size:16.5px; }
+  table.data-table.compact th{ font-size:14px; padding:7px 8px; }
+  table.data-table.compact td{ padding:6px 8px; }
+  table.data-table td.num, table.data-table th.num{ text-align:right; font-variant-numeric:tabular-nums; }
+
+  .tl-item{ min-width:200px; background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px 16px; cursor:pointer; flex-shrink:0; }
+  .tl-item .tl-year{ font-family:var(--mono); font-size:18px; color:var(--amber-deep); }
+  .tl-item .tl-title{ font-family:var(--serif); font-size:20px; margin:4px 0 8px 0; }
+  .tl-item .tl-detail{ font-size:19px; color:var(--ink-soft); line-height:1.5; display:none; }
+  .tl-item.open .tl-detail{ display:block; }
+  .tl-item.open{ border-color:var(--amber); }
+
+  .footer-note{ margin-top:20px; font-size:18px; color:var(--ink-soft); font-family:var(--mono); line-height:1.5; }
+  .sources{ font-size:14px; color:var(--ink-soft); line-height:1.6; }
+  .sources p{ margin:0 0 6px 0; }
+  .cite{ font-size:12.5px; color:var(--ink-soft); line-height:1.45; margin-top:10px; }
+  .flag{ font-size:13px; color:var(--danger); margin-top:6px; }
+
+  .diagram-box{ background:#fff; border:1px solid var(--line); border-radius:10px; padding:14px; margin-top:12px; }
+  .scheme-img{ width:100%; max-width:720px; display:block; margin:0 auto; border:1px solid var(--line); border-radius:8px; background:#fff; cursor:zoom-in; }
+  .scheme-img.wide{ max-width:960px; }
+  .scheme-img.narrow{ max-width:520px; }
+  .scheme-img.tiny{ max-width:300px; }
+  .diagram-box svg{ cursor:zoom-in; }
+  figure.fig{ margin:12px 0 0 0; }
+  figure.fig figcaption{ font-size:12.5px; color:var(--ink-soft); text-align:center; margin-top:6px; line-height:1.45; }
+  .portrait{ max-height:300px; width:auto; max-width:100%; }
+
+  #lightbox{ position:fixed; inset:0; background:rgba(15,16,12,.95); z-index:300; display:none; align-items:center; justify-content:center; padding:4vh 4vw; cursor:zoom-out; }
+  #lightbox.show{ display:flex; }
+  #lightbox-inner{ max-width:100%; max-height:100%; cursor:default; }
+  #lightbox-inner img{ display:block; max-width:92vw; max-height:92vh; border-radius:10px; background:#fff; }
+  #lightbox-inner svg{ display:block; width:92vw; height:auto; max-height:92vh; background:#fff; border-radius:10px; padding:28px; }
+  #lightbox-hint{ position:absolute; bottom:22px; left:50%; transform:translateX(-50%); color:#B9B9A8; font-family:var(--mono); font-size:13px; }
+
+  .match-wrap{ display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-top:14px; }
+  @media (max-width:760px){ .match-wrap{ grid-template-columns:1fr; } }
+  .match-col-title{ font-family:var(--mono); font-size:13px; color:var(--ink-soft); margin-bottom:8px; }
+  .match-item{ background:var(--card); border:1px solid var(--line); border-radius:8px; padding:11px 14px; margin-bottom:8px; font-size:18px; cursor:pointer; }
+  .match-item.selected{ border-color:var(--amber); background:#FBF0DD; }
+  .match-item.correct{ border-color:var(--tox-green); background:#EAF1EA; }
+  .match-item.wrong{ border-color:var(--danger); background:#F7EAE7; }
+  .match-result{ margin-top:14px; font-size:18px; color:var(--ink-soft); min-height:24px; }
+
+  /* třídění do kategorií (3R) */
+  .sort-row{ display:grid; grid-template-columns:1fr auto; gap:12px; align-items:center; background:var(--card); border:1px solid var(--line); border-radius:8px; padding:10px 14px; margin-bottom:8px; font-size:17.5px; }
+  .sort-row.correct{ border-color:var(--tox-green); background:#EAF1EA; }
+  .sort-btns{ display:flex; gap:6px; }
+  .sort-btn{ font-family:var(--sans); font-size:14.5px; padding:6px 10px; border:1px solid var(--line); border-radius:6px; background:#fff; cursor:pointer; color:var(--ink); }
+  .sort-btn:hover{ border-color:var(--amber); }
+  .sort-btn.wrong{ border-color:var(--danger); background:#F7EAE7; color:var(--danger); }
+  .sort-btn.right{ border-color:var(--tox-green); background:var(--tox-green); color:#fff; }
+  .sort-why{ grid-column:1 / -1; font-size:15.5px; color:var(--ink-soft); display:none; }
+  .sort-row.correct .sort-why{ display:block; }
+
+  details.calc{ background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px 18px; margin-top:12px; }
+  details.calc summary{ cursor:pointer; font-family:var(--sans); font-weight:600; color:var(--amber-deep); font-size:18px; outline:none; }
+  .calc-step{ font-family:var(--mono); font-size:19px; line-height:1.9; color:var(--ink); }
+  .calc-step .res{ color:var(--tox-green-deep); font-weight:700; }
+  .calc-step .bad{ color:var(--danger); font-weight:700; }
+  .calc-note{ font-family:var(--sans); font-size:18px; line-height:1.5; color:var(--ink-soft); margin-top:8px; }
+
+  /* zadání / řešení */
+  .task-box{ background:var(--card); border:1px solid var(--line); border-left:4px solid var(--amber); border-radius:10px; padding:16px 20px; margin-top:12px; }
+  .task-box ol{ margin:0; padding-left:24px; font-size:18px; }
+  .task-box ol li{ margin-bottom:8px; line-height:1.5; }
+  .sol-box{ background:#F3F7F2; border:1px solid #C9D8CA; border-left:4px solid var(--tox-green); border-radius:10px; padding:16px 20px; margin-top:12px; }
+  .sol-box .calc-step{ font-size:18px; line-height:1.8; }
+  .sol-box ul.plain li{ margin-bottom:7px; }
+  .sol-label{ font-family:var(--mono); font-size:13px; color:var(--tox-green-deep); letter-spacing:.03em; margin-bottom:6px; }
+  .hint{ font-size:16px; color:var(--ink-soft); margin-top:10px; line-height:1.5; }
+  .think{ background:#EEF3F6; border:1px solid #C6D4DE; border-left:4px solid var(--blue); border-radius:10px; padding:14px 18px; margin-top:14px; font-size:18px; line-height:1.5; }
+  .think b{ font-family:var(--mono); font-size:13px; color:var(--blue-deep); display:block; margin-bottom:4px; letter-spacing:.03em; font-weight:600; }
+
+  @media (prefers-reduced-motion: reduce){ .slide, .navbtn, #progress-fill{ transition:none !important; } }
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <div class="brand">Metody zjišťování a predikce toxicity · Přednáška 6 · obsáhlá verze</div>
+  <div id="progress-track"><div id="progress-fill"></div></div>
+  <div id="counter">1 / 1</div>
+  <button id="menu-btn" onclick="toggleOverlay(true)">Obsah</button>
+</div>
+
+<div id="deck"></div>
+
+<div id="navbtns">
+  <button class="navbtn" id="prevBtn" onclick="prevSlide()">←</button>
+  <button class="navbtn" id="nextBtn" onclick="nextSlide()">→</button>
+</div>
+
+<div id="lightbox" onclick="closeLightbox()">
+  <div id="lightbox-inner" onclick="event.stopPropagation()"></div>
+  <div id="lightbox-hint">klikněte mimo obrázek nebo stiskněte Esc pro zavření</div>
+</div>
+
+<div id="overlay">
+  <button id="overlay-close" onclick="toggleOverlay(false)">×</button>
+  <h3>Přeskočit na</h3>
+  <ul id="overlay-list"></ul>
+</div>
+
+<script>
+const slides = [];
+function slide(id, title, html){ slides.push({id, title, html}); }
+
+/* =====================================================================
+   0. ÚVOD
+   ===================================================================== */
+slide('title','Titulní strana', `
+  <div class="slide-inner">
+    <p class="eyebrow">Ing. Pavla Fojtíková, Ph.D. · Přírodovědecká fakulta JU</p>
+    <h1 class="headline">Metody zjišťování a predikce toxicity látek</h1>
+    <p class="lede">Přednáška 6: od LD50 k orgánům na čipu a predikci toxicity pomocí umělé inteligence</p>
+    <p class="footer-note">Laboratoř analytické a environmentální chemie</p>
+  </div>
+`);
+
+slide('outline','Osnova přednášky 6', `
+  <div class="slide-inner">
+    <p class="eyebrow">Dnes</p>
+    <h2 class="headline">Osnova</h2>
+    <ul class="plain" style="font-size:19px;">
+      <li>Proč a jak testujeme toxicitu</li>
+      <li>Historie metod: 1538–2026</li>
+      <li>Klasické testy in vivo a jejich limity</li>
+      <li>In vitro metody, NAMs, AOP a integrované strategie</li>
+      <li>Orgány na čipu (organ-on-chip)</li>
+      <li>In silico toxikologie a AI</li>
+      <li>Regulace 2025–2026, analýza rizika</li>
+    </ul>
+    <p class="footer-note">V přednášce průběžně: kvízy, úkoly a otázky k úsudku.</p>
+  </div>
+`);
+
+slide('cile','Výukové cíle', `
+  <div class="slide-inner">
+    <p class="eyebrow">Po přednášce byste měli umět</p>
+    <h2 class="headline">Výukové cíle</h2>
+    <ul class="plain">
+      <li>vysvětlit LD50, NOAEL, LOAEL, EC50 a limity zvířecích testů</li>
+      <li>rozlišit metody in vivo, in vitro, in chemico a in silico</li>
+      <li>vysvětlit pojmy NAMs, AOP, IATA a definovaný přístup</li>
+      <li>kriticky zhodnotit data o orgánech na čipu a AI predikcích</li>
+      <li>shrnout regulační vývoj v USA a EU (2025–2026)</li>
+    </ul>
+  </div>
+`);
+
+slide('proc-testujeme','Proč testujeme toxicitu', `
+  <div class="slide-inner">
+    <p class="eyebrow">1. Úvod a motivace</p>
+    <h2 class="headline">Data o nebezpečnosti vyžaduje legislativa</h2>
+    <ul class="plain">
+      <li>léčiva</li>
+      <li>průmyslové chemikálie (v EU nařízení REACH)</li>
+      <li>pesticidy a biocidy</li>
+      <li>potravinářská aditiva, kosmetika</li>
+    </ul>
+    <div class="think"><b>KLÍČOVÁ OTÁZKA PŘEDNÁŠKY</b>Jak dobře předpovídají data z laboratoře, ze zvířat nebo z počítače účinek látky na člověka a ekosystémy?</div>
+  </div>
+`);
+
+slide('kviz-odhad','Zahřívací odhad', `
+  <div class="slide-inner">
+    <p class="eyebrow">Zahřívací otázka · tipněte si</p>
+    <h2 class="headline">Kolik závažných nežádoucích účinků léčiv zachytily testy na zvířatech?</h2>
+    <div class="quiz-card" id="q-odhad">
+      <div class="quiz-q">Po uvedení na trh bylo zjištěno 93 závažných nežádoucích účinků. Kolik procent z nich bylo zachyceno v předklinických studiích na zvířatech?</div>
+      <button class="quiz-opt" data-correct="false">asi 80 %</button>
+      <button class="quiz-opt" data-correct="false">asi 50 %</button>
+      <button class="quiz-opt" data-correct="true">asi 19 %</button>
+      <div class="quiz-feedback" id="q-odhad-fb"></div>
+    </div>
+    <p class="cite">Van Norman GA (2019) JACC Basic Transl Sci 4(7):845–854.</p>
+  </div>
+`);
+
+slide('fialuridin','Když testy selhaly', `
+  <div class="slide-inner">
+    <p class="eyebrow">1. Úvod · dva dobře dokumentované případy</p>
+    <h2 class="headline">Když předklinické testy selhaly</h2>
+    <div class="grid-2">
+      <div class="card">
+        <p class="body-text" style="margin:0;"><strong>Fialuridin (FIAU), 1993</strong><br>nukleosidový analog, klinická studie u chronické hepatitidy B. Ve 13. týdnu selhání jater s laktátovou acidózou: ze 7 pacientů 5 zemřelo, 2 přežili díky transplantaci jater. Příčina: pravděpodobně poškození mitochondrií.</p>
+      </div>
+      <div class="card">
+        <p class="body-text" style="margin:0;"><strong>Troglitazon, 1997–2000</strong><br>antidiabetikum, staženo v březnu 2000 po desítkách případů těžkého selhání jater. Mechanismus (reaktivní metabolity, inhibice transportu žlučových kyselin) byl objasněn až zpětně.</p>
+      </div>
+    </div>
+    <p class="cite">McKenzie R et al. (1995) N Engl J Med 333:1099–1105; Scheen AJ (2001) Diabetes Metab 27:305–313.</p>
+  </div>
+`);
+
+slide('van-norman','Selhání léčiv v klinickém vývoji', `
+  <div class="slide-inner">
+    <p class="eyebrow">1. Úvod · data</p>
+    <h2 class="headline">Kolik léčiv projde vývojem?</h2>
+    <figure class="fig">
+      <img class="scheme-img narrow" src="obrázky_6/vannorman2019_selhani.jpg" alt="Podíl selhání léčiv v předklinické a klinické fázi">
+      <figcaption>Podíl neúspěšných a úspěšných léčiv v předklinické a klinické fázi; vpravo hypotetický stav, kdyby se podařilo předejít selháním kvůli toxicitě.<br>Van Norman GA (2019) JACC Basic Transl Sci 4(7):845–854, obr. 1 (CC BY-NC-ND 4.0).</figcaption>
+    </figure>
+  </div>
+`);
+
+slide('kviz-90','Pozor na číslo 90 %', `
+  <div class="slide-inner">
+    <p class="eyebrow">Kontrolní zastávka · kritické čtení</p>
+    <h2 class="headline">„90 % léčiv selže v klinickém vývoji“</h2>
+    <div class="quiz-card" id="q-90">
+      <div class="quiz-q">Média z toho často vyvozují, že „zvířecí testy selhávají v 90 % případů“. Je to správně?</div>
+      <button class="quiz-opt" data-correct="false">Ano, každé selhání v klinice je selháním zvířecího modelu.</button>
+      <button class="quiz-opt" data-correct="true">Ne. Většina selhání má jiné příčiny než nepředpovězenou toxicitu.</button>
+      <div class="quiz-feedback" id="q-90-fb"></div>
+    </div>
+    <p class="cite">Sun D et al. (2022) Acta Pharm Sin B 12(7):3049–3062 (analýza klinických dat 2010–2017).</p>
+  </div>
+`);
+
+/* =====================================================================
+   2. HISTORIE
+   ===================================================================== */
+slide('casova-osa','Časová osa', `
+  <div class="slide-inner">
+    <p class="eyebrow">2. Historický vývoj · přehled</p>
+    <h2 class="headline">Od Paracelsa k regulačnímu obratu</h2>
+    <figure class="fig">
+      <img class="scheme-img wide" src="obrázky_6/casova_osa.png" alt="Časová osa vývoje metod zjišťování toxicity">
+      <figcaption>Barva značí typ milníku. Vlastní zpracování podle Borzelleca 2000; Michaleas 2022; Trevan 1927; Russell &amp; Burch 1959; Krewski 2010; Ankley 2010; Huh 2010; Mayr 2016; Ewart 2022; OECD; FDA; EK.</figcaption>
+    </figure>
+  </div>
+`);
+
+slide('paracelsus-orfila','Paracelsus a Orfila', `
+  <div class="slide-inner">
+    <p class="eyebrow">2. Historie · 16.–19. století</p>
+    <h2 class="headline">Dávka, jed a experiment</h2>
+    <div class="grid-2">
+      <figure class="fig" style="text-align:center;">
+        <img class="scheme-img portrait" src="obrázky_1/Paracelsus.jpg" alt="Paracelsus">
+        <figcaption><strong>Paracelsus (1493–1541)</strong>: „Třetí obhajoba“ (1538), o toxicitě rozhoduje dávka.<br>Portrét: volné dílo (Wikimedia Commons).</figcaption>
+      </figure>
+      <figure class="fig" style="text-align:center;">
+        <img class="scheme-img portrait" src="obrázky_6/orfila.jpg" alt="Mathieu Orfila">
+        <figcaption><strong>M. J. B. Orfila (1787–1853)</strong>: <em>Traité des poisons</em> (1814–1815), pokusy na zvířatech, Marshův test na arsen (případ Lafargeové, 1840).<br>Portrét: volné dílo (Wikimedia Commons).</figcaption>
+      </figure>
+    </div>
+    <p class="cite">Borzelleca JF (2000) Toxicol Sci 53:2–4; Michaleas SN et al. (2022) Maedica 17:532–537.</p>
+  </div>
+`);
+
+slide('trevan-draize','Trevan a Draize', `
+  <div class="slide-inner">
+    <p class="eyebrow">2. Historie · standardizace testů na zvířatech</p>
+    <h2 class="headline">1927–1944: vznik standardních testů</h2>
+    <div class="grid-2">
+      <div class="card">
+        <p class="body-text" style="margin:0;"><strong>Trevan (1927): LD50</strong><br>statisticky definovaná náhrada nepřesné „minimální letální dávky“. Původní účel: biologická standardizace léčiv (digitalis, inzulin).</p>
+      </div>
+      <div class="card">
+        <p class="body-text" style="margin:0;"><strong>Draize a kol. (1944), FDA</strong><br>dráždivost látek na kůži a sliznicích králíků. Standard pro kosmetiku a později symbol kritiky testů na zvířatech.</p>
+      </div>
+    </div>
+    <p class="cite">Trevan JW (1927) Proc R Soc Lond B 101:483–514; Draize JH et al. (1944) J Pharmacol Exp Ther 82:377–390.</p>
+  </div>
+`);
+
+slide('princip-3r','Princip 3R', `
+  <div class="slide-inner">
+    <p class="eyebrow">2. Historie · 1959</p>
+    <h2 class="headline">Russell a Burch: princip 3R</h2>
+    <div class="grid-3">
+      <div class="card"><p class="body-text" style="margin:0;"><strong>Replacement</strong><br>nahrazení zvířat jinou metodou</p></div>
+      <div class="card"><p class="body-text" style="margin:0;"><strong>Reduction</strong><br>omezení počtu zvířat</p></div>
+      <div class="card"><p class="body-text" style="margin:0;"><strong>Refinement</strong><br>zjemnění postupů, méně utrpení</p></div>
+    </div>
+    <p class="body-text" style="margin-top:16px;">Princip byl zpočátku přijímán pomalu. Dnes je zakotven v legislativě EU.</p>
+    <p class="cite">Russell WMS, Burch RL (1959) The Principles of Humane Experimental Technique. London: Methuen; Tannenbaum J, Bennett BT (2015) J Am Assoc Lab Anim Sci 54:120–132.</p>
+  </div>
+`);
+
+slide('thalidomid','Thalidomid', `
+  <div class="slide-inner">
+    <p class="eyebrow">2. Historie · zlom na konci 50. a začátku 60. let</p>
+    <h2 class="headline">Thalidomidová tragédie</h2>
+    <div class="grid-2" style="align-items:center;">
+      <figure class="fig">
+        <img class="scheme-img tiny" src="obrázky_6/thalidomid_enantiomery.png" alt="Enantiomery thalidomidu (R) a (S)">
+        <figcaption>Enantiomery (<em>R</em>)- a (<em>S</em>)-thalidomidu. Wikimedia Commons (volné dílo).</figcaption>
+      </figure>
+      <ul class="plain">
+        <li>těžké vrozené vady u tisíců dětí</li>
+        <li>vedla k systematickým protokolům včetně testů <strong>reprodukční a vývojové toxicity</strong> před uvedením léčiva na trh</li>
+        <li>enantiomery se v organismu vzájemně přeměňují, takže podání „bezpečného“ enantiomeru by riziko neodstranilo</li>
+      </ul>
+    </div>
+    <p class="cite">Kim JH, Scialli AR (2011) Toxicol Sci 122(1):1–6.</p>
+  </div>
+`);
+
+slide('prvni-alternativy','První alternativy 1960–2002', `
+  <div class="slide-inner">
+    <p class="eyebrow">2. Historie · 1960–2002</p>
+    <h2 class="headline">První alternativy a výpočetní toxikologie</h2>
+    <table class="data-table compact">
+      <tr><th>Rok</th><th>Milník</th></tr>
+      <tr><td>1964</td><td><strong>QSAR</strong>: Hansch a Fujita, hydrofobní (π) a elektronové (σ) parametry substituentů</td></tr>
+      <tr><td>1973–75</td><td><strong>Amesův test</strong>: první široce rozšířená in vitro metoda v regulační toxikologii</td></tr>
+      <tr><td>1981</td><td><strong>Kritika LD50</strong>: Zbinden a Flury-Roversi, LD50 není biologická konstanta</td></tr>
+      <tr><td>1990–2002</td><td>OECD TG 420, 423, 425 (méně zvířat); klasická LD50 (TG 401) <strong>zrušena 2002</strong></td></tr>
+    </table>
+    <p class="cite">Hansch C, Fujita T (1964) J Am Chem Soc 86:1616–1626; Ames BN et al. (1975) Mutat Res 31:347–364; Zbinden G, Flury-Roversi M (1981) Arch Toxicol 47:77–99; OECD Test Guidelines.</p>
+  </div>
+`);
+
+slide('tox21','Toxikologie 21. století', `
+  <div class="slide-inner">
+    <p class="eyebrow">2. Historie · 2007</p>
+    <h2 class="headline">„Toxicity Testing in the 21st Century“</h2>
+    <figure class="fig">
+      <img class="scheme-img" src="obrázky_6/krewski2010_vize.png" alt="Komponenty vize toxikologie 21. století">
+      <figcaption>Komponenty vize NRC: charakterizace látky, testy toxicitních drah a cílené testy, modelování dávka–odpověď, vše v kontextu expozičních dat a rozhodování o riziku.<br>Krewski D et al. (2010) J Toxicol Environ Health B 13:51–138, obr. 3 (© Taylor &amp; Francis, citováno pro výuku).</figcaption>
+    </figure>
+  </div>
+`);
+
+slide('tox21-text','Tox21 a ToxCast', `
+  <div class="slide-inner">
+    <p class="eyebrow">2. Historie · 2007–2020</p>
+    <h2 class="headline">Od zjevných účinků na zvířatech k toxicitním drahám</h2>
+    <ul class="plain">
+      <li>testy toxicitních drah na <strong>lidských buňkách</strong></li>
+      <li><strong>vysokokapacitní screening</strong> (HTS)</li>
+      <li>výpočetní modely dávka–odpověď</li>
+      <li><strong>ToxCast</strong> (US EPA, od 2007): fáze I prověřila 310 látek ve stovkách testů</li>
+      <li>knihovna <strong>Tox21</strong> dnes zahrnuje tisíce látek</li>
+    </ul>
+    <p class="cite">Krewski D et al. (2010); Richard AM et al. (2016) Chem Res Toxicol 29:1225–1251.</p>
+  </div>
+`);
+
+slide('2010-2013','Milníky 2004–2013', `
+  <div class="slide-inner">
+    <p class="eyebrow">2. Historie · 2004–2013</p>
+    <h2 class="headline">Nové koncepty a první zákazy</h2>
+    <table class="data-table compact">
+      <tr><th>Rok</th><th>Milník</th></tr>
+      <tr><td>2004</td><td>Shuler: první mikrofluidní systémy s propojenými „orgánovými“ komůrkami</td></tr>
+      <tr><td>2010</td><td><strong>AOP</strong> (Ankley a kol.): řetězec od molekulární události k nepříznivému výsledku</td></tr>
+      <tr><td>2010</td><td><strong>lung-on-a-chip</strong> (Huh a kol., Wyss Institute) s cyklickým „dýcháním“</td></tr>
+      <tr><td>2004–2013</td><td>EU kosmetika: zákaz testů hotových výrobků (2004), složek (2009), uvádění na trh (2013)</td></tr>
+      <tr><td>2013</td><td><strong>OECD TG 236</strong>: test na embryích dánia pruhovaného (ZFET)</td></tr>
+    </table>
+    <p class="cite">Sin A et al. (2004) Biotechnol Prog 20:338–345; Ankley GT et al. (2010) Environ Toxicol Chem 29:730–741; Huh D et al. (2010) Science 328:1662–1668; nařízení (ES) 1223/2009, čl. 18; Busquet F et al. (2014) Regul Toxicol Pharmacol 69:496–511.</p>
+  </div>
+`);
+
+slide('zfet','ZFET – TG 236', `
+  <div class="slide-inner">
+    <p class="eyebrow">2. Historie · ekotoxikologie</p>
+    <h2 class="headline">ZFET: test na embryích dánia (OECD TG 236)</h2>
+    <p class="body-text">Alternativa ke klasickému testu akutní toxicity na rybách (TG 203). Hodnotí se čtyři letální znaky:</p>
+    <div class="grid-2" style="margin-top:12px;">
+      <div class="card"><p class="body-text" style="margin:0;">1. koagulace embrya</p></div>
+      <div class="card"><p class="body-text" style="margin:0;">2. absence somitů</p></div>
+      <div class="card"><p class="body-text" style="margin:0;">3. neoddělení ocasu od žloutku</p></div>
+      <div class="card"><p class="body-text" style="margin:0;">4. absence srdeční činnosti</p></div>
+    </div>
+    <p class="cite">OECD TG 236 (2013); Busquet F et al. (2014) Regul Toxicol Pharmacol 69:496–511.</p>
+  </div>
+`);
+
+/* =====================================================================
+   3. IN VIVO
+   ===================================================================== */
+slide('baterie-testu','Standardní baterie testů', `
+  <div class="slide-inner">
+    <p class="eyebrow">3. Klasické metody in vivo</p>
+    <h2 class="headline">Standardní regulační baterie testů</h2>
+    <ul class="plain">
+      <li>akutní, subakutní, subchronická a chronická toxicita</li>
+      <li>genotoxicita a karcinogenita</li>
+      <li>reprodukční a vývojová toxicita</li>
+      <li>dráždivost a senzibilizace kůže a očí</li>
+      <li>ekotoxikologie: řasy, perloočky (<em>Daphnia magna</em>), ryby</li>
+    </ul>
+    <p class="footer-note">Testy se řídí směrnicemi OECD (Test Guidelines) a zásadami správné laboratorní praxe (GLP).</p>
+  </div>
+`);
+
+slide('davka-odpoved','Křivka dávka–odpověď', `
+  <div class="slide-inner">
+    <p class="eyebrow">3. In vivo · základní ukazatele</p>
+    <h2 class="headline">Křivky dávka–odpověď</h2>
+    <figure class="fig">
+      <img class="scheme-img" src="obrázky_6/davka_odpoved.png" alt="Křivky dávka-odpověď s NOAEL, LOAEL, ED50 a LD50">
+      <figcaption>Ilustrativní data, vlastní zpracování podle principů Borzelleca 2000 a Trevan 1927.</figcaption>
+    </figure>
+    <p class="hint"><strong>LD50 / ED50 (EC50)</strong>: dávka (koncentrace) vyvolávající letalitu / účinek u 50 % jedinců.</p>
+  </div>
+`);
+
+slide('akutni','Akutní toxicita', `
+  <div class="slide-inner">
+    <p class="eyebrow">3. In vivo · akutní toxicita</p>
+    <h2 class="headline">LD50 a LC50</h2>
+    <div class="grid-2">
+      <div class="card"><p class="body-text" style="margin:0;"><strong>LD50</strong><br>medián letální dávky po jednorázovém podání (orálně, dermálně), v mg/kg tělesné hmotnosti</p></div>
+      <div class="card"><p class="body-text" style="margin:0;"><strong>LC50</strong><br>medián letální koncentrace při inhalaci; nutné uvést i <strong>dobu expozice</strong></p></div>
+    </div>
+    <ul class="plain" style="margin-top:16px;">
+      <li>po podání obvykle 14 dní pozorování</li>
+      <li>nezachytí účinky dlouhodobé expozice</li>
+    </ul>
+    <p class="cite">Linhart I (2014) Toxikologie, 2. vyd., VŠCHT Praha; OECD TG 420, 423, 425.</p>
+  </div>
+`);
+
+slide('fixni-davka','Šetrnější metody akutní toxicity', `
+  <div class="slide-inner">
+    <p class="eyebrow">3. In vivo · náhrada klasické LD50</p>
+    <h2 class="headline">Metody s menším počtem zvířat</h2>
+    <table class="data-table compact">
+      <tr><th>Směrnice OECD</th><th>Princip</th></tr>
+      <tr><td>TG 420 fixní dávka</td><td>fixní dávky 5, 50, 300, 2000 mg/kg; ukazatelem jsou <strong>zjevné známky toxicity</strong>, ne smrt</td></tr>
+      <tr><td>TG 423 akutní třídy</td><td>postupně po 3 zvířatech na týchž dávkových stupních</td></tr>
+      <tr><td>TG 425 up-and-down</td><td>po jednom zvířeti, další dávka se zvyšuje nebo snižuje podle výsledku</td></tr>
+    </table>
+    <p class="body-text" style="margin-top:14px;">Výsledkem není přesná LD50, ale <strong>zařazení do kategorie</strong> akutní toxicity.</p>
+    <p class="cite">OECD TG 420, 423, 425; TG 401 zrušena 2002.</p>
+  </div>
+`);
+
+slide('ghs-kategorie','Kategorie akutní toxicity CLP/GHS', `
+  <div class="slide-inner">
+    <p class="eyebrow">3. In vivo · klasifikace</p>
+    <h2 class="headline">Kategorie akutní orální toxicity (CLP/GHS)</h2>
+    <table class="data-table">
+      <tr><th>Kategorie</th><th class="num">LD50 orálně (mg/kg)</th><th>Standardní věta</th></tr>
+      <tr><td>1</td><td class="num">≤ 5</td><td>H300 Při požití může způsobit smrt</td></tr>
+      <tr><td>2</td><td class="num">&gt; 5 – 50</td><td>H300</td></tr>
+      <tr><td>3</td><td class="num">&gt; 50 – 300</td><td>H301 Toxický při požití</td></tr>
+      <tr><td>4</td><td class="num">&gt; 300 – 2000</td><td>H302 Zdraví škodlivý při požití</td></tr>
+    </table>
+    <p class="footer-note">Dřívější třídy T⁺ / T / Xn (směrnice 67/548/EHS) nahradilo nařízení CLP. Kategorie 5 GHS se v EU nepoužívá.</p>
+    <p class="cite">Nařízení (ES) č. 1272/2008 (CLP), příloha I, tab. 3.1.1.</p>
+  </div>
+`);
+
+slide('ukolA-zadani','Úkol A – zadání', `
+  <div class="slide-inner">
+    <p class="eyebrow">Úkol A · přemýšlení (3 min, ve dvojicích)</p>
+    <h2 class="headline">Fixní dávky a kritika LD50</h2>
+    <div class="task-box">
+      <ol>
+        <li>Porovnejte fixní dávky TG 420 (5, 50, 300, 2000 mg/kg) s tabulkou CLP. Proč byly zvoleny právě tyto hodnoty?</li>
+        <li>Které ze 3R splňuje TG 420 tím, že ukazatelem jsou zjevné známky toxicity místo smrti?</li>
+        <li>Zbinden a Flury-Roversi (1981): LD50 „není biologická konstanta“. Uveďte alespoň tři faktory, které ji ovlivňují.</li>
+      </ol>
+    </div>
+  </div>
+`);
+
+slide('ukolA-reseni','Úkol A – řešení', `
+  <div class="slide-inner">
+    <p class="eyebrow">Úkol A · řešení</p>
+    <h2 class="headline">Fixní dávky a kritika LD50</h2>
+    <div class="sol-box">
+      <ul class="plain">
+        <li><strong>1.</strong> Fixní dávky odpovídají <strong>hranicím kategorií</strong> CLP/GHS. Test rovnou odpovídá na regulační otázku, do které kategorie látka patří.</li>
+        <li><strong>2.</strong> <strong>Refinement</strong> (méně utrpení); díky menšímu počtu zvířat i Reduction.</li>
+        <li><strong>3.</strong> Druh, kmen, pohlaví, věk, strava a podmínky chovu. Přesnost testu navíc neodpovídá počtu spotřebovaných zvířat.</li>
+      </ul>
+    </div>
+    <p class="cite">Zbinden G, Flury-Roversi M (1981) Arch Toxicol 47:77–99.</p>
+  </div>
+`);
+
+slide('subchronicke','Subakutní a subchronické testy', `
+  <div class="slide-inner">
+    <p class="eyebrow">3. In vivo · opakovaná expozice</p>
+    <h2 class="headline">Subakutní a subchronické testy</h2>
+    <div class="grid-2" style="align-items:center;">
+      <figure class="fig">
+        <img class="scheme-img" src="obrázky_6/noael_loael_krivka.png" alt="NOAEL a LOAEL na křivce dávka-odpověď">
+        <figcaption>NOAEL a LOAEL jsou testované dávky, práh účinku leží mezi nimi.</figcaption>
+        <p class="flag">Zdroj obrázku: doplnit.</p>
+      </figure>
+      <ul class="plain">
+        <li>TG 407: 28 dní; TG 408: 90 dní (hlodavci)</li>
+        <li>min. 3 dávkové hladiny + kontrola, obě pohlaví</li>
+        <li>sleduje se hmotnost, hematologie, biochemie, chování; na konci histopatologie</li>
+        <li>výsledek: <strong>NOAEL, LOAEL</strong>, cílové orgány</li>
+      </ul>
+    </div>
+    <p class="cite">OECD TG 407 (2008), TG 408 (2018); Linhart I (2014) Toxikologie, 2. vyd.</p>
+  </div>
+`);
+
+slide('chronicke','Chronické testy a karcinogenita', `
+  <div class="slide-inner">
+    <p class="eyebrow">3. In vivo · dlouhodobá expozice</p>
+    <h2 class="headline">Chronické testy a testy karcinogenity</h2>
+    <ul class="plain">
+      <li><strong>chronická toxicita</strong> (TG 452): obvykle 12 měsíců</li>
+      <li><strong>karcinogenita</strong> (TG 451): potkan obvykle 24 měsíců, myš 18–24 měsíců; nejméně 50 zvířat každého pohlaví na skupinu</li>
+      <li>nejvyšší dávka se odvozuje od <strong>maximální tolerované dávky (MTD)</strong>: vyvolá mírnou toxicitu (např. malé snížení přírůstku hmotnosti), ale nezkrátí přežití</li>
+    </ul>
+    <div class="think"><b>K ZAMYŠLENÍ</b>Studie trvají roky a stojí stovky zvířat. Kolik z desítek tisíc látek na trhu je takto reálně možné otestovat?</div>
+    <p class="cite">OECD TG 451, 452 (2018); Krewski D et al. (2010).</p>
+  </div>
+`);
+
+slide('kviz-noael','Kvíz: NOAEL a LOAEL', `
+  <div class="slide-inner">
+    <p class="eyebrow">Kontrolní zastávka · kvíz</p>
+    <h2 class="headline">NOAEL a LOAEL</h2>
+    <div class="quiz-card" id="q-noael">
+      <div class="quiz-q">Ve 90denní studii byly testovány dávky 0, 10, 30 a 100 mg/kg/den. Nepříznivý účinek se objevil při 30 a 100 mg/kg/den. Jaké jsou NOAEL a LOAEL?</div>
+      <button class="quiz-opt" data-correct="false">NOAEL 0, LOAEL 10 mg/kg/den</button>
+      <button class="quiz-opt" data-correct="true">NOAEL 10, LOAEL 30 mg/kg/den</button>
+      <button class="quiz-opt" data-correct="false">NOAEL 20 mg/kg/den (průměr 10 a 30)</button>
+      <div class="quiz-feedback" id="q-noael-fb"></div>
+    </div>
+    <p class="hint">Dávky jsou modelové, slouží k procvičení definice.</p>
+  </div>
+`);
+
+slide('epidemiologie','Epidemiologické studie', `
+  <div class="slide-inner">
+    <p class="eyebrow">3. Studie na lidech</p>
+    <h2 class="headline">Epidemiologické studie</h2>
+    <div class="grid-3">
+      <div class="card"><p class="body-text" style="margin:0;"><strong>Kohortní</strong><br>exponovaní vs. neexponovaní, sledování v čase</p></div>
+      <div class="card"><p class="body-text" style="margin:0;"><strong>Případů a kontrol</strong><br>nemocní vs. zdraví, hledání rizikových faktorů</p></div>
+      <div class="card"><p class="body-text" style="margin:0;"><strong>Průřezové</strong><br>vztah nemoc–faktory v jednom okamžiku</p></div>
+    </div>
+    <ul class="plain" style="margin-top:16px;">
+      <li>+ data přímo z lidské populace</li>
+      <li>− dávku nelze přesně určit, obtížně se oddělují matoucí vlivy (kouření, strava)</li>
+    </ul>
+    <p class="cite">Linhart I (2014) Toxikologie, 2. vyd.</p>
+  </div>
+`);
+
+slide('limity-zvirat','Limity testů na zvířatech', `
+  <div class="slide-inner">
+    <p class="eyebrow">3. In vivo · limity</p>
+    <h2 class="headline">Hlavní limity testů na zvířatech</h2>
+    <ul class="plain">
+      <li><strong>mezidruhové rozdíly</strong> v metabolismu, transportérech, imunitě a cílových strukturách (fialuridin, troglitazon)</li>
+      <li><strong>reprodukovatelnost</strong>: opakovaný test podle stejné směrnice OECD dal v databázi REACH shodný výsledek v 78–96 % případů</li>
+      <li><strong>etika</strong> a princip 3R</li>
+      <li><strong>čas a náklady</strong>: otestovat lze jen zlomek látek na trhu</li>
+    </ul>
+    <p class="cite">Van Norman 2019; Luechtefeld T et al. (2018) Toxicol Sci 165:198–212; Krewski D et al. (2010).</p>
+  </div>
+`);
+
+slide('diskuse-standard','Diskuse: zlatý standard?', `
+  <div class="slide-inner">
+    <p class="eyebrow">Otázka k úsudku · 2 minuty</p>
+    <h2 class="headline">Je zvířecí test „zlatým standardem“?</h2>
+    <div class="think"><b>OTÁZKA</b>Je správné porovnávat nové metody se zvířecími testy jako se „zlatým standardem“, když samy zvířecí testy nejsou stoprocentně reprodukovatelné ani prediktivní pro člověka?</div>
+    <div class="tl-item" id="disc-standard" style="min-width:auto;width:100%;margin-top:14px;">
+      <div class="tl-year">Klikněte pro možné argumenty</div>
+      <div class="tl-detail">
+        <ul class="plain">
+          <li>Pokud zvířecí test dává shodný výsledek jen v 78–96 % opakování, nová metoda ho nemůže „porazit“ o víc, než je jeho vlastní variabilita.</li>
+          <li>Lepší referencí jsou data od lidí, kde existují (např. kožní senzibilizace v TG 497, DILI u Liver-Chip).</li>
+          <li>Proti: pro systémové a chronické účinky lidská referenční data často chybějí.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+`);
+
+/* =====================================================================
+   4. IN VITRO, NAMs, AOP
+   ===================================================================== */
+slide('in-vitro','Přehled in vitro metod', `
+  <div class="slide-inner">
+    <p class="eyebrow">4. In vitro a in chemico</p>
+    <h2 class="headline">Přehled metod</h2>
+    <table class="data-table compact">
+      <tr><th>Oblast</th><th>Příklady</th></tr>
+      <tr><td>Cytotoxicita</td><td>MTT/XTT (mitochondrie), neutrální červeň (lyzozomy), uvolnění LDH (membrána)</td></tr>
+      <tr><td>Genotoxicita</td><td>Amesův test (TG 471), mikrojaderný test in vitro (TG 487)</td></tr>
+      <tr><td>Kůže a oko</td><td>rekonstruovaná lidská epidermis, izolované rohovky</td></tr>
+      <tr><td>HTS</td><td>robotizované testy stovek cílů a drah (ToxCast/Tox21)</td></tr>
+      <tr><td>3D modely</td><td>sféroidy, organoidy z iPSC, bioprintované tkáně</td></tr>
+    </table>
+    <p class="cite">Richard AM et al. (2016); Nitsche KS et al. (2022) Arch Toxicol 96:711–741; Ingber DE (2022) Nat Rev Genet 23:467–491.</p>
+  </div>
+`);
+
+slide('ames-princip','Amesův test – princip', `
+  <div class="slide-inner">
+    <p class="eyebrow">4. In vitro · test mutagenity (OECD TG 471)</p>
+    <h2 class="headline">Amesův test</h2>
+    <figure class="fig">
+      <img class="scheme-img" src="obrázky_6/ames_test_schema.jpg" alt="Schéma Amesova testu">
+      <figcaption>Kmen <em>S. typhimurium</em> his⁻ + jaterní frakce S9 potkana → půda bez histidinu → mutagen vyvolá zpětné mutace (his⁺ revertanty rostou).</figcaption>
+      <p class="flag">Zdroj obrázku: doplnit (dodaný soubor bez uvedení původu).</p>
+    </figure>
+    <p class="cite">Ames BN, McCann J, Yamasaki E (1975) Mutat Res 31:347–364.</p>
+  </div>
+`);
+
+slide('ames-s9','Amesův test – S9', `
+  <div class="slide-inner">
+    <p class="eyebrow">4. In vitro · Amesův test</p>
+    <h2 class="headline">Proč jaterní frakce S9?</h2>
+    <ul class="plain">
+      <li>bakterie nemají savčí biotransformační enzymy</li>
+      <li>S9 obsahuje mikrozomální enzymy (CYP450) → zachytí <strong>promutageny</strong> aktivované až metabolicky (přednáška 4)</li>
+      <li>počet revertantních kolonií ~ mutagenní potenciál</li>
+    </ul>
+    <div class="think"><b>K ZAMYŠLENÍ</b>Látka je v Amesově testu negativní bez S9 a pozitivní s S9. Co z toho usoudíte o mechanismu?</div>
+  </div>
+`);
+
+slide('kviz-ames','Kvíz: Ames a karcinogenita', `
+  <div class="slide-inner">
+    <p class="eyebrow">Kontrolní zastávka · úsudek</p>
+    <h2 class="headline">Pozitivní Amesův test = karcinogen?</h2>
+    <div class="grid-2" style="align-items:center;">
+      <figure class="fig">
+        <img class="scheme-img" src="obrázky_6/ames_test_mutagen_vs_karcinogen.jpg" alt="Amesův test: mutagen vs. karcinogen">
+        <p class="flag">Zdroj obrázku: doplnit.</p>
+      </figure>
+      <div class="quiz-card" id="q-ames" style="margin-top:0;">
+        <div class="quiz-q">Látka vyšla v Amesově testu pozitivní. Co lze říct?</div>
+        <button class="quiz-opt" data-correct="false">Je prokázaný lidský karcinogen.</button>
+        <button class="quiz-opt" data-correct="true">Je mutagenní u bakterií; je to varovný signál, karcinogenitu je nutné ověřit dalšími daty.</button>
+        <button class="quiz-opt" data-correct="false">Je bezpečná, bakterie nejsou člověk.</button>
+        <div class="quiz-feedback" id="q-ames-fb"></div>
+      </div>
+    </div>
+  </div>
+`);
+
+slide('nams','NAMs', `
+  <div class="slide-inner">
+    <p class="eyebrow">4. NAMs · pojmy</p>
+    <h2 class="headline">New Approach Methodologies (NAMs)</h2>
+    <p class="body-text">Souhrnný pojem pro <strong>neživočišné metody</strong> (in vitro, in chemico, in silico a jejich kombinace), které poskytují data využitelná pro hodnocení rizika.</p>
+    <div class="grid-2" style="margin-top:14px;">
+      <div class="card"><p class="body-text" style="margin:0;"><strong>IATA</strong><br>Integrated Approaches to Testing and Assessment: kombinace metod <strong>s expertním úsudkem</strong></p></div>
+      <div class="card"><p class="body-text" style="margin:0;"><strong>Definovaný přístup (DA)</strong><br>kombinace metod s <strong>pevně daným</strong> vyhodnocovacím pravidlem</p></div>
+    </div>
+    <p class="cite">Stucki AO et al. (2022) Front Toxicol 4:964553.</p>
+  </div>
+`);
+
+slide('aop-koncept','Koncept AOP', `
+  <div class="slide-inner">
+    <p class="eyebrow">4. Adverse Outcome Pathway (2010)</p>
+    <h2 class="headline">AOP: od molekuly k populaci</h2>
+    <figure class="fig">
+      <img class="scheme-img wide" src="obrázky_6/ankley2010_aop.png" alt="Koncepční schéma AOP podle Ankley 2010">
+      <figcaption>Molekulární iniciační událost (MIE, kotva 1) → klíčové události (KE) na úrovni buňky a orgánu → nepříznivý výsledek (AO) u organismu nebo populace (kotva 2).<br>Ankley GT et al. (2010) Environ Toxicol Chem 29:730–741, obr. 1 (© SETAC/Wiley, citováno pro výuku).</figcaption>
+    </figure>
+  </div>
+`);
+
+slide('aop-kuze','AOP kožní senzibilizace', `
+  <div class="slide-inner">
+    <p class="eyebrow">4. AOP · učebnicový příklad</p>
+    <h2 class="headline">AOP kožní senzibilizace</h2>
+    <figure class="fig">
+      <img class="scheme-img wide" src="obrázky_6/aop_kozni_senzibilizace.png" alt="AOP kožní senzibilizace a testy OECD">
+      <figcaption>Klíčové události a validované testy OECD. Vlastní zpracování podle Ankley 2010; Casati 2022 a OECD TG 442C–E, 429, 497.</figcaption>
+    </figure>
+  </div>
+`);
+
+slide('ukolB','Úkol B – testy a klíčové události', `
+  <div class="slide-inner">
+    <p class="eyebrow">Úkol B · interaktivní přiřazení</p>
+    <h2 class="headline">Který test pokrývá kterou událost AOP?</h2>
+    <p class="body-text">Klikněte na test vlevo a pak na odpovídající klíčovou událost vpravo.</p>
+    <div class="match-wrap">
+      <div><div class="match-col-title">TEST</div><div id="mB-left"></div></div>
+      <div><div class="match-col-title">KLÍČOVÁ UDÁLOST</div><div id="mB-right"></div></div>
+    </div>
+    <div class="match-result" id="mB-result"></div>
+  </div>
+`);
+
+slide('tg497','OECD TG 497', `
+  <div class="slide-inner">
+    <p class="eyebrow">4. Definované přístupy · precedens</p>
+    <h2 class="headline">OECD TG 497 (2021)</h2>
+    <ul class="plain">
+      <li>první směrnice OECD pro <strong>definované přístupy</strong></li>
+      <li>tři přístupy: <strong>„2 ze 3“, ITSv1, ITSv2</strong></li>
+      <li>založeny na testech DPRA, KeratinoSens™, h-CLAT; ITS i s in silico predikcí (Derek Nexus, OECD QSAR Toolbox)</li>
+      <li>ověřeny na 168 referenčních látkách proti LLNA i proti <strong>datům od lidí</strong></li>
+    </ul>
+    <p class="footer-note">Metody postavené na lidské biologii dosáhly stejné nebo lepší výkonnosti než test na zvířatech.</p>
+    <p class="cite">Casati S (2022) Front Toxicol 4:943152; OECD TG 497.</p>
+  </div>
+`);
+
+slide('kviz-2ze3','Kvíz: „2 ze 3“', `
+  <div class="slide-inner">
+    <p class="eyebrow">Kontrolní zastávka · aplikace pravidla</p>
+    <h2 class="headline">Definovaný přístup „2 ze 3“</h2>
+    <div class="quiz-card" id="q-2ze3">
+      <div class="quiz-q">Látka: DPRA pozitivní, KeratinoSens™ negativní, h-CLAT pozitivní. Jaký je výsledek podle pravidla „2 ze 3“?</div>
+      <button class="quiz-opt" data-correct="true">Senzibilizátor (2 shodné výsledky ze 3)</button>
+      <button class="quiz-opt" data-correct="false">Nesenzibilizátor (jeden test negativní)</button>
+      <button class="quiz-opt" data-correct="false">Nelze rozhodnout, je nutný test LLNA</button>
+      <div class="quiz-feedback" id="q-2ze3-fb"></div>
+    </div>
+    <p class="cite">OECD TG 497; Casati S (2022).</p>
+  </div>
+`);
+
+slide('iata','Vrstvená strategie IATA/NGRA', `
+  <div class="slide-inner">
+    <p class="eyebrow">4. Integrované strategie</p>
+    <h2 class="headline">Vrstvená strategie hodnocení (IATA / NGRA)</h2>
+    <figure class="fig">
+      <img class="scheme-img" src="obrázky_6/iata_pyramida.png" alt="Vrstvená strategie IATA/NGRA">
+      <figcaption>NGRA = Next-Generation Risk Assessment. Vlastní zpracování podle Krewski 2010; Stucki 2022; Nitsche 2022.</figcaption>
+    </figure>
+  </div>
+`);
+
+slide('ukol-3r','Úkol: princip 3R', `
+  <div class="slide-inner">
+    <p class="eyebrow">Interaktivní úkol · 3R</p>
+    <h2 class="headline">Které „R“ daný postup naplňuje?</h2>
+    <p class="hint" style="margin-top:0;">U každého řádku vyberte jednu možnost.</p>
+    <div id="sort3r" style="margin-top:10px;"></div>
+  </div>
+`);
+
+/* =====================================================================
+   5. ORGAN-ON-CHIP
+   ===================================================================== */
+slide('ooc-princip','Organ-on-chip: princip', `
+  <div class="slide-inner">
+    <p class="eyebrow">5. Organ-on-chip a mikrofyziologické systémy (MPS)</p>
+    <h2 class="headline">Jak vypadá orgán na čipu?</h2>
+    <figure class="fig">
+      <img class="scheme-img wide" src="obrázky_6/ooc_rez.png" alt="Příčný řez dvoukanálovým čipem">
+      <figcaption>Vlastní schéma; upraveno podle lung-on-chip (Huh 2010) a Liver-Chip (Ewart 2022).</figcaption>
+    </figure>
+  </div>
+`);
+
+slide('ooc-princip-2','Organ-on-chip: konstrukce', `
+  <div class="slide-inner">
+    <p class="eyebrow">5. Organ-on-chip · konstrukce</p>
+    <h2 class="headline">Co dělá čip jiným než miska s buňkami</h2>
+    <ul class="plain">
+      <li>mikrofluidní zařízení z PDMS nebo termoplastů</li>
+      <li>dva kanály oddělené porézní membránou: parenchymové buňky / endotel</li>
+      <li>kontinuální průtok → <strong>smykové napětí</strong>, gradienty</li>
+      <li>cyklické natahování membrány („dýchání“, peristaltika)</li>
+    </ul>
+    <p class="cite">Huh D et al. (2010); Ingber DE (2022); Leung CM et al. (2022) Nat Rev Methods Primers 2:33; Marx U et al. (2020) ALTEX 37:365–394.</p>
+  </div>
+`);
+
+slide('liver-chip-obr','Liver-Chip', `
+  <div class="slide-inner">
+    <p class="eyebrow">5. Organ-on-chip · příklad</p>
+    <h2 class="headline">Liver-Chip</h2>
+    <figure class="fig">
+      <img class="scheme-img" src="obrázky_6/ewart2022_liverchip.png" alt="Schéma Emulate Liver-Chip">
+      <figcaption>Horní kanál (A): lidské hepatocyty (C) v extracelulární matrix (B) na porézní membráně (D). Dolní cévní kanál (H): sinusoidální endotel (G), Kupfferovy buňky (F), hvězdicové buňky (E).<br>Ewart L et al. (2022) Commun Med 2:154, obr. 1 (CC BY 4.0).</figcaption>
+    </figure>
+  </div>
+`);
+
+slide('body-on-chip','Body-on-chip', `
+  <div class="slide-inner">
+    <p class="eyebrow">5. Organ-on-chip · přednosti</p>
+    <h2 class="headline">Od jednoho orgánu k „body-on-chip“</h2>
+    <div class="grid-2" style="align-items:center;">
+      <figure class="fig">
+        <img class="scheme-img" src="obrázky_6/driver2023_body_on_chip.png" alt="Orgány na čipu a body-on-chip">
+        <figcaption>Driver R, Mishra S (2023) BioChip J 17:1–23, grafický abstrakt (© Korean BioChip Society, citováno pro výuku).</figcaption>
+      </figure>
+      <ul class="plain">
+        <li>tkáňová rozhraní (alveolokapilární, střevní, hematoencefalická bariéra)</li>
+        <li>delší funkčnost buněk</li>
+        <li>propojení orgánů (játra + cílový orgán)</li>
+        <li>průběžný odběr média: ALT, albumin, urea, TEER</li>
+      </ul>
+    </div>
+  </div>
+`);
+
+slide('ooc-publikace','Rozvoj oboru', `
+  <div class="slide-inner">
+    <p class="eyebrow">5. Organ-on-chip · rozvoj oboru</p>
+    <h2 class="headline">Prudký nárůst publikací</h2>
+    <figure class="fig">
+      <img class="scheme-img" src="obrázky_6/surina2025_ooc_publikace.png" alt="Počet publikací o organ-on-chip 2010-2025">
+      <figcaption>Počet publikací v PubMed (2010–2025). Surina S et al. (2025) Int J Mol Sci 26:10753, obr. 1 (CC BY 4.0).</figcaption>
+    </figure>
+    <div class="think"><b>K ZAMYŠLENÍ</b>Znamená rostoucí počet publikací, že je metoda validovaná pro regulační použití?</div>
+  </div>
+`);
+
+slide('ewart-design','Studie Ewart 2022', `
+  <div class="slide-inner">
+    <p class="eyebrow">5. Klíčová studie · lékové poškození jater (DILI)</p>
+    <h2 class="headline">Ewart a kol. (2022): design studie</h2>
+    <ul class="plain">
+      <li><strong>870</strong> jaterních čipů</li>
+      <li>lidské primární hepatocyty a nepárenchymové buňky</li>
+      <li><strong>27 léčiv</strong> slepě: 22 hepatotoxických, 5 netoxických (sada podle konsorcia IQ MPS)</li>
+      <li>srovnání s 3D jaterními sféroidy a s historickými výsledky zvířecích modelů</li>
+    </ul>
+    <p class="cite">Ewart L et al. (2022) Commun Med 2:154.</p>
+  </div>
+`);
+
+slide('ukolC-zadani','Úkol C – zadání (reálná data)', `
+  <div class="slide-inner">
+    <p class="eyebrow">Úkol C · výpočet z publikovaných dat (5 min)</p>
+    <h2 class="headline">Senzitivita a specificita Liver-Chipu</h2>
+    <table class="data-table compact">
+      <tr><th>Model</th><th class="num">TP</th><th class="num">TN</th><th class="num">FP</th><th class="num">FN</th></tr>
+      <tr><td>Liver-Chip, dárce 1 (27 léčiv)</td><td class="num">17</td><td class="num">5</td><td class="num">0</td><td class="num">5</td></tr>
+      <tr><td>Liver-Chip, oba dárci (18 léčiv)</td><td class="num">13</td><td class="num">3</td><td class="num">0</td><td class="num">2</td></tr>
+      <tr><td>3D sféroidy (22 léčiv)</td><td class="num">9</td><td class="num">3</td><td class="num">0</td><td class="num">10</td></tr>
+    </table>
+    <div class="task-box">
+      <ol>
+        <li>Spočítejte senzitivitu = TP/(TP+FN) a specificitu = TN/(TN+FP) pro všechny tři řádky.</li>
+        <li>Abstrakt článku uvádí: „27 léčiv … senzitivita 87 %“. Je to přesné?</li>
+      </ol>
+    </div>
+    <p class="cite">TP/TN = správně pozitivní/negativní, FP/FN = falešně pozitivní/negativní. Data: Ewart L et al. (2022) Commun Med 2:154, tab. 6 (korekce na vazbu na proteiny).</p>
+  </div>
+`);
+
+slide('ukolC-reseni-1','Úkol C – řešení (výpočet)', `
+  <div class="slide-inner">
+    <p class="eyebrow">Úkol C · řešení 1</p>
+    <h2 class="headline">Výpočet</h2>
+    <div class="sol-box">
+      <div class="calc-step">dárce 1: 17 / (17+5) = <span class="res">77 %</span> · specificita 5/5 = <span class="res">100 %</span></div>
+      <div class="calc-step">oba dárci: 13 / (13+2) = <span class="res">87 %</span> · specificita 3/3 = <span class="res">100 %</span></div>
+      <div class="calc-step">sféroidy: 9 / (9+10) = <span class="bad">47 %</span> · specificita 3/3 = 100 %</div>
+    </div>
+    <div class="sol-box">
+      <div class="sol-label">ODPOVĚĎ 2</div>
+      <p class="body-text" style="margin:0;">Ne zcela. 87 % platí jen pro <strong>podskupinu 18 léčiv</strong> testovaných na buňkách dvou dárců. Pro celou sadu 27 léčiv je senzitivita 77 %.</p>
+    </div>
+  </div>
+`);
+
+slide('ukolC-reseni-2','Úkol C – řešení (interpretace)', `
+  <div class="slide-inner">
+    <p class="eyebrow">Úkol C · řešení 2 · kritické čtení</p>
+    <h2 class="headline">Jak výsledek interpretovat?</h2>
+    <div class="grid-2" style="align-items:center;">
+      <figure class="fig">
+        <img class="scheme-img" src="obrázky_6/liverchip_senzitivita.png" alt="Senzitivita modelů pro DILI">
+        <figcaption>Data podle Ewart 2022; vlastní graf.</figcaption>
+      </figure>
+      <ul class="plain" style="font-size:17px;">
+        <li>malý vzorek: 95% interval spolehlivosti pro 87 % je <strong>61,5–96 %</strong></li>
+        <li>0 % u zvířat je dáno <strong>výběrem léčiv</strong> (prošla testy na zvířatech jako bezpečná)</li>
+        <li>většina autorů byla zaměstnána výrobcem čipu (Emulate, Inc.): <strong>střet zájmů</strong></li>
+        <li>přesto jde o nejrozsáhlejší dosavadní srovnání</li>
+      </ul>
+    </div>
+    <p class="cite">Ewart L et al. (2022); Nahle Z (2022) Front Med Technol 4:1053588.</p>
+  </div>
+`);
+
+slide('kviz-0','Kvíz: proč 0 %?', `
+  <div class="slide-inner">
+    <p class="eyebrow">Kontrolní zastávka · úsudek</p>
+    <h2 class="headline">Senzitivita zvířecích modelů 0 %</h2>
+    <div class="quiz-card" id="q-zero">
+      <div class="quiz-q">Lze z grafu usoudit, že zvířecí modely nezachytí žádné hepatotoxické léčivo?</div>
+      <button class="quiz-opt" data-correct="false">Ano, data to jasně ukazují.</button>
+      <button class="quiz-opt" data-correct="true">Ne. Do studie byla vybrána léčiva, která testy na zvířatech prošla; hodnota 0 % je dána designem.</button>
+      <div class="quiz-feedback" id="q-zero-fb"></div>
+    </div>
+  </div>
+`);
+
+slide('ooc-regulace','Organ-on-chip: regulace a omezení', `
+  <div class="slide-inner">
+    <p class="eyebrow">5. Organ-on-chip · regulační status a omezení</p>
+    <h2 class="headline">Kde je technologie dnes?</h2>
+    <p class="body-text"><strong>24. 9. 2024</strong>: FDA (CDER) přijala do pilotního programu ISTAND první organ-on-chip (Liver-Chip, DILI). Jde o první ze tří kroků kvalifikace.</p>
+    <ul class="plain" style="margin-top:12px;">
+      <li>chybí standardizace pro definovaný <strong>kontext použití</strong></li>
+      <li>variabilita buněk (dárci, iPSC), reprodukovatelnost mezi laboratořemi</li>
+      <li><strong>sorpce lipofilních látek do PDMS</strong>, cena, nízká kapacita</li>
+      <li>chybí imunitní systém, systémová farmakokinetika, chronická expozice</li>
+    </ul>
+    <p class="cite">FDA (2024) ISTAND, 24. 9. 2024; Ingber 2022; Leung 2022; Marx 2020.</p>
+  </div>
+`);
+
+slide('kviz-pdms','Kvíz: sorpce do PDMS', `
+  <div class="slide-inner">
+    <p class="eyebrow">Kontrolní zastávka · propojení s chemií</p>
+    <h2 class="headline">Kterou látku čip z PDMS nejspíše podhodnotí?</h2>
+    <div class="quiz-card" id="q-pdms">
+      <div class="quiz-q">U které látky hrozí, že skutečná koncentrace v médiu bude výrazně nižší než nominální?</div>
+      <button class="quiz-opt" data-correct="false">glukóza</button>
+      <button class="quiz-opt" data-correct="true">benzo[a]pyren</button>
+      <button class="quiz-opt" data-correct="false">chlorid sodný</button>
+      <div class="quiz-feedback" id="q-pdms-fb"></div>
+    </div>
+    <p class="hint">Nápověda: PDMS je hydrofobní polymer.</p>
+  </div>
+`);
+
+/* =====================================================================
+   6. IN SILICO A AI
+   ===================================================================== */
+slide('qsar','QSAR a read-across', `
+  <div class="slide-inner">
+    <p class="eyebrow">6. In silico toxikologie</p>
+    <h2 class="headline">QSAR a read-across</h2>
+    <div class="grid-2">
+      <div class="card"><p class="body-text" style="margin:0;"><strong>QSAR</strong><br>kvantitativní vztah mezi strukturou a aktivitou; deskriptory: lipofilita (log K<sub>OW</sub>), elektronové a sterické vlastnosti</p></div>
+      <div class="card"><p class="body-text" style="margin:0;"><strong>Read-across</strong><br>odvození vlastností látky z dat strukturně podobných látek; v REACH nejčastější zdroj dat bez testů na zvířatech</p></div>
+    </div>
+    <p class="cite">Hansch C, Fujita T (1964); Luechtefeld T et al. (2018).</p>
+  </div>
+`);
+
+slide('oecd-qsar','Pět principů OECD', `
+  <div class="slide-inner">
+    <p class="eyebrow">6. In silico · regulační použití</p>
+    <h2 class="headline">Pět principů OECD pro (Q)SAR</h2>
+    <ul class="plain" style="font-size:19px;">
+      <li>1. definovaný cílový ukazatel</li>
+      <li>2. jednoznačný algoritmus</li>
+      <li>3. definovaná <strong>doména použitelnosti</strong></li>
+      <li>4. vhodné míry shody, robustnosti a prediktivity</li>
+      <li>5. pokud možno mechanistická interpretace</li>
+    </ul>
+    <p class="cite">OECD (2007) Guidance Document on the Validation of (Q)SAR Models, ENV/JM/MONO(2007)2.</p>
+  </div>
+`);
+
+slide('narkoza','Příklad: narkóza', `
+  <div class="slide-inner">
+    <p class="eyebrow">6. In silico · příklad z ekotoxikologie</p>
+    <h2 class="headline">Narkóza: QSAR, který funguje</h2>
+    <ul class="plain">
+      <li>nespecifická „baseline“ toxicita: slabé, vratné hydrofobní interakce s membránami</li>
+      <li>takto podle odhadů působí asi <strong>60 % průmyslových organických látek</strong></li>
+      <li>toxicita roste s <strong>log K<sub>OW</sub></strong> → spolehlivé QSAR modely akutní toxicity pro ryby</li>
+      <li>model narkózy je součástí EPI Suite (US EPA) a OECD QSAR Toolbox</li>
+    </ul>
+    <div class="think"><b>K ZAMYŠLENÍ</b>Proč je důležité nejdřív poznat, že látka působí narkózou, a ne specifickým mechanismem?</div>
+    <p class="cite">Ankley GT et al. (2010) Environ Toxicol Chem 29:730–741.</p>
+  </div>
+`);
+
+slide('toxikofory','Strukturní alerty', `
+  <div class="slide-inner">
+    <p class="eyebrow">6. In silico · strukturní alerty (toxikofory)</p>
+    <h2 class="headline">Varovná návěští ve struktuře</h2>
+    <ul class="plain">
+      <li><strong>elektrofilní centra</strong> v molekule nebo jejím metabolitu reagují s nukleofily v DNA a proteinech (přednášky 2 a 4)</li>
+      <li>α-halogenkarbonylové seskupení: slzotvorné látky (bromaceton)</li>
+      <li>organofosfáty: inhibitory acetylcholinesterázy (pesticidy i nervově paralytické látky, přednáška 8)</li>
+      <li>expertní systémy (např. Derek Nexus) hledají alerty automaticky</li>
+    </ul>
+    <p class="cite">Linhart I (2014) Toxikologie, 2. vyd.; Casati S (2022).</p>
+  </div>
+`);
+
+slide('ml-milniky','Strojové učení: milníky', `
+  <div class="slide-inner">
+    <p class="eyebrow">6. Od QSAR k hlubokému učení</p>
+    <h2 class="headline">Milníky strojového učení</h2>
+    <table class="data-table compact">
+      <tr><th>Rok</th><th>Milník</th></tr>
+      <tr><td>2014–16</td><td><strong>DeepTox</strong>: vítěz Tox21 Data Challenge (~12 000 látek, 12 testů); hluboké neuronové sítě s víceúlohovým učením</td></tr>
+      <tr><td>2018</td><td><strong>RASAR</strong>: read-across na &gt;866 000 hodnotách; vyvážená přesnost 80–95 % pro 9 nebezpečností (vyvolalo polemiku; autoři s komerčními vazbami)</td></tr>
+      <tr><td>2025–26</td><td>grafové sítě, transformery, LLM, multimodální data, orgánově specifické predikce</td></tr>
+    </table>
+    <p class="cite">Mayr A et al. (2016) Front Environ Sci 3:80; Luechtefeld T et al. (2018) Toxicol Sci 165:198–212; Zhang R et al. (2025) Toxics 13:525.</p>
+  </div>
+`);
+
+slide('ml-postup','Postup predikce pomocí ML', `
+  <div class="slide-inner">
+    <p class="eyebrow">6. Jak vzniká AI predikce</p>
+    <h2 class="headline">Obecný postup</h2>
+    <figure class="fig">
+      <img class="scheme-img wide" src="obrázky_6/ml_postup.png" alt="Postup predikce toxicity pomocí strojového učení">
+      <figcaption>Vlastní zpracování podle Zhang 2025; Bai 2025; Zhang J 2025; Ajisafe 2025; Hartung &amp; Kleinstreuer 2025.</figcaption>
+    </figure>
+  </div>
+`);
+
+slide('ai-organy','AI: orgánová toxicita', `
+  <div class="slide-inner">
+    <p class="eyebrow">6. AI · cílové ukazatele</p>
+    <h2 class="headline">Co dnešní modely predikují</h2>
+    <figure class="fig">
+      <img class="scheme-img narrow" src="obrázky_6/zhang2025_organova_toxicita.png" alt="Orgánově specifické ukazatele predikce toxicity">
+      <figcaption>Zhang R, Wen H, Lin Z, Li B, Zhou X (2025) Toxics 13(7):525, obr. 2 (CC BY 4.0).</figcaption>
+    </figure>
+  </div>
+`);
+
+slide('nastroje','Volně dostupné nástroje', `
+  <div class="slide-inner">
+    <p class="eyebrow">6. Volně dostupné nástroje</p>
+    <h2 class="headline">Zkuste si sami</h2>
+    <table class="data-table compact">
+      <tr><th>Nástroj</th><th>Co umí</th></tr>
+      <tr><td><strong>ProTox 3.0</strong> (Charité)</td><td>61 modelů: LD50 a třída GHS, orgánová toxicita, mutagenita, dráhy Tox21; zdarma</td></tr>
+      <tr><td><strong>CompTox Dashboard</strong> (US EPA)</td><td>databáze statisíců látek: vlastnosti, osud v prostředí, expozice, ToxCast</td></tr>
+      <tr><td><strong>OECD QSAR Toolbox</strong></td><td>read-across, profilování podle AOP; součást ITSv2 v TG 497</td></tr>
+      <tr><td><strong>PBPK/PBTK</strong> modely</td><td>převod koncentrací in vitro na dávky in vivo (IVIVE)</td></tr>
+    </table>
+    <p class="cite">Banerjee P et al. (2024) Nucleic Acids Res 52:W513–W520; Williams AJ et al. (2017) J Cheminform 9:61; Casati 2022.</p>
+  </div>
+`);
+
+slide('ai-omezeni','Omezení AI', `
+  <div class="slide-inner">
+    <p class="eyebrow">6. Omezení a výzvy</p>
+    <h2 class="headline">Kde AI narází</h2>
+    <ul class="plain">
+      <li><strong>data</strong>: nevyvážené třídy, šum ve zvířecích datech, malé soubory</li>
+      <li><strong>doména použitelnosti</strong>: mezery u PFAS, směsí, nanomateriálů, environmentálních polutantů</li>
+      <li><strong>vysvětlitelnost</strong> (XAI) a propojení s AOP</li>
+      <li><strong>validace</strong>: modely se mění („drift“) a dědí zkreslení dat</li>
+    </ul>
+    <p class="cite">Hartung T, Kleinstreuer N (2025) ALTEX 42:3–21; Zhang R et al. (2025).</p>
+  </div>
+`);
+
+slide('ukolD-zadani','Úkol D – zadání (ProTox 3.0)', `
+  <div class="slide-inner">
+    <p class="eyebrow">Úkol D · práce s nástrojem (10 min, notebook/mobil)</p>
+    <h2 class="headline">Predikce vs. experiment</h2>
+    <div class="task-box">
+      <ol>
+        <li>Otevřete ProTox 3.0 (tox.charite.de/protox3) a zadejte <strong>kofein</strong> (název nebo SMILES z PubChem). Látku znáte z přednášky 5.</li>
+        <li>Zapište predikovanou LD50, třídu toxicity a údaje o spolehlivosti predikce.</li>
+        <li>V PubChem nebo ECHA CHEM najděte experimentální orální LD50 (potkan). Shoduje se kategorie CLP?</li>
+        <li>Zopakujte pro <strong>PFOA</strong> (kyselina perfluoroktanová). Je predikce stejně důvěryhodná?</li>
+      </ol>
+    </div>
+  </div>
+`);
+
+slide('ukolD-reseni','Úkol D – jak výsledek posoudit', `
+  <div class="slide-inner">
+    <p class="eyebrow">Úkol D · řešení · interpretace</p>
+    <h2 class="headline">Na co se dívat</h2>
+    <div class="sol-box">
+      <ul class="plain">
+        <li>Porovnávejte <strong>kategorie</strong>, ne přesná čísla: LD50 má i experimentálně velký rozptyl (Zbinden 1981).</li>
+        <li>Sledujte, jak <strong>podobná je látka trénovacím datům</strong> a jakou přesnost nástroj uvádí. Nízká podobnost znamená, že látka je mimo doménu použitelnosti.</li>
+        <li>PFAS jsou typická mezera v trénovacích datech: predikce je jen orientační.</li>
+        <li>Predikce slouží k <strong>prioritizaci</strong>, nenahrazuje experimentální data.</li>
+      </ul>
+    </div>
+    <p class="hint">Konkrétní čísla závisí na verzi modelu. Výsledky porovnáme společně.</p>
+  </div>
+`);
+
+slide('kviz-domena','Kvíz: doména použitelnosti', `
+  <div class="slide-inner">
+    <p class="eyebrow">Kontrolní zastávka · úsudek</p>
+    <h2 class="headline">Doména použitelnosti</h2>
+    <div class="quiz-card" id="q-domena">
+      <div class="quiz-q">Model byl natrénován převážně na léčivech. Laboratoř necílenou analýzou LC-HRMS identifikuje nový transformační produkt pesticidu ve vodě. Jak naložíte s predikcí toxicity?</div>
+      <button class="quiz-opt" data-correct="false">Predikci přijmu, AI modely jsou přesnější než testy na zvířatech.</button>
+      <button class="quiz-opt" data-correct="true">Nejdřív ověřím, zda látka leží v doméně použitelnosti; predikci použiji jen k prioritizaci pro experimentální testy.</button>
+      <button class="quiz-opt" data-correct="false">Predikci vůbec nepoužiji, in silico metody nemají v toxikologii místo.</button>
+      <div class="quiz-feedback" id="q-domena-fb"></div>
+    </div>
+  </div>
+`);
+
+/* =====================================================================
+   7. REGULACE
+   ===================================================================== */
+slide('usa-1','USA 2022–2025', `
+  <div class="slide-inner">
+    <p class="eyebrow">7. Regulace · USA</p>
+    <h2 class="headline">USA: 2022–2025</h2>
+    <table class="data-table compact">
+      <tr><th>Datum</th><th>Událost</th></tr>
+      <tr><td>12/2022</td><td><strong>FDA Modernization Act 2.0</strong>: ruší zákonnou povinnost testovat léčiva na zvířatech; jako neklinický test lze použít i buněčné modely, MPS a počítačové modely</td></tr>
+      <tr><td>24. 9. 2024</td><td>první organ-on-chip v programu ISTAND</td></tr>
+      <tr><td>10. 4. 2025</td><td><strong>FDA Roadmap</strong>: postupné omezení testů na zvířatech, začíná u monoklonálních protilátek</td></tr>
+      <tr><td>12/2025</td><td>návrh pokynu pro monoklonální protilátky (méně studií na primátech); první kvalifikovaný AI nástroj (AIM-NASH)</td></tr>
+    </table>
+    <p class="cite">Public Law 117-328, Div. FF, sec. 3209; FDA (2024, 2025) [R1, R4, R5]; Hartung T (2025) ALTEX 42:536–537.</p>
+  </div>
+`);
+
+slide('usa-2','USA 2026', `
+  <div class="slide-inner">
+    <p class="eyebrow">7. Regulace · USA</p>
+    <h2 class="headline">USA: 2026</h2>
+    <table class="data-table compact">
+      <tr><th>Datum</th><th>Událost</th></tr>
+      <tr><td>20. 4. 2026</td><td>zpráva o prvním roce: ISTAND trvalý, veřejná databáze přijatelných NAMs, rekombinantní testy endotoxinů místo lyzátu z ostrorepů</td></tr>
+      <tr><td>22. 9. 2026</td><td>pravidlo „Nonclinical Testing Terminology“: v 21 CFR „animal test“ → „nonclinical test“; účinnost 4. 2. 2027, pokud do 7. 12. 2026 nepřijdou zásadní námitky</td></tr>
+    </table>
+    <div class="grid-2" style="margin-top:14px;">
+      <div class="card"><p class="body-text" style="margin:0;font-size:17px;"><strong>ALTEX (McCord 2026)</strong>: reálný pokrok; váha důkazů má být výchozím základem hodnocení</p></div>
+      <div class="card"><p class="body-text" style="margin:0;font-size:17px;"><strong>FASEB</strong>: pro mnoho tříd léčiv zůstávají zvířecí modely zatím nezbytné</p></div>
+    </div>
+    <p class="cite">FDA (2026) [R2, R3]; McCord J et al. (2026) ALTEX 43(3):514.</p>
+  </div>
+`);
+
+slide('eu','Evropská unie', `
+  <div class="slide-inner">
+    <p class="eyebrow">7. Regulace · EU</p>
+    <h2 class="headline">Evropská unie</h2>
+    <ul class="plain">
+      <li><strong>kosmetika</strong>: plný zákaz testování a uvádění na trh od 2013 (nařízení 1223/2009, čl. 18)</li>
+      <li><strong>REACH</strong>: testy na obratlovcích až jako poslední možnost</li>
+      <li><strong>Roadmapa k ukončení testů na zvířatech</strong> (EK, 1. 6. 2026): 22 opatření, 3 pilíře, 15 legislativních oblastí; hodnotící konference 2029</li>
+    </ul>
+    <div class="think"><b>KRITIKA (Hartung 2026, ALTEX)</b>Vědecky důkladná, ale na rozdíl od USA a Velké Británie bez závazných termínů.</div>
+    <p class="cite">Nařízení (ES) 1223/2009; EK C(2026) 3497, SWD(2026) 144 [R6]; Hartung T (2026) ALTEX, doi:10.14573/altex.2606011.</p>
+  </div>
+`);
+
+slide('stav-2026','Stav v říjnu 2026', `
+  <div class="slide-inner">
+    <p class="eyebrow">7. Shrnutí současného stavu</p>
+    <h2 class="headline">Testy na zvířatech nejsou zrušeny, mění se výchozí logika</h2>
+    <div class="grid-2">
+      <div class="card">
+        <p class="body-text" style="margin:0;"><strong>Nejdále</strong><br>lokální účinky (kůže, oko, senzibilizace), genotoxicita in vitro, endotoxiny, biologická léčiva</p>
+      </div>
+      <div class="card">
+        <p class="body-text" style="margin:0;"><strong>Nejobtížněji nahraditelné</strong><br>systémová chronická toxicita, karcinogenita, reprodukční a vývojová toxicita</p>
+      </div>
+    </div>
+    <p class="footer-note">Nové metody se přijímají pro jasně vymezený kontext použití, ne plošně.</p>
+  </div>
+`);
+
+slide('kviz-regulace','Kvíz: regulace', `
+  <div class="slide-inner">
+    <p class="eyebrow">Kontrolní zastávka · kvíz</p>
+    <h2 class="headline">Co platí?</h2>
+    <div class="quiz-card" id="q-reg1">
+      <div class="quiz-q">FDA Modernization Act 2.0 (2022):</div>
+      <button class="quiz-opt" data-correct="false">zakázal testování léčiv na zvířatech v USA</button>
+      <button class="quiz-opt" data-correct="true">zrušil zákonnou povinnost testovat na zvířatech; alternativy jsou přípustné</button>
+      <div class="quiz-feedback" id="q-reg1-fb"></div>
+    </div>
+    <div class="quiz-card" id="q-reg2" style="margin-top:14px;">
+      <div class="quiz-q">Proč je karcinogenita mezi nejobtížněji nahraditelnými ukazateli?</div>
+      <button class="quiz-opt" data-correct="true">Jde o vícekrokový, dlouhodobý proces v celém organismu; žádný in vitro test ho zatím celý nepokryje.</button>
+      <button class="quiz-opt" data-correct="false">Protože Amesův test už karcinogenitu spolehlivě určuje.</button>
+      <div class="quiz-feedback" id="q-reg2-fb"></div>
+    </div>
+  </div>
+`);
+
+slide('analyza-rizika','Od dat k riziku', `
+  <div class="slide-inner">
+    <p class="eyebrow">Od dat k rozhodnutí</p>
+    <h2 class="headline">Kam data o toxicitě vstupují: hodnocení rizika</h2>
+    <div class="diagram-box">
+      <svg viewBox="0 0 800 130" style="width:100%;max-width:820px;">
+        <rect x="10" y="35" width="175" height="60" rx="6" fill="#FBF0DD" stroke="#B9791E"/>
+        <text x="97" y="60" font-size="14" text-anchor="middle" font-weight="600">1. Identifikace</text>
+        <text x="97" y="78" font-size="14" text-anchor="middle" font-weight="600">nebezpečnosti</text>
+        <line x1="185" y1="65" x2="211" y2="65" stroke="#5A5D51" stroke-width="2" marker-end="url(#a8)"/>
+        <rect x="214" y="35" width="175" height="60" rx="6" fill="#F7EAE7" stroke="#9C3B2E"/>
+        <text x="301" y="60" font-size="14" text-anchor="middle" font-weight="600">2. Vztah</text>
+        <text x="301" y="78" font-size="14" text-anchor="middle" font-weight="600">dávka–účinek</text>
+        <line x1="389" y1="65" x2="415" y2="65" stroke="#5A5D51" stroke-width="2" marker-end="url(#a8)"/>
+        <rect x="418" y="35" width="175" height="60" rx="6" fill="#EAF1EA" stroke="#3E5C42"/>
+        <text x="505" y="60" font-size="14" text-anchor="middle" font-weight="600">3. Hodnocení</text>
+        <text x="505" y="78" font-size="14" text-anchor="middle" font-weight="600">expozice</text>
+        <line x1="593" y1="65" x2="619" y2="65" stroke="#5A5D51" stroke-width="2" marker-end="url(#a8)"/>
+        <rect x="622" y="35" width="175" height="60" rx="6" fill="#EAF0F4" stroke="#3A5A72"/>
+        <text x="709" y="60" font-size="14" text-anchor="middle" font-weight="600">4. Charakterizace</text>
+        <text x="709" y="78" font-size="14" text-anchor="middle" font-weight="600">rizika</text>
+        <defs><marker id="a8" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#5A5D51"/></marker></defs>
+      </svg>
+    </div>
+    <ul class="plain" style="margin-top:14px;">
+      <li>kroky 1–2: dnešní metody (in vivo, in vitro, in silico)</li>
+      <li>krok 3: expozice a biomonitoring (přednáška 5)</li>
+      <li>NOAEL ÷ nejistotní faktor (obvykle 100 = 10 mezidruhový × 10 mezi lidmi) → bezpečná dávka (ADI, TDI)</li>
+    </ul>
+    <p class="cite">WHO/IPCS (2009) Environmental Health Criteria 240; Krewski D et al. (2010).</p>
+  </div>
+`);
+
+/* =====================================================================
+   8. ZÁVĚR
+   ===================================================================== */
+slide('diskuse','Diskusní otázky', `
+  <div class="slide-inner">
+    <p class="eyebrow">Na závěr přednášky</p>
+    <h2 class="headline">Diskusní otázky</h2>
+    <div id="discussion-list" style="margin-top:14px;"></div>
+  </div>
+`);
+
+slide('shrnuti','Shrnutí', `
+  <div class="slide-inner">
+    <p class="eyebrow">Na závěr</p>
+    <h2 class="headline">Co si odnášíme</h2>
+    <ul class="plain" style="font-size:19px;">
+      <li>Od popisu letality (LD50) k mechanismům (AOP), od jednoho druhu k integraci dat (IATA, NGRA).</li>
+      <li>Organ-on-chip přináší lidskou fyziologii do in vitro; nejlepší data jsou pro játra, validace teprve začíná.</li>
+      <li>AI predikuje toxicitu tisíců látek, omezuje ji kvalita dat, doména použitelnosti a vysvětlitelnost.</li>
+      <li>2025–2026 je regulační zlom, změna je ale postupná a závislá na kontextu použití.</li>
+    </ul>
+  </div>
+`);
+
+slide('zdroje-1','Zdroje – publikace', `
+  <div class="slide-inner">
+    <p class="eyebrow">Zdroje · recenzované publikace</p>
+    <h2 class="headline">Literatura</h2>
+    <div class="card sources" style="font-size:12.5px;column-count:2;column-gap:28px;">
+      <p>Linhart I (2014) Toxikologie: interakce škodlivých látek s živými organismy, jejich mechanismy, projevy a důsledky. 2., upr. a rozš. vyd. Praha: VŠCHT. ISBN 978-80-7080-877-1.</p>
+      <p>Borzelleca JF (2000) Toxicol Sci 53:2–4.</p>
+      <p>Michaleas SN et al. (2022) Maedica 17:532–537.</p>
+      <p>Trevan JW (1927) Proc R Soc Lond B 101:483–514.</p>
+      <p>Draize JH et al. (1944) J Pharmacol Exp Ther 82:377–390.</p>
+      <p>Russell WMS, Burch RL (1959) The Principles of Humane Experimental Technique. Methuen.</p>
+      <p>Tannenbaum J, Bennett BT (2015) J Am Assoc Lab Anim Sci 54:120–132.</p>
+      <p>Kim JH, Scialli AR (2011) Toxicol Sci 122:1–6.</p>
+      <p>Hansch C, Fujita T (1964) J Am Chem Soc 86:1616–1626.</p>
+      <p>Ames BN et al. (1975) Mutat Res 31:347–364.</p>
+      <p>Zbinden G, Flury-Roversi M (1981) Arch Toxicol 47:77–99.</p>
+      <p>Krewski D et al. (2010) J Toxicol Environ Health B 13:51–138.</p>
+      <p>Richard AM et al. (2016) Chem Res Toxicol 29:1225–1251.</p>
+      <p>Ankley GT et al. (2010) Environ Toxicol Chem 29:730–741.</p>
+      <p>Huh D et al. (2010) Science 328:1662–1668.</p>
+      <p>Busquet F et al. (2014) Regul Toxicol Pharmacol 69:496–511.</p>
+      <p>Van Norman GA (2019) JACC Basic Transl Sci 4:845–854.</p>
+      <p>Sun D et al. (2022) Acta Pharm Sin B 12:3049–3062.</p>
+      <p>McKenzie R et al. (1995) N Engl J Med 333:1099–1105.</p>
+      <p>Scheen AJ (2001) Diabetes Metab 27:305–313.</p>
+      <p>Stucki AO et al. (2022) Front Toxicol 4:964553.</p>
+      <p>Casati S (2022) Front Toxicol 4:943152.</p>
+      <p>Nitsche KS et al. (2022) Arch Toxicol 96:711–741.</p>
+      <p>Ingber DE (2022) Nat Rev Genet 23:467–491.</p>
+      <p>Leung CM et al. (2022) Nat Rev Methods Primers 2:33.</p>
+      <p>Marx U et al. (2020) ALTEX 37:365–394.</p>
+      <p>Ewart L et al. (2022) Commun Med 2:154.</p>
+      <p>Nahle Z (2022) Front Med Technol 4:1053588.</p>
+      <p>Sin A et al. (2004) Biotechnol Prog 20:338–345.</p>
+      <p>Driver R, Mishra S (2023) BioChip J 17:1–23.</p>
+      <p>Surina S et al. (2025) Int J Mol Sci 26:10753.</p>
+      <p>Mayr A et al. (2016) Front Environ Sci 3:80.</p>
+      <p>Luechtefeld T et al. (2018) Toxicol Sci 165:198–212.</p>
+      <p>Banerjee P et al. (2024) Nucleic Acids Res 52:W513–W520.</p>
+      <p>Williams AJ et al. (2017) J Cheminform 9:61.</p>
+      <p>Zhang R et al. (2025) Toxics 13:525.</p>
+      <p>Bai C et al. (2025) Adv Sci, doi:10.1002/advs.202413405.</p>
+      <p>Zhang J et al. (2025) Brief Bioinform 26:bbaf533.</p>
+      <p>Ajisafe OM et al. (2025) Life Sci 378:123821.</p>
+      <p>Hartung T, Kleinstreuer N (2025) ALTEX 42:3–21.</p>
+      <p>Hartung T (2025) ALTEX 42:536–537.</p>
+      <p>McCord J et al. (2026) ALTEX 43:514.</p>
+      <p>Hartung T (2026) ALTEX, doi:10.14573/altex.2606011; ALTEX 43:176–177.</p>
+    </div>
+  </div>
+`);
+
+slide('zdroje-2','Zdroje – regulace', `
+  <div class="slide-inner">
+    <p class="eyebrow">Zdroje · regulatorní a legislativní dokumenty</p>
+    <h2 class="headline">Regulace a směrnice</h2>
+    <div class="card sources" style="font-size:13.5px;">
+      <p>[R1] FDA (2025) Roadmap to Reducing Animal Testing in Preclinical Safety Studies, 10. 4. 2025.</p>
+      <p>[R2] FDA (2026) Reducing Animal Testing in Nonclinical Studies: Year One Progress and the Path Forward.</p>
+      <p>[R3] FDA (2026) Nonclinical Testing Terminology. 91 Fed. Reg. 59988 (22. 9. 2026).</p>
+      <p>[R4] FDA (2024) ISTAND Pilot Program accepts first organ-on-a-chip submission, 24. 9. 2024.</p>
+      <p>[R5] FDA (2025) FDA qualifies first AI drug development tool, 8. 12. 2025.</p>
+      <p>[R6] European Commission (2026) Roadmap towards phasing out animal testing for chemical safety assessments. C(2026) 3497; SWD(2026) 144.</p>
+      <p>[R7] Směrnice 2003/15/ES; nařízení (ES) č. 1223/2009, čl. 18.</p>
+      <p>[R8] OECD Test Guidelines: TG 236, 401 (zrušena 2002), 407, 408, 420, 423, 425, 429, 442C–E, 451, 452, 471, 487, 497.</p>
+      <p>[R9] Consolidated Appropriations Act 2023 (P.L. 117-328), Div. FF, sec. 3209: FDA Modernization Act 2.0.</p>
+      <p>Nařízení (ES) č. 1272/2008 (CLP); OECD (2007) ENV/JM/MONO(2007)2 – validace (Q)SAR; WHO/IPCS (2009) EHC 240.</p>
+      <p style="margin-bottom:0;">Obrázky: vlastní schémata podle uvedených zdrojů; převzaté obrázky s citací u každého slidu (CC BY nebo citační výjimka pro výuku).</p>
+    </div>
+  </div>
+`);
+
+
+const deck = document.getElementById('deck');
+slides.forEach((s,i)=>{
+  const el = document.createElement('div');
+  el.className='slide'; el.id='slide-'+i; el.innerHTML=s.html;
+  deck.appendChild(el);
+});
+const overlayList = document.getElementById('overlay-list');
+slides.forEach((s,i)=>{
+  const li = document.createElement('li');
+  li.innerHTML = '<span>'+String(i+1).padStart(2,'0')+'</span>'+s.title;
+  li.onclick = ()=>{ goTo(i); toggleOverlay(false); };
+  overlayList.appendChild(li);
+});
+
+let current = 0;
+function render(){
+  document.querySelectorAll('.slide').forEach((el,i)=> el.classList.toggle('active', i===current));
+  document.getElementById('progress-fill').style.width = ((current+1)/slides.length*100)+'%';
+  document.getElementById('counter').textContent = (current+1)+' / '+slides.length;
+  document.getElementById('prevBtn').disabled = current===0;
+  document.getElementById('nextBtn').disabled = current===slides.length-1;
+  initSlideWidgets(current);
+}
+function goTo(i){ current = Math.max(0, Math.min(slides.length-1, i)); render(); }
+function nextSlide(){ goTo(current+1); }
+function prevSlide(){ goTo(current-1); }
+document.addEventListener('keydown', (e)=>{
+  if(document.getElementById('lightbox').classList.contains('show')){ if(e.key==='Escape') closeLightbox(); return; }
+  if(document.getElementById('overlay').classList.contains('show')){ if(e.key==='Escape') toggleOverlay(false); return; }
+  if(e.key==='ArrowRight' || e.key===' ') nextSlide();
+  if(e.key==='ArrowLeft') prevSlide();
+  if(e.key==='Escape') toggleOverlay(false);
+});
+function toggleOverlay(show){ document.getElementById('overlay').classList.toggle('show', show); }
+
+/* ---- schema lightbox (click to enlarge) ---- */
+deck.addEventListener('click', (e)=>{
+  const img = e.target.closest('.scheme-img');
+  if(img){ openLightbox('<img src="'+img.getAttribute('src')+'" alt="'+(img.getAttribute('alt')||'')+'">'); return; }
+  const svg = e.target.closest('.diagram-box svg');
+  if(svg){ openLightbox(svg.outerHTML); return; }
+});
+function openLightbox(html){
+  document.getElementById('lightbox-inner').innerHTML = html;
+  document.getElementById('lightbox').classList.add('show');
+}
+function closeLightbox(){
+  document.getElementById('lightbox').classList.remove('show');
+  document.getElementById('lightbox-inner').innerHTML = '';
+}
+
+/* ================= WIDGETS ================= */
+const initialized = {};
+function initSlideWidgets(i){
+  const id = slides[i].id;
+  if(initialized[id]) return;
+  initialized[id] = true;
+  const Q = {
+    'kviz-odhad':[['q-odhad','q-odhad-fb','Ano, jen 19 %. Van Norman (2019) to uvádí jako argument pro opatrnost při přenosu dat ze zvířat na člověka.','Ve skutečnosti jen asi 19 %. Van Norman (2019) to uvádí jako argument pro opatrnost při přenosu dat ze zvířat na člověka.']],
+    'kviz-90':[['q-90','q-90-fb','Správně. Podle analýzy 2010–2017 připadá 40–50 % neúspěchů na nedostatečnou účinnost, asi 30 % na toxicitu, 10–15 % na farmakokinetiku a asi 10 % na komerční důvody. Problém prediktivity je reálný, ale číslo 90 % ho nekvantifikuje.','Ne. Podle analýzy 2010–2017 připadá 40–50 % neúspěchů na nedostatečnou účinnost, asi 30 % na toxicitu, 10–15 % na farmakokinetiku a asi 10 % na komerční důvody.']],
+    'kviz-noael':[['q-noael','q-noael-fb','Správně. NOAEL je nejvyšší testovaná dávka bez účinku, LOAEL nejnižší testovaná dávka s účinkem. Obě jsou vždy skutečně testované dávky, skutečný práh leží někde mezi nimi.','Ne. NOAEL i LOAEL jsou vždy skutečně testované dávky: NOAEL = 10, LOAEL = 30 mg/kg/den. Skutečný práh leží někde mezi nimi a průměr nemá oporu v datech.']],
+    'kviz-ames':[['q-ames','q-ames-fb','Správně. Ames zachytí mutagenitu u bakterií. Ne každý mutagen je karcinogen a existují i negenotoxické (epigenetické) karcinogeny, které Ames nezachytí (přednáška 8).','Ne. Ames zachytí mutagenitu u bakterií; je to varovný signál. Ne každý mutagen je karcinogen a negenotoxické karcinogeny Ames nezachytí.']],
+    'kviz-2ze3':[['q-2ze3','q-2ze3-fb','Správně. Výsledek „2 ze 3“ určují dva shodné výsledky. Test na zvířatech (LLNA) není potřeba.','Ne. V přístupu „2 ze 3“ rozhodují dva shodné výsledky, tedy senzibilizátor, a to bez testu na zvířatech.']],
+    'kviz-0':[['q-zero','q-zero-fb','Přesně tak. Vybrána byla léčiva, která na zvířatech prošla jako bezpečná a hepatotoxicitu projevila až u člověka. Hodnota 0 % tedy není nezávislé měření.','Ne. Vybrána byla léčiva, která na zvířatech prošla jako bezpečná, takže 0 % je dáno výběrem, ne nezávislým měřením.']],
+    'kviz-pdms':[['q-pdms','q-pdms-fb','Správně. Benzo[a]pyren je silně lipofilní PAU a sorbuje se do hydrofobního PDMS, takže buňky „vidí“ nižší koncentraci a toxicita se podhodnotí. To je zvlášť důležité u organických polutantů.','Ne. Sorpce do hydrofobního PDMS se týká lipofilních látek, jako je benzo[a]pyren. Glukóza i NaCl jsou polární.']],
+    'kviz-domena':[['q-domena','q-domena-fb','Správně. Necílená LC-HRMS a in silico predikce se dobře doplňují, ale jen tehdy, když látka leží v doméně použitelnosti. Predikce pak slouží k prioritizaci.','Ne. Rozumný postup je ověřit doménu použitelnosti a predikci použít k prioritizaci, ne jako definitivní odpověď ani ji zcela zavrhnout.']],
+    'kviz-regulace':[
+      ['q-reg1','q-reg1-fb','Správně. Testy na zvířatech nejsou zakázány, jen už nejsou zákonem vyžadovány jako jediná možnost.','Ne. Zákon testy nezakázal, jen zrušil povinnost a připustil alternativy (buněčné modely, MPS, počítačové modely).'],
+      ['q-reg2','q-reg2-fb','Správně. Karcinogeneze je vícestupňový proces (přednáška 8) a Amesův test pokryje jen mutagenitu.','Ne. Amesův test pokryje jen mutagenitu, ne celý vícestupňový proces karcinogeneze.']]
+  };
+  if(Q[id]) initSimpleQuizzes(Q[id]);
+  if(id==='diskuse-standard') document.getElementById('disc-standard').onclick = function(){ this.classList.toggle('open'); };
+  if(id==='ukolB') initMatching('mB', [
+    {left:'DPRA (in chemico)', right:'MIE: kovalentní vazba na kožní proteiny'},
+    {left:'KeratinoSens™', right:'KE2: aktivace keratinocytů (Keap1-Nrf2-ARE)'},
+    {left:'h-CLAT', right:'KE3: aktivace dendritických buněk'},
+    {left:'LLNA (myš)', right:'KE4: proliferace T-lymfocytů v uzlinách'}
+  ], 'Výborně. Testy KE1–KE3 jsou bez zvířat a TG 497 je kombinuje místo LLNA.');
+  if(id==='ukol-3r') initSort3R();
+  if(id==='diskuse') initDiscussion();
+}
+
+function initSimpleQuizzes(list){
+  list.forEach(([cardId, fbId, correctMsg, wrongMsg])=>{
+    const card = document.getElementById(cardId);
+    const opts = card.querySelectorAll('.quiz-opt');
+    opts.forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const isCorrect = btn.dataset.correct==='true';
+        opts.forEach(o=>o.disabled=true);
+        btn.classList.add(isCorrect?'correct':'wrong');
+        if(!isCorrect){ opts.forEach(o=>{ if(o.dataset.correct==='true') o.classList.add('correct'); }); }
+        const fb = document.getElementById(fbId);
+        fb.textContent = isCorrect? correctMsg: wrongMsg;
+        fb.classList.add('show');
+      });
+    });
+  });
+}
+
+/* ---- 3R třídění ---- */
+function initSort3R(){
+  const items = [
+    {t:'Kožní senzibilizace hodnocená kombinací DPRA, KeratinoSens™ a h-CLAT (TG 497)', a:'Replacement', why:'Testy in chemico a in vitro nahrazují test LLNA na myších.'},
+    {t:'Metoda up-and-down (TG 425) místo klasické LD50 (TG 401)', a:'Reduction', why:'Zvířata se testují postupně po jednom, celkem jich je výrazně méně.'},
+    {t:'Ukončení pokusu při zjevných známkách toxicity místo čekání na smrt (TG 420)', a:'Refinement', why:'Méně utrpení; jde o tzv. humánní cílový ukazatel.'},
+    {t:'Predikce akutní toxicity v ProTox 3.0 před plánováním experimentu', a:'Replacement', why:'In silico metoda (pro prioritizaci) poskytne informaci bez zvířat.'},
+    {t:'Sdílení existujících dat mezi registranty v REACH, aby se test neopakoval', a:'Reduction', why:'Zabraňuje duplicitním testům, takže se použije méně zvířat.'}
+  ];
+  const wrap = document.getElementById('sort3r');
+  items.forEach(it=>{
+    const row = document.createElement('div'); row.className='sort-row';
+    row.innerHTML = '<div>'+it.t+'</div><div class="sort-btns"></div><div class="sort-why">✓ '+it.a+': '+it.why+'</div>';
+    const btns = row.querySelector('.sort-btns');
+    ['Replacement','Reduction','Refinement'].forEach(c=>{
+      const b = document.createElement('button'); b.className='sort-btn'; b.textContent=c;
+      b.onclick = ()=>{
+        if(row.classList.contains('correct')) return;
+        if(c===it.a){ row.classList.add('correct'); b.classList.add('right'); }
+        else { b.classList.add('wrong'); setTimeout(()=>b.classList.remove('wrong'),600); }
+      };
+      btns.appendChild(b);
+    });
+    wrap.appendChild(row);
+  });
+}
+
+/* ---- discussion accordion ---- */
+function initDiscussion(){
+  const qa = [
+    {q:'Studie Liver-Chip byla financována výrobcem čipu. Znamená to, že jejím výsledkům nelze věřit?',
+     a:'Ne automaticky. Střet zájmů je důvod číst pozorněji: ověřit design (slepé testování, předem definovaná sada léčiv podle konsorcia IQ MPS), velikost vzorku a interval spolehlivosti a hledat nezávislé replikace. Problematické je spíš zkrácené podání výsledků („87 %“ bez kontextu podskupiny) než samotný fakt financování.'},
+    {q:'Proč jsou systémová chronická toxicita, karcinogenita a reprodukční toxicita nejtěžší na nahrazení?',
+     a:'Zahrnují interakci mnoha orgánů, hormonální a imunitní regulaci, toxikokinetiku a dlouhé časové škály (měsíce až generace). Dnešní NAMs pokrývají jednotlivé klíčové události AOP, ale ne celý řetězec v celém organismu. Pro tyto ukazatele chybí i lidská referenční data pro validaci.'},
+    {q:'Jak by mohla laboratoř environmentální analytické chemie propojit necílenou analýzu LC-HRMS s in silico predikcí?',
+     a:'Nově identifikované látky (transformační produkty polutantů, přírodní toxiny) lze hned vyhodnotit predikčními modely (ProTox 3.0, OECD QSAR Toolbox) a podle výsledku vybrat ty, které stojí za experimentální testování. Podmínkou je kontrola domény použitelnosti a vědomí, že predikce není důkaz.'},
+    {q:'Proč se NOAEL ze zvířecí studie dělí nejistotním faktorem a nepoužívá se přímo jako bezpečná dávka pro člověka?',
+     a:'NOAEL nezohledňuje mezidruhové rozdíly v citlivosti ani variabilitu v lidské populaci (děti, senioři, genetické polymorfismy, přednáška 4). Výchozí faktor 100 = 10 (mezidruhový) × 10 (mezi lidmi). NGRA se snaží tyto výchozí hodnoty nahradit daty z lidských buněk a PBPK modelů.'},
+    {q:'Má smysl považovat výsledek AI modelu za „lepší než test na zvířatech“, když se model učil na datech z testů na zvířatech?',
+     a:'Model nemůže být spolehlivější než jeho trénovací data vůči lidské realitě; může nanejvýš lépe reprodukovat zvířecí výsledky (RASAR srovnával s reprodukovatelností zvířecích testů). Proto Hartung a Kleinstreuer (2025) požadují nový rámec validace AI-NAMs s transparentními kritérii nejistoty a pokud možno s lidskými referenčními daty.'}
+  ];
+  const wrap = document.getElementById('discussion-list');
+  qa.forEach((item,i)=>{
+    const div = document.createElement('div');
+    div.className='tl-item'; div.style.cssText='min-width:auto;width:100%;margin-bottom:10px;';
+    div.innerHTML = '<div class="tl-year">Otázka '+(i+1)+'</div><div class="tl-title" style="font-size:19px;">'+item.q+'</div><div class="tl-detail" style="font-size:17px;"><strong>Možná odpověď:</strong> '+item.a+'</div>';
+    div.onclick = ()=> div.classList.toggle('open');
+    wrap.appendChild(div);
+  });
+}
+
+/* ---- párování (obecné) ---- */
+function initMatching(prefix, pairs, doneMsg){
+  const leftItems = pairs.map((p,i)=>({text:p.left, idx:i}));
+  const rightItems = pairs.map((p,i)=>({text:p.right, idx:i}));
+  for(let i=rightItems.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [rightItems[i],rightItems[j]]=[rightItems[j],rightItems[i]]; }
+  const leftEl = document.getElementById(prefix+'-left');
+  const rightEl = document.getElementById(prefix+'-right');
+  let selectedLeft = null, solved = 0;
+  leftItems.forEach(item=>{
+    const div = document.createElement('div');
+    div.className='match-item'; div.textContent = item.text; div.dataset.idx = item.idx;
+    div.onclick = ()=>{
+      if(div.classList.contains('correct')) return;
+      leftEl.querySelectorAll('.match-item').forEach(x=>x.classList.remove('selected'));
+      div.classList.add('selected'); selectedLeft = div;
+    };
+    leftEl.appendChild(div);
+  });
+  rightItems.forEach(item=>{
+    const div = document.createElement('div');
+    div.className='match-item'; div.textContent = item.text; div.dataset.idx = item.idx;
+    div.onclick = ()=>{
+      if(!selectedLeft || div.classList.contains('correct')) return;
+      if(selectedLeft.dataset.idx === div.dataset.idx){
+        selectedLeft.classList.remove('selected'); selectedLeft.classList.add('correct');
+        div.classList.add('correct'); solved++; selectedLeft = null;
+        if(solved===pairs.length) document.getElementById(prefix+'-result').textContent = doneMsg;
+      } else {
+        div.classList.add('wrong'); setTimeout(()=>div.classList.remove('wrong'), 500);
+      }
+    };
+    rightEl.appendChild(div);
+  });
+}
+
+render();
+</script>
+</body>
+</html>
