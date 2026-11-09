@@ -1,0 +1,1215 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interpretace toxikologických dat a orgánová toxicita — Přednáška 7</title>
+<style>
+  :root{
+    --paper:#F4F5EF;
+    --ink:#1E2019;
+    --ink-soft:#5A5D51;
+    --amber:#B9791E;
+    --amber-deep:#8F5D14;
+    --tox-green:#3E5C42;
+    --tox-green-deep:#2A3F2D;
+    --danger:#9C3B2E;
+    --blue:#3A5A72;
+    --blue-deep:#233C4E;
+    --violet:#6A55A8;
+    --line:#D6D6C6;
+    --card:#FFFFFE;
+    --serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', 'Book Antiqua', serif;
+    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --mono: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{ margin:0; background:var(--paper); color:var(--ink); font-family:var(--sans); overflow:hidden; font-size:18px; }
+  ::selection{ background: var(--amber); color:#fff; }
+
+  #topbar{ position:fixed; top:0; left:0; right:0; height:54px; display:flex; align-items:center; gap:16px; padding:0 20px; z-index:50;
+    background:linear-gradient(to bottom, rgba(244,245,239,0.97), rgba(244,245,239,0.85)); border-bottom:1px solid var(--line); }
+  #topbar .brand{ font-family:var(--serif); font-size:16px; font-style:italic; color:var(--ink-soft); white-space:nowrap; }
+  #progress-track{ flex:1; height:3px; background:var(--line); border-radius:2px; overflow:hidden; }
+  #progress-fill{ height:100%; width:0%; background:var(--amber); transition:width .35s ease; }
+  #counter{ font-family:var(--mono); font-size:13px; color:var(--ink-soft); white-space:nowrap; }
+  #menu-btn{ font-family:var(--sans); font-size:14px; color:var(--ink); background:var(--card); border:1px solid var(--line); border-radius:6px; padding:6px 12px; cursor:pointer; }
+  #menu-btn:hover{ border-color:var(--amber); }
+
+  #deck{ position:relative; width:100%; height:100%; padding-top:54px; }
+  .slide{ position:absolute; inset:0; top:54px; display:flex; align-items:center; justify-content:center;
+    padding:30px 6vw 90px 6vw; opacity:0; visibility:hidden; transform:translateY(14px);
+    transition:opacity .4s ease, transform .4s ease; overflow-y:auto; }
+  .slide.active{ opacity:1; visibility:visible; transform:translateY(0); }
+  .slide-inner{ width:100%; max-width:1080px; }
+  .eyebrow{ font-family:var(--mono); font-size:16px; letter-spacing:.02em; color:var(--amber-deep); margin:0 0 10px 0; }
+  h1.headline{ font-family:var(--serif); font-weight:400; font-size:clamp(30px,4.6vw,50px); line-height:1.1; margin:0 0 16px 0; }
+  h2.headline{ font-family:var(--serif); font-weight:400; font-size:clamp(24px,3.2vw,34px); line-height:1.18; margin:0 0 16px 0; }
+  p.lede{ font-size:20px; line-height:1.55; color:var(--ink-soft); max-width:760px; }
+  .body-text{ font-size:19px; line-height:1.6; color:var(--ink); }
+  .grid-2{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .grid-3{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+  @media (max-width:860px){ .grid-2,.grid-3{ grid-template-columns:1fr; } }
+  ul.plain{ margin:0; padding-left:22px; font-size:18px; }
+  ul.plain li{ margin-bottom:8px; line-height:1.5; }
+  .mt{ margin-top:14px; }
+
+  /* ---------- barevná pole ---------- */
+  .box{ border-radius:12px; padding:14px 18px; border:1px solid; border-left-width:6px; font-size:18px; line-height:1.5; }
+  .box p{ margin:0; }
+  .box p + p{ margin-top:6px; }
+  .box ul.plain{ font-size:17.5px; }
+  .box-title{ font-family:var(--mono); font-size:13px; letter-spacing:.06em; text-transform:uppercase; margin-bottom:6px; font-weight:600; }
+  .box .big{ font-family:var(--serif); font-size:23px; margin-bottom:4px; display:block; }
+  .box.blue{ background:#EAF2F8; border-color:#C3D6E4; border-left-color:var(--blue); }   .box.blue .box-title{ color:var(--blue-deep); }
+  .box.green{ background:#EAF4EC; border-color:#C5DCC9; border-left-color:var(--tox-green); } .box.green .box-title{ color:var(--tox-green-deep); }
+  .box.amber{ background:#FDF3E1; border-color:#EBD3A8; border-left-color:var(--amber); } .box.amber .box-title{ color:var(--amber-deep); }
+  .box.red{ background:#FBECE9; border-color:#E8C4BD; border-left-color:var(--danger); }   .box.red .box-title{ color:var(--danger); }
+  .box.violet{ background:#F1EDF9; border-color:#D5CBEB; border-left-color:var(--violet); } .box.violet .box-title{ color:var(--violet); }
+  .box.grey{ background:#FFFFFE; border-color:var(--line); border-left-color:#9A9C8E; } .box.grey .box-title{ color:var(--ink-soft); }
+
+  /* zkratky */
+  .abbr{ margin-top:16px; padding:10px 14px; background:#F0F1EA; border:1px dashed #BFC1B2; border-radius:10px; font-size:15.5px; line-height:1.55; color:var(--ink-soft); }
+  .abbr b{ color:var(--ink); font-family:var(--mono); font-size:14.5px; }
+  .abbr .lbl{ font-family:var(--mono); font-size:12px; letter-spacing:.06em; color:var(--amber-deep); margin-right:6px; }
+
+  /* tok / řetězec */
+  .flow{ display:flex; align-items:stretch; gap:8px; margin-top:12px; }
+  .flow .step{ flex:1; border-radius:12px; padding:12px 10px; border:2px solid; text-align:center; font-size:17px; line-height:1.4; display:flex; flex-direction:column; justify-content:center; }
+  .flow .step b{ display:block; font-size:18px; margin-bottom:4px; }
+  .flow .arr{ align-self:center; font-size:26px; color:#8A8C7E; flex:0 0 18px; text-align:center; }
+  .s-red{ background:#FBECE9; border-color:#D9897B; } .s-blue{ background:#EAF2F8; border-color:#7FA3BF; }
+  .s-green{ background:#EAF4EC; border-color:#86AE8D; } .s-violet{ background:#F1EDF9; border-color:#A797D2; }
+  .s-amber{ background:#FDF3E1; border-color:#D9AE62; }
+  @media (max-width:860px){ .flow{ flex-direction:column; } .flow .arr{ transform:rotate(90deg); } }
+  .under{ display:flex; gap:8px; margin-top:8px; }
+  .under div{ flex:1; text-align:center; font-size:15px; color:var(--ink-soft); line-height:1.35; }
+  .under .gap{ flex:0 0 18px; }
+
+  /* časová osa */
+  .tline{ display:grid; gap:8px; margin-top:8px; }
+  .tline .ev{ display:grid; grid-template-columns:96px 1fr; gap:14px; align-items:center; }
+  .tline .yr{ font-family:var(--mono); font-size:17px; font-weight:700; color:#fff; border-radius:8px; padding:7px 0; text-align:center; }
+  .tline .tx{ font-size:17.5px; line-height:1.4; background:var(--card); border:1px solid var(--line); border-radius:8px; padding:7px 12px; }
+  .y-vivo{ background:#C4673A; } .y-vitro{ background:#3E8A5E; } .y-silico{ background:#6A55A8; } .y-reg{ background:#3A6FA0; }
+  .legend{ display:flex; gap:16px; flex-wrap:wrap; font-size:14.5px; color:var(--ink-soft); margin-top:12px; }
+  .legend span::before{ content:''; display:inline-block; width:12px; height:12px; border-radius:3px; margin-right:6px; vertical-align:-1px; background:var(--c); }
+
+  /* sloupcový graf */
+  .bars{ margin-top:10px; }
+  .bar-row{ display:grid; grid-template-columns:260px 1fr 80px; gap:12px; align-items:center; margin-bottom:10px; font-size:17.5px; }
+  .bar-track{ background:#E7E8DF; border-radius:6px; height:32px; overflow:hidden; }
+  .bar-fill{ height:100%; border-radius:6px; }
+  .bar-val{ font-family:var(--mono); font-weight:700; font-size:17px; text-align:right; }
+
+  /* pyramida */
+  .pyr{ display:flex; flex-direction:column; align-items:center; gap:6px; margin-top:6px; }
+  .pyr div{ border-radius:10px; padding:10px 14px; text-align:center; font-size:17px; line-height:1.35; border:2px solid; }
+  .pyr b{ display:block; font-size:18px; }
+
+  /* délka testů */
+  .dur-row{ display:grid; grid-template-columns:200px 1fr; gap:12px; align-items:center; margin-bottom:9px; font-size:18px; }
+  .dur-bar{ height:32px; border-radius:6px; color:#fff; font-size:15.5px; display:flex; align-items:center; padding:0 10px; white-space:nowrap; font-weight:600; }
+
+  #navbtns{ position:fixed; bottom:22px; right:28px; display:flex; gap:10px; z-index:50; }
+  .navbtn{ width:46px; height:46px; border-radius:50%; border:1px solid var(--line); background:var(--card); color:var(--ink); font-size:19px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .navbtn:hover{ border-color:var(--amber); color:var(--amber-deep); }
+  .navbtn:disabled{ opacity:.3; cursor:default; }
+  #overlay{ position:fixed; inset:0; background:rgba(30,32,25,.94); z-index:100; display:none; padding:56px 8vw; overflow-y:auto; }
+  #overlay.show{ display:block; }
+  #overlay h3{ font-family:var(--serif); color:#fff; font-weight:400; font-size:23px; margin-bottom:20px; }
+  #overlay-list{ list-style:none; margin:0; padding:0; columns:2; column-gap:40px; }
+  @media (max-width:800px){ #overlay-list{ columns:1; } }
+  #overlay-list li{ color:#EDEEE6; font-size:16px; padding:9px 0; border-bottom:1px solid rgba(255,255,255,.12); cursor:pointer; break-inside:avoid; }
+  #overlay-list li span{ font-family:var(--mono); color:var(--amber); margin-right:10px; font-size:13px; }
+  #overlay-list li:hover{ color:var(--amber); }
+  #overlay-close{ position:absolute; top:22px; right:30px; color:#fff; font-size:28px; background:none; border:none; cursor:pointer; }
+
+  /* poznámky vyučujícího (klávesa N; obsah jen z lokálního souboru Lektor_poznamky_P7.js) */
+  #notes{ position:fixed; left:0; right:0; bottom:0; max-height:42vh; overflow-y:auto; background:#1E2019; color:#EDEEE6; z-index:200;
+    padding:16px 6vw 20px 6vw; font-size:16px; line-height:1.55; display:none; border-top:3px solid var(--amber); }
+  #notes.show{ display:block; }
+  #notes .nh{ font-family:var(--mono); font-size:12.5px; color:var(--amber); letter-spacing:.05em; margin-bottom:6px; }
+  #notes ul{ margin:4px 0 0 0; padding-left:20px; } #notes li{ margin-bottom:4px; }
+  #notes b{ color:#F3D9A8; }
+
+  .quiz-card{ background:var(--card); border:1px solid var(--line); border-left:6px solid var(--blue); border-radius:12px; padding:20px 24px; margin-top:10px; }
+  .quiz-q{ font-size:19px; font-weight:600; margin-bottom:14px; line-height:1.45; }
+  .quiz-opt{ display:block; width:100%; text-align:left; padding:12px 16px; margin-bottom:9px; border:1px solid var(--line); border-radius:8px; background:#fff; cursor:pointer; font-size:18px; font-family:var(--sans); color:var(--ink); }
+  .quiz-opt:hover{ border-color:var(--amber); }
+  .quiz-opt.correct{ border-color:var(--tox-green); background:#EAF1EA; color:var(--tox-green-deep); font-weight:600; }
+  .quiz-opt.wrong{ border-color:var(--danger); background:#F7EAE7; color:var(--danger); }
+  .quiz-opt[disabled]{ cursor:default; }
+  .quiz-feedback{ margin-top:12px; font-size:18px; line-height:1.55; color:var(--ink-soft); display:none; }
+  .quiz-feedback.show{ display:block; }
+
+  table.data-table{ width:100%; border-collapse:collapse; font-size:18px; margin-top:10px; background:var(--card); border-radius:10px; overflow:hidden; }
+  table.data-table th{ text-align:left; font-family:var(--mono); font-size:14.5px; color:#fff; background:var(--blue); padding:9px 12px; }
+  table.data-table td{ padding:9px 12px; border-bottom:1px solid var(--line); }
+  table.data-table td.num, table.data-table th.num{ text-align:right; font-variant-numeric:tabular-nums; }
+  table.data-table tr.c1 td:first-child{ border-left:6px solid #D9897B; }
+  table.data-table tr.c2 td:first-child{ border-left:6px solid #D9AE62; }
+  table.data-table tr.c3 td:first-child{ border-left:6px solid #86AE8D; }
+  table.data-table tr.c4 td:first-child{ border-left:6px solid #7FA3BF; }
+
+  .tl-item{ background:var(--card); border:1px solid var(--line); border-left:6px solid var(--violet); border-radius:10px; padding:14px 16px; cursor:pointer; }
+  .tl-item .tl-year{ font-family:var(--mono); font-size:14px; color:var(--violet); }
+  .tl-item .tl-title{ font-family:var(--serif); font-size:20px; margin:4px 0 6px 0; }
+  .tl-item .tl-detail{ font-size:17.5px; color:var(--ink-soft); line-height:1.5; display:none; }
+  .tl-item.open .tl-detail{ display:block; }
+
+  .footer-note{ margin-top:16px; font-size:17px; color:var(--ink-soft); font-family:var(--mono); line-height:1.5; }
+  .sources{ font-size:12px; color:var(--ink-soft); line-height:1.45; column-count:2; column-gap:26px; background:#fff; border:1px solid var(--line); border-radius:10px; padding:14px 18px; }
+  .sources p{ margin:0 0 4px 0; break-inside:avoid; }
+  .sources h4{ font-family:var(--mono); font-size:12px; color:var(--amber-deep); margin:6px 0 4px 0; letter-spacing:.05em; }
+
+  .diagram-box{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:12px; }
+  .diagram-box svg{ cursor:zoom-in; display:block; width:100%; height:auto; }
+  .scheme-img{ width:100%; max-width:720px; display:block; margin:0 auto; border:1px solid var(--line); border-radius:8px; background:#fff; cursor:zoom-in; }
+  .scheme-img.tiny{ max-width:300px; }
+  .portrait{ max-height:290px; width:auto; max-width:100%; }
+  figure.fig{ margin:0; }
+  figure.fig figcaption{ font-size:15px; color:var(--ink-soft); text-align:center; margin-top:6px; line-height:1.45; }
+
+  #lightbox{ position:fixed; inset:0; background:rgba(15,16,12,.95); z-index:300; display:none; align-items:center; justify-content:center; padding:4vh 4vw; cursor:zoom-out; }
+  #lightbox.show{ display:flex; }
+  #lightbox-inner{ max-width:100%; max-height:100%; cursor:default; }
+  #lightbox-inner img{ display:block; max-width:92vw; max-height:92vh; border-radius:10px; background:#fff; }
+  #lightbox-inner svg{ display:block; width:92vw; height:auto; max-height:92vh; background:#fff; border-radius:10px; padding:28px; }
+  #lightbox-hint{ position:absolute; bottom:22px; left:50%; transform:translateX(-50%); color:#B9B9A8; font-family:var(--mono); font-size:13px; }
+
+  .match-wrap{ display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-top:14px; }
+  @media (max-width:760px){ .match-wrap{ grid-template-columns:1fr; } }
+  .match-col-title{ font-family:var(--mono); font-size:13px; color:var(--ink-soft); margin-bottom:8px; }
+  .match-item{ background:var(--card); border:1px solid var(--line); border-radius:8px; padding:11px 14px; margin-bottom:8px; font-size:18px; cursor:pointer; }
+  .match-item.selected{ border-color:var(--amber); background:#FBF0DD; }
+  .match-item.correct{ border-color:var(--tox-green); background:#EAF1EA; }
+  .match-item.wrong{ border-color:var(--danger); background:#F7EAE7; }
+  .match-result{ margin-top:12px; font-size:18px; color:var(--tox-green-deep); min-height:24px; font-weight:600; }
+
+  .sort-row{ display:grid; grid-template-columns:1fr auto; gap:12px; align-items:center; background:var(--card); border:1px solid var(--line); border-radius:8px; padding:10px 14px; margin-bottom:8px; font-size:17.5px; }
+  .sort-row.correct{ border-color:var(--tox-green); background:#EAF1EA; }
+  .sort-btns{ display:flex; gap:6px; }
+  .sort-btn{ font-family:var(--sans); font-size:14.5px; padding:6px 10px; border:1px solid var(--line); border-radius:6px; background:#fff; cursor:pointer; color:var(--ink); }
+  .sort-btn:hover{ border-color:var(--amber); }
+  .sort-btn.wrong{ border-color:var(--danger); background:#F7EAE7; color:var(--danger); }
+  .sort-btn.right{ border-color:var(--tox-green); background:var(--tox-green); color:#fff; }
+  .sort-why{ grid-column:1 / -1; font-size:15.5px; color:var(--ink-soft); display:none; }
+  .sort-row.correct .sort-why{ display:block; }
+
+  .task-box{ background:var(--card); border:1px solid var(--line); border-left:6px solid var(--amber); border-radius:12px; padding:16px 20px; margin-top:12px; }
+  .task-box ol{ margin:0; padding-left:24px; font-size:18.5px; }
+  .task-box ol li{ margin-bottom:8px; line-height:1.5; }
+  .sol-box{ background:#EAF4EC; border:1px solid #C5DCC9; border-left:6px solid var(--tox-green); border-radius:12px; padding:14px 20px; margin-top:12px; }
+  .calc-step{ font-family:var(--mono); font-size:18px; line-height:1.9; color:var(--ink); }
+  .calc-step .res{ color:var(--tox-green-deep); font-weight:700; }
+  .calc-step .bad{ color:var(--danger); font-weight:700; }
+  .sol-label{ font-family:var(--mono); font-size:13px; color:var(--tox-green-deep); letter-spacing:.05em; margin-bottom:6px; font-weight:600; }
+  .hint{ font-size:15.5px; color:var(--ink-soft); margin-top:10px; line-height:1.5; }
+
+  @media (prefers-reduced-motion: reduce){ .slide, .navbtn, #progress-fill{ transition:none !important; } }
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <div class="brand">Interpretace toxikologických dat a orgánová toxicita · Přednáška 7</div>
+  <div id="progress-track"><div id="progress-fill"></div></div>
+  <div id="counter">1 / 1</div>
+  <button id="menu-btn" onclick="toggleOverlay(true)">Obsah</button>
+</div>
+
+<div id="deck"></div>
+
+<div id="navbtns">
+  <button class="navbtn" id="prevBtn" onclick="prevSlide()">←</button>
+  <button class="navbtn" id="nextBtn" onclick="nextSlide()">→</button>
+</div>
+
+<div id="lightbox" onclick="closeLightbox()">
+  <div id="lightbox-inner" onclick="event.stopPropagation()"></div>
+  <div id="lightbox-hint">klikněte mimo obrázek nebo stiskněte Esc pro zavření</div>
+</div>
+
+<div id="overlay">
+  <button id="overlay-close" onclick="toggleOverlay(false)">×</button>
+  <h3>Přeskočit na</h3>
+  <ul id="overlay-list"></ul>
+</div>
+
+<div id="notes"></div>
+
+<script>
+const slides = [];
+function slide(id, title, html){ slides.push({id, title, html}); }
+
+
+/* =====================================================================
+   0 · ÚVOD (≈ 4 min)
+   ===================================================================== */
+slide('title','Titulní strana', `
+  <div class="slide-inner">
+    <p class="eyebrow">Ing. Pavla Fojtíková, Ph.D. · Přírodovědecká fakulta JU</p>
+    <h1 class="headline">Interpretace toxikologických dat a orgánová toxicita</h1>
+    <p class="lede">Přednáška 7: odvození zdravotně bezpečné dávky z experimentálních a epidemiologických dat, charakterizace rizika a mechanismy orgánově specifické toxicity.</p>
+    <p class="footer-note">Laboratoř analytické a environmentální chemie</p>
+  </div>
+`);
+
+slide('outline','Osnova', `
+  <div class="slide-inner">
+    <p class="eyebrow">Obsah přednášky</p>
+    <h2 class="headline">Šest tematických celků</h2>
+    <div class="grid-3">
+      <div class="box amber"><div class="box-title">1 · Analýza rizika</div><p>Výchozí bod, faktory nejistoty, koeficient nebezpečnosti</p></div>
+      <div class="box red"><div class="box-title">2 · Hepatotoxicita</div><p>Metabolická aktivace a typy jaterního poškození</p></div>
+      <div class="box blue"><div class="box-title">3 · Nefrotoxicita</div><p>Perfuze, tubulární resorpce a koncentrační gradient</p></div>
+      <div class="box green"><div class="box-title">4 · Pneumotoxicita</div><p>Depozice částic a rozpustnost plynů</p></div>
+      <div class="box violet"><div class="box-title">5 · Hemato- a imunotoxicita</div><p>Methemoglobinemie, porfyrie, senzibilizace, PFAS</p></div>
+      <div class="box grey"><div class="box-title">6 · Zdroje dat</div><p>Klasifikace STOT, práce s databázemi ECHA a GESTIS</p></div>
+    </div>
+    <p class="footer-note">Součástí jsou čtyři úkoly (A–D), kontrolní kvízy a diskuse.</p>
+  </div>
+`);
+
+/* =====================================================================
+   1 · ANALÝZA RIZIKA (≈ 25 min)
+   ===================================================================== */
+slide('nebezpecnost-riziko','Nebezpečnost a riziko', `
+  <div class="slide-inner">
+    <p class="eyebrow">1 · Analýza rizika · navazujeme na přednášku 6</p>
+    <h2 class="headline">Nebezpečnost a riziko nejsou synonyma</h2>
+    <div class="grid-2">
+      <div class="box red"><div class="box-title">Nebezpečnost (hazard)</div><p><strong>Vlastnost látky</strong> vyvolat nepříznivý účinek, nezávislá na expozičním scénáři.</p></div>
+      <div class="box blue"><div class="box-title">Riziko (risk)</div><p><strong>Pravděpodobnost</strong>, že se účinek projeví v definované populaci za <strong>konkrétních expozičních podmínek</strong> (dávka, doba, cesta vstupu).</p></div>
+    </div>
+    <div class="box amber mt"><div class="box-title">Důsledek pro hodnocení</div><p>Identifikace nebezpečnosti sama o sobě nedovoluje učinit závěr o riziku. Bez kvantifikace expozice (přednáška 5) zůstává posouzení neúplné.</p></div>
+    <div class="box green mt"><p><strong>Riziko je funkcí nebezpečnosti a expozice.</strong> Snížení expozice je proto rovnocenným nástrojem řízení rizika jako náhrada látky.</p></div>
+  </div>
+`);
+
+slide('ctyri-kroky','Čtyři kroky hodnocení rizika', `
+  <div class="slide-inner">
+    <p class="eyebrow">1 · Analýza rizika · metodický rámec</p>
+    <h2 class="headline">Hodnocení zdravotního rizika: čtyřstupňový postup</h2>
+    <div class="flow">
+      <div class="step s-red"><b>1 · Identifikace nebezpečnosti</b>Jaké nepříznivé účinky látka vyvolává a ve kterých cílových orgánech?</div>
+      <div class="arr">→</div>
+      <div class="step s-amber"><b>2 · Vztah dávka–odpověď</b>Kvantifikace závislosti; odvození výchozího bodu (NOAEL, BMDL)</div>
+      <div class="arr">→</div>
+      <div class="step s-blue"><b>3 · Hodnocení expozice</b>Odhad přijaté dávky v definované populaci</div>
+      <div class="arr">→</div>
+      <div class="step s-green"><b>4 · Charakterizace rizika</b>Integrace předchozích kroků včetně vyjádření nejistot</div>
+    </div>
+    <div class="under"><div>toxikologické studie, epidemiologie</div><div class="gap"></div><div>experimentální modely</div><div class="gap"></div><div>monitoring, biomonitoring, spotřební data</div><div class="gap"></div><div>podklad pro regulatorní rozhodnutí</div></div>
+    <div class="box violet mt"><div class="box-title">Hodnocení versus řízení rizika</div><p>Postup vychází z metodiky NRC (1983). Na vědecké hodnocení navazuje <strong>řízení rizika</strong> (limity, omezení, zákazy), které zohledňuje i technickou proveditelnost a sociálně-ekonomické dopady.</p></div>
+    <div class="abbr"><span class="lbl">ZKRATKY</span><b>NRC</b> = National Research Council (USA)</div>
+  </div>
+`);
+
+slide('prah','Prahový a bezprahový účinek', `
+  <div class="slide-inner">
+    <p class="eyebrow">1 · Analýza rizika · typ závislosti</p>
+    <h2 class="headline">Existuje dávka bez účinku?</h2>
+    <div class="grid-2">
+      <div class="diagram-box">
+        <svg viewBox="0 0 520 330" xmlns="http://www.w3.org/2000/svg" font-family="Helvetica, Arial, sans-serif">
+          <line x1="60" y1="280" x2="500" y2="280" stroke="#1E2019" stroke-width="2"/>
+          <line x1="60" y1="280" x2="60" y2="30" stroke="#1E2019" stroke-width="2"/>
+          <text x="280" y="318" font-size="18" text-anchor="middle" fill="#1E2019">dávka</text>
+          <text x="22" y="160" font-size="18" text-anchor="middle" fill="#1E2019" transform="rotate(-90 22 160)">odpověď</text>
+          <path d="M60 280 L200 280 C260 280 300 150 340 110 C380 72 430 60 490 55" fill="none" stroke="#3E5C42" stroke-width="4"/>
+          <path d="M60 280 C150 240 300 150 490 50" fill="none" stroke="#9C3B2E" stroke-width="4" stroke-dasharray="10 6"/>
+          <line x1="200" y1="290" x2="200" y2="250" stroke="#3E5C42" stroke-width="2"/>
+          <text x="200" y="240" font-size="17" text-anchor="middle" fill="#2A3F2D" font-weight="bold">práh</text>
+          <rect x="62" y="20" width="18" height="6" fill="#3E5C42"/><text x="85" y="28" font-size="17" fill="#1E2019">prahová závislost</text>
+          <rect x="62" y="35" width="18" height="6" fill="#9C3B2E"/><text x="85" y="43" font-size="17" fill="#1E2019">bezprahová (lineární) závislost</text>
+        </svg>
+      </div>
+      <div>
+        <div class="box green"><div class="box-title">Prahová závislost</div><p>Dokud není vyčerpána <strong>homeostatická a reparační kapacita</strong> tkáně (detoxikační konjugace, zásoba GSH, oprava DNA, regenerace), nepříznivý účinek se neprojeví. Lze odvodit zdravotně bezpečnou dávku. Platí pro převážnou většinu orgánových účinků.</p></div>
+        <div class="box red mt"><div class="box-title">Bezprahová závislost</div><p>Předpokládá se u <strong>genotoxických karcinogenů</strong>: jediná neopravená mutace v kritickém genu může iniciovat karcinogenezi. Práh nelze experimentálně prokázat, proto se riziko kvantifikuje pravděpodobnostně (přednáška 8).</p></div>
+      </div>
+    </div>
+    <div class="abbr"><span class="lbl">ZKRATKY</span><b>GSH</b> = glutathion</div>
+  </div>
+`);
+
+slide('bmd','NOAEL a BMDL', `
+  <div class="slide-inner">
+    <p class="eyebrow">1 · Analýza rizika · výchozí bod (point of departure)</p>
+    <h2 class="headline">Volba výchozího bodu: NOAEL, nebo BMDL?</h2>
+    <div class="grid-2">
+      <div class="box amber"><div class="box-title">NOAEL (přednáška 6)</div><p>Nejvyšší <strong>experimentálně aplikovaná</strong> dávka bez statisticky či biologicky významného nepříznivého účinku. Je omezeno volbou dávkových hladin a statistickou silou studie (např.počet zvířat ve skupině).</p></div>
+      <div class="box blue"><div class="box-title">BMD a BMDL</div><p>Na celý soubor dat závislosti účinku na dávce se <strong>aplikuje matematický model (regrese)</strong>. <strong>BMD</strong> je dávka odpovídající předem definované velikosti účinku (benchmark response, zpravidla 5 % nebo 10 %). <strong>BMDL</strong> je dolní mez jejího intervalu spolehlivosti (obvykle 95%), tedy konzervativní odhad.</p></div>
+    </div>
+    <div class="box green mt"><div class="box-title">Proč se preferuje BMDL</div><p>Využívá informaci z celé křivky, není vázán na testované hladiny a kvantifikuje statistickou nejistotu. EFSA jej doporučuje jako standardní postup (Scientific Committee, 2022).</p></div>
+    <div class="abbr"><span class="lbl">ZKRATKY</span><b>NOAEL</b> = no observed adverse effect level · <b>BMD</b> = benchmark dose · <b>BMDL</b> = benchmark dose lower confidence limit · <b>BMR</b> = benchmark response, zvolená velikost účinku · <b>EFSA</b> = Evropský úřad pro bezpečnost potravin</div>
+  </div>
+`);
+
+slide('faktory','Faktory nejistoty', `
+  <div class="slide-inner">
+    <p class="eyebrow">1 · Analýza rizika · extrapolace</p>
+    <h2 class="headline">Od výchozího bodu ke zdravotně bezpečné dávce</h2>
+    <p class="body-text"><strong>Bezpečná dávka = výchozí bod (NOAEL nebo BMDL) ÷ součin faktorů nejistoty</strong></p>
+    <table class="data-table">
+      <tr><th>Zdroj nejistoty</th><th class="num">Standardní faktor</th></tr>
+      <tr class="c4"><td>Mezidruhová extrapolace (zvíře → člověk)</td><td class="num">10</td></tr>
+      <tr class="c4"><td>Vnitrodruhová variabilita (toxikokinetická a toxikodynamická)</td><td class="num">10</td></tr>
+      <tr class="c2"><td>Výchozím bodem je LOAEL místo NOAEL</td><td class="num">3–10</td></tr>
+      <tr class="c2"><td>Extrapolace ze subchronické na chronickou expozici</td><td class="num">3–10</td></tr>
+      <tr class="c1"><td>Neúplná databáze (chybí studie reprodukční toxicity apod.)</td><td class="num">až 10</td></tr>
+    </table>
+    <div class="box green mt"><p>Oba standardní faktory 10 se dále dělí na kinetickou a dynamickou složku. Jsou-li k dispozici <strong>data o člověku</strong>, mezidruhový faktor odpadá a vnitrodruhový lze nahradit hodnotou odvozenou z naměřené variability. Tento postup uvidíme v úkolu A.</p></div>
+    <div class="abbr"><span class="lbl">ZKRATKY</span><b>LOAEL</b> = lowest observed adverse effect level, nejnižší dávka s pozorovaným nepříznivým účinkem</div>
+  </div>
+`);
+
+slide('zkratky-limity','Názvy bezpečných dávek', `
+  <div class="slide-inner">
+    <p class="eyebrow">1 · Analýza rizika · terminologie</p>
+    <h2 class="headline">Jeden koncept, odlišná terminologie</h2>
+    <div class="grid-2">
+      <div class="box green"><div class="box-title">ADI · přijatelný denní příjem</div><p>Pro látky přidávané do potravin <strong>záměrně</strong>: aditiva, rezidua pesticidů a veterinárních léčiv. Např. dusičnany 3,7 mg/kg za den.</p></div>
+      <div class="box amber"><div class="box-title">TDI / TWI · tolerovatelný denní / týdenní příjem</div><p>Pro <strong>kontaminanty</strong>, jejichž přítomnost není záměrná: kovy, PFAS, dioxiny. Týdenní vyjádření se volí u látek s dlouhým biologickým poločasem.</p></div>
+      <div class="box blue"><div class="box-title">RfD · referenční dávka</div><p>Ekvivalentní veličina v terminologii US EPA; pro inhalační expozici RfC (referenční koncentrace).</p></div>
+      <div class="box violet"><div class="box-title">DNEL · odvozená úroveň bez účinku</div><p>Podle nařízení REACH. Odvozuje se odděleně pro pracovníky a pro obecnou populaci a pro jednotlivé cesty vstupu.</p></div>
+    </div>
+    <div class="box grey mt"><p>Všechny veličiny se vztahují <strong>na kilogram tělesné hmotnosti</strong> a předpokládají <strong>celoživotní denní expozici</strong>. Krátkodobé překročení proto nelze ztotožňovat s poškozením zdraví.</p></div>
+    <div class="abbr"><span class="lbl">ZKRATKY</span><b>ADI</b> acceptable daily intake · <b>TDI/TWI</b> tolerable daily/weekly intake · <b>RfD/RfC</b> reference dose/concentration · <b>DNEL</b> derived no-effect level · <b>US EPA</b> = Agentura pro ochranu životního prostředí USA · <b>PFAS</b> = per- a polyfluorované alkylované sloučeniny</div>
+  </div>
+`);
+
+slide('kviz-twi','Kvíz: proč týdenní?', `
+  <div class="slide-inner">
+    <p class="eyebrow">Kontrolní kvíz · 1 minuta</p>
+    <h2 class="headline">Proč je pro kadmium stanoven tolerovatelný <em>týdenní</em> příjem?</h2>
+    <div class="quiz-card" id="q-twi">
+      <div class="quiz-q">Vyberte toxikologicky správné zdůvodnění.</div>
+      <button class="quiz-opt" data-correct="false">Protože expozice kadmiu z potravy nastává pouze jednou týdně.</button>
+      <button class="quiz-opt" data-correct="true">Protože kadmium se v organismu kumuluje; pro účinek je rozhodující dlouhodobá tělesná zátěž, nikoli denní kolísání příjmu.</button>
+      <button class="quiz-opt" data-correct="false">Protože týdenní vyjádření poskytuje vyšší číselnou hodnotu, a tedy mírnější limit.</button>
+      <div class="quiz-feedback" id="q-twi-fb"></div>
+    </div>
+  </div>
+`);
+
+slide('hq','Koeficient nebezpečnosti', `
+  <div class="slide-inner">
+    <p class="eyebrow">1 · Analýza rizika · krok 4</p>
+    <h2 class="headline">Charakterizace rizika u látek s prahem účinku</h2>
+    <div class="box blue"><span class="big">HQ = odhadnutá expozice ÷ zdravotně bezpečná dávka</span><p>Obě veličiny musí být vyjádřeny ve shodných jednotkách a pro shodný časový interval (např. µg/kg tělesné hmotnosti za týden).</p></div>
+    <div class="grid-3 mt">
+      <div class="box green"><div class="box-title">HQ &lt; 1</div><p>Expozice nedosahuje bezpečné dávky. Riziko se považuje za nevýznamné.</p></div>
+      <div class="box amber"><div class="box-title">HQ ≈ 1</div><p>Bezpečnostní rezerva je vyčerpána. Nutná analýza citlivých a vysoce exponovaných podskupin.</p></div>
+      <div class="box red"><div class="box-title">HQ &gt; 1</div><p>Překročení bezpečné dávky. Neznamená manifestaci účinku, ale indikuje potřebu opatření ke snížení expozice.</p></div>
+    </div>
+    <div class="box violet mt"><p>Při současné expozici více látkám se <strong>shodným cílovým orgánem a mechanismem</strong> se koeficienty sčítají: <strong>index nebezpečnosti<br>HI = Σ HQᵢ</strong>. Uplatňuje se např. u ftalátů nebo PFAS.</p></div>
+    <div class="abbr"><span class="lbl">ZKRATKY</span><b>HQ</b> = hazard quotient, koeficient nebezpečnosti · <b>HI</b> = hazard index, index nebezpečnosti</div>
+  </div>
+`);
+
+slide('ukolA-data','Odkud pocházejí data', `
+  <div class="slide-inner">
+    <p class="eyebrow">1 · Analýza rizika · příprava k úkolu A</p>
+    <h2 class="headline">Odkud pocházejí data pro kadmium</h2>
+    <p class="body-text">Na rozdíl od většiny limitů nevychází zdravotně bezpečná dávka pro kadmium ze studie na zvířatech, ale z měření na lidech. Proto bude postup jejího odvození vypadat jinak, než jsme viděli u standardních faktorů nejistoty.</p>
+    <div class="flow">
+      <div class="step s-blue"><b>1 · Koho sledovali</b>Dospělé osoby z běžné populace, bez profesní expozice, v Evropě i v Asii. Rozhodující byla skupina nad 50 let, u níž se celoživotně nahromaděné kadmium projeví nejdříve</div>
+      <div class="arr">→</div>
+      <div class="step s-amber"><b>2 · Co měřili</b>V jednom vzorku moči dvě veličiny současně: kadmium a β₂-mikroglobulin</div>
+      <div class="arr">→</div>
+      <div class="step s-green"><b>3 · Co z toho udělali</b>Shromáždili výsledky z několika desítek epidemiologických studií, proložili je modelem a z křivky odečetli koncentraci odpovídající 5% nárůstu podílu osob se zvýšeným β₂-mikroglobulinem</div>
+    </div>
+    <div class="grid-2 mt">
+      <div class="box blue"><div class="box-title">Kadmium v moči = ukazatel expozice</div><p>Kadmium se v ledvinné kůře hromadí po celý život a jeho množství v moči odpovídá <strong>celkové tělesné zátěži</strong>. Neříká nic o tom, zda už vznikla škoda; říká, kolik látky v těle je.</p></div>
+      <div class="box red"><div class="box-title">β₂-mikroglobulin = ukazatel účinku</div><p>Malá bílkovina, kterou zdravý proximální tubulus téměř celou zpětně vstřebá zpět do krve. Objeví-li se v moči ve zvýšeném množství, znamená to, že tubulus <strong>ztrácí resorpční funkci</strong>. Jde tedy o časný ukazatel poškození, dlouho před selháním ledviny.</p></div>
+    </div>
+    <div class="box amber mt"><p>Teprve <strong>vztah mezi oběma veličinami</strong> tvoří závislost dávka–odpověď: jedna popisuje expozici, druhá účinek, a obě se získají z téhož vzorku moči. Navazujeme tak přímo na biologický monitoring z přednášky 5.</p></div>
+    <div class="box green mt"><div class="box-title">Proč se koncentrace vztahuje na kreatinin</div><p>Moč bývá jednou zředěnější, jindy koncentrovanější. Kdyby se kadmium udávalo v µg na litr, výsledek by závisel na tom, kolik dotyčný ten den vypil. Kreatinin se vylučuje přibližně rovnoměrně, přepočet na jeho gram proto vliv zředění odstraní.</p></div>
+  </div>
+`);
+
+slide('ukolA','Úkol A – zadání', `
+  <div class="slide-inner">
+    <p class="eyebrow">Úkol A · výpočet · 7 minut · data EFSA (2009)</p>
+    <h2 class="headline">Odvození TWI (tolerované týdenní dávky) pro kadmium a charakterizace rizika</h2>
+    <p class="body-text">Z právě popsané závislosti EFSA odvodila zdravotně bezpečnou dávku. Projdeme nyní stejný postup krok za krokem.</p>
+    <div class="task-box"><ol>
+      <li>Výchozím bodem je <strong>BMDL₅ = 4 µg Cd/g kreatininu</strong>, tedy koncentrace odečtená z křivky. Aby byla chráněna i citlivější část populace, dělí se <strong>látkově specifickým faktorem 3,9</strong>, který vyjadřuje skutečně naměřený rozptyl kadmia v moči mezi jednotlivci. Jaká kritická koncentrace z toho plyne?</li>
+      <li>Toxikokinetický model převedl tuto koncentraci na průměrný denní příjem <strong>0,36 µg/kg t. hm.</strong> Vyjádřete jej jako týdenní hodnotu.</li>
+      <li>Stanovte HQ pro tři expoziční scénáře: průměrná dospělá populace EU (<strong>2,3 µg/kg t. hm. za týden</strong>), vysoce exponovaní dospělí (<strong>3,0</strong>), vegetariáni (<strong>až 5,4</strong>).</li>
+      <li>Zdůvodněte, proč byl použit souhrnný faktor 3,9, a nikoli standardní hodnota 100.</li>
+    </ol></div>
+    <div class="abbr"><span class="lbl">POJMY</span><b>BMDL₅</b> = dolní mez 95% intervalu spolehlivosti koncentrace odpovídající <b>5% nárůstu podílu</b> osob se zvýšeným β₂-mikroglobulinem oproti pozadí · <b>t. hm.</b> = tělesná hmotnost</div>
+  </div>
+`);
+
+slide('ukolA-res1','Úkol A – řešení (1–3)', `
+  <div class="slide-inner">
+    <p class="eyebrow">Úkol A · řešení</p>
+    <h2 class="headline">Výpočet</h2>
+    <div class="sol-box">
+      <div class="sol-label">1 · KRITICKÁ KONCENTRACE V MOČI</div>
+      <div class="calc-step">4 ÷ 3,9 <span class="res">≈ 1,0 µg Cd/g kreatininu</span></div>
+      <div class="sol-label mt">2 · TOLEROVATELNÝ TÝDENNÍ PŘÍJEM</div>
+      <div class="calc-step">0,36 µg/kg × 7 = 2,52 → <span class="res">TWI = 2,5 µg/kg t. hm. za týden</span></div>
+      <div class="sol-label mt">3 · KOEFICIENT NEBEZPEČNOSTI</div>
+      <div class="calc-step">průměrná populace: 2,3 ÷ 2,5 = <span class="res">HQ 0,9</span></div>
+      <div class="calc-step">vysoce exponovaní: 3,0 ÷ 2,5 = <span class="bad">HQ 1,2</span></div>
+      <div class="calc-step">vegetariáni: 5,4 ÷ 2,5 = <span class="bad">HQ 2,2</span></div>
+    </div>
+    <p class="hint">Vyšší expozice vegetariánů souvisí s vyšší spotřebou obilovin, luštěnin, olejnin a ořechů, tedy komodit s vyšší akumulací kadmia z půdy.</p>
+  </div>
+`);
+
+slide('ukolA-res2','Úkol A – řešení (4) a interpretace', `
+  <div class="slide-inner">
+    <p class="eyebrow">Úkol A · řešení a interpretace</p>
+    <h2 class="headline">Interpretace výsledku</h2>
+    <div class="grid-2">
+      <div class="box green"><div class="box-title">4 · Zdůvodnění faktoru 3,9</div><p>Výchozí bod byl odvozen <strong>z lidských dat</strong>, takže mezidruhová extrapolace odpadá. Hodnota 3,9 je <strong>látkově specifický faktor</strong> kvantifikující skutečně naměřenou interindividuální variabilitu kadmia v moči ve sledovaných populacích.</p></div>
+      <div class="box amber"><div class="box-title">Vyčerpaná rezerva</div><p>Průměrná expozice dospělé populace EU se pohybuje těsně pod TWI. Děti (vyšší příjem potravy na kg hmotnosti) a vegetariáni hodnotu překračují. EFSA proto doporučila snižování expozice.</p></div>
+      <div class="box red"><div class="box-title">Kuřáci</div><p>Plicní absorpce kadmia je řádově vyšší než absorpce gastrointestinální (jednotky procent). Kouření proto představuje samostatný významný expoziční zdroj.</p></div>
+      <div class="box blue"><div class="box-title">Situace v ČR</div><p>Podle monitoringu dietární expozice SZÚ dosahuje u části předškolních dětí přívod kadmia hodnoty TWI nebo ji překračuje.</p></div>
+    </div>
+    <div class="abbr"><span class="lbl">ZKRATKY</span><b>SZÚ</b> = Státní zdravotní ústav · <b>TWI</b> = tolerovatelný týdenní příjem</div>
+  </div>
+`);
+
+slide('dva-urady','Dva úřady, dvě čísla', `
+  <div class="slide-inner">
+    <p class="eyebrow">1 · Analýza rizika · kritické hodnocení zdrojů</p>
+    <h2 class="headline">Kadmium: dvě odlišné zdravotně bezpečné dávky</h2>
+    <div class="grid-2">
+      <div class="box blue"><div class="box-title">EFSA (2009) · kadmium</div><span class="big">TWI 2,5 µg/kg t. hm. za týden</span><p>Model cílí na to, aby 95 % populace nepřekročilo kritickou koncentraci 1 µg Cd/g kreatininu do 50 let věku.</p></div>
+      <div class="box violet"><div class="box-title">JECFA (2010) · kadmium</div><span class="big">PTMI 25 µg/kg t. hm. za měsíc</span><p>Odpovídá přibližně 5,8 µg/kg za týden. Rozdíl plyne z jiné volby kritické koncentrace a jiného toxikokinetického modelu.</p></div>
+    </div>
+    <div class="box amber mt"><div class="box-title">Metodický závěr</div><p>Zdravotně bezpečná dávka není fyzikální konstanta, ale <strong>výsledek expertního posouzení</strong> závislý na volbě dat, modelu a míře konzervativnosti. V odborném textu je proto nezbytné uvádět, <strong>která instituce</strong> hodnotu stanovila a <strong>v kterém roce</strong>.</p></div>
+    <div class="abbr"><span class="lbl">ZKRATKY</span><b>EFSA</b> = Evropský úřad pro bezpečnost potravin · <b>JECFA</b> = Společný výbor expertů FAO/WHO pro potravinářská aditiva · <b>PTMI</b> = provisional tolerable monthly intake, prozatímní tolerovatelný měsíční příjem</div>
+  </div>
+`);
+
+/* =====================================================================
+   2 · ORGÁNOVÁ TOXICITA – ÚVOD A JÁTRA (≈ 15 min)
+   ===================================================================== */
+slide('lokalni','Lokální a systémový účinek', `
+  <div class="slide-inner">
+    <p class="eyebrow">2 · Orgánová toxicita · úvod</p>
+    <h2 class="headline">Lokální a systémový účinek</h2>
+    <div class="grid-2">
+      <div class="box amber"><div class="box-title">Lokální účinek</div><p>Projevuje se v místě kontaktu (kůže, spojivka, sliznice, dýchací cesty) bez nutnosti resorpce. Typicky žíraviny a dráždivé látky.</p></div>
+      <div class="box blue"><div class="box-title">Systémový účinek</div><p>Nastává po resorpci a distribuci krví do <strong>cílového orgánu</strong>. Tvoří náplň dalších částí přednášky.</p></div>
+    </div>
+    <div class="grid-2 mt">
+      <div class="box red"><div class="box-title">Kyseliny</div><p><strong>Koagulační nekróza</strong>: denaturace a precipitace bílkovin vytvoří koagulum, které omezuje penetraci do hlubších vrstev.</p></div>
+      <div class="box violet"><div class="box-title">Hydroxidy a zásady</div><p><strong>Kolikvační nekróza</strong>: zmýdelnění lipidů a hydrolýza bílkovin umožňují penetraci do hloubky. Poškození bývá rozsáhlejší a progreduje déle.</p></div>
+    </div>
+    <p class="hint">Rozsah poškození určuje koncentrace a pH, množství látky, doba kontaktu, skupenství či náplň žaludku.</p>
+  </div>
+`);
+
+slide('proc-organ','Proč právě tento orgán?', `
+  <div class="slide-inner">
+    <p class="eyebrow">2 · Orgánová toxicita · determinanty orgánové selektivity</p>
+    <h2 class="headline">Čím je dána orgánová selektivita toxického účinku?</h2>
+    <div class="grid-3">
+      <div class="box red"><div class="box-title">1 · Perfuze</div><p>Orgány s vysokým průtokem krve vztaženým na hmotnost přijímají vyšší dávku za jednotku času (játra, ledviny).</p></div>
+      <div class="box amber"><div class="box-title">2 · Metabolická aktivace</div><p>Vysoká exprese enzymů I. fáze vede ke vzniku reaktivních metabolitů in situ (přednáška 4).</p></div>
+      <div class="box blue"><div class="box-title">3 · Akumulace</div><p>Specifické membránové přenašeče nebo vazebné bílkoviny látku v tkáni zadrží (Cd vázané na metalothionein).</p></div>
+      <div class="box green"><div class="box-title">4 · Koncentrování</div><p>Zpětná resorpce vody v tubulech zvyšuje koncentraci látky v tubulárním lumen.</p></div>
+      <div class="box violet"><div class="box-title">5 · Vnitřní citlivost tkáně</div><p>Neurony a myokard jsou kriticky závislé na aerobním metabolismu; proliferující tkáně jsou citlivé k poškození DNA.</p></div>
+      <div class="box grey"><div class="box-title">6 · Místo vstupu</div><p>Respirační epitel a kůže jsou vystaveny nejvyšším koncentracím před distribucí.</p></div>
+    </div>
+    <div class="abbr"><span class="lbl">ZKRATKY</span><b>CYP</b> = cytochrom P450, hlavní enzymový systém I. fáze biotransformace · <b>in situ</b> = přímo v dané tkáni</div>
+  </div>
+`);
+
+slide('jatra-proc','Játra – proč jsou terčem', `
+  <div class="slide-inner">
+    <p class="eyebrow">2 · Hepatotoxicita</p>
+    <h2 class="headline">Játra: centrální orgán biotransformace</h2>
+    <div class="flow">
+      <div class="step s-amber"><b>Gastrointestinální trakt</b>resorpce látky</div>
+      <div class="arr">→</div>
+      <div class="step s-red"><b>Vena portae</b>přivádí asi 75 % celkového průtoku krve játry, zejména z trávicího traktu, sleziny a pankreatu.</div>
+      <div class="arr">→</div>
+      <div class="step s-violet"><b>Játra</b>hmotnost asi 1,5 kg, perfuze asi 1,5 l·min⁻¹ (asi 25 % srdečního výdeje)</div>
+      <div class="arr">→</div>
+      <div class="step s-blue"><b>Vena cava inferior</b>systémový oběh</div>
+    </div>
+    <div class="grid-2 mt">
+      <div class="box amber"><div class="box-title">Protektivní význam</div><p>Presystémová eliminace (efekt prvního průchodu, přednáška 3) snižuje systémovou biologickou dostupnost řady látek.</p></div>
+      <div class="box red"><div class="box-title">Zdroj zranitelnosti</div><p>Vysoká aktivita enzymů CYP vede u některých substrátů k <strong>metabolické aktivaci</strong> a vzniku reaktivních metabolitů přímo v hepatocytech.</p></div>
+    </div>
+    <p class="hint">Vysoká regenerační kapacita jater je výhodou při akutním poškození, avšak opakovaná proliferace hepatocytů při chronické expozici zvyšuje riziko nádorové transformace.</p>
+  </div>
+`);
+
+slide('jatra-typy','Typy poškození jater', `
+  <div class="slide-inner">
+    <p class="eyebrow">2 · Hepatotoxicita · klasifikace poškození</p>
+    <h2 class="headline">Morfologické a funkční typy jaterního poškození</h2>
+    <table class="data-table">
+      <tr><th>Typ poškození</th><th>Patogeneze</th><th>Příklady vyvolávajících látek</th></tr>
+      <tr class="c1"><td><strong>Nekróza</strong></td><td>odumření hepatocytů, zpravidla zonální</td><td>tetrachlormethan, paracetamol (P4), amatoxiny (P1)</td></tr>
+      <tr class="c2"><td><strong>Steatóza</strong></td><td>akumulace triacylglycerolů v hepatocytech</td><td>ethanol, tetrachlormethan, valproát, tetracykliny</td></tr>
+      <tr class="c4"><td><strong>Cholestáza</strong></td><td>porucha tvorby či odtoku žluči, inhibice transportérů žlučových kyselin</td><td>chlorpromazin, anabolické steroidy, amoxicilin s klavulanátem</td></tr>
+      <tr class="c3"><td><strong>Fibróza a cirhóza</strong></td><td>aktivace hvězdicových buněk, ukládání kolagenu, přestavba parenchymu</td><td>ethanol, přetížení železem či mědí, arsen</td></tr>
+      <tr class="c1"><td><strong>Nádory</strong></td><td>hepatocelulární karcinom, angiosarkom</td><td>aflatoxin B1, vinylchlorid (P4), arsen</td></tr>
+    </table>
+    <p class="hint">P1, P4 = odkaz na přednášku, v níž je látka probrána podrobně.</p>
+  </div>
+`);
+
+slide('ccl4','Případ: tetrachlormethan', `
+  <div class="slide-inner">
+    <p class="eyebrow">2 · Hepatotoxicita · modelová látka</p>
+    <h2 class="headline">Tetrachlormethan: radikálový mechanismus poškození</h2>
+    <div class="flow">
+      <div class="step s-blue"><b>CCl₄</b>historicky rozpouštědlo a hasební látka</div>
+      <div class="arr">→</div>
+      <div class="step s-amber"><b>CYP2E1</b>reduktivní dehalogenace → trichlormethylový radikál •CCl₃</div>
+      <div class="arr">→</div>
+      <div class="step s-red"><b>Reakce s O₂</b>trichlormethylperoxylový radikál CCl₃OO•</div>
+      <div class="arr">→</div>
+      <div class="step s-violet"><b>Peroxidace lipidů</b>porušení integrity membrán</div>
+    </div>
+    <div class="grid-2 mt">
+      <div class="box red"><div class="box-title">Projevy</div><p><strong>Odumírání jaterních buněk</strong> (zóna 3 acinu, kde je exprese CYP2E1 nejvyšší) a ztučnění jater. Současně bývá postižen filtrační systém ledvin.</p></div>
+      <div class="box amber"><div class="box-title">Vliv ethanolu</div><p>Ethanol je induktorem CYP2E1. Indukce zvyšuje rychlost tvorby reaktivních metabolitů, a tím i rozsah poškození. Jde o příklad <strong>metabolické interakce</strong> (přednáška 4).</p></div>
+    </div>
+    <p class="hint">V EU je použití CCl₄ zásadně omezeno (je i látkou poškozující ozonovou vrstvu); v experimentální hepatologii zůstává standardním modelem indukce fibrózy.</p>
+  </div>
+`);
+
+slide('aflatoxin','Aflatoxin B1', `
+  <div class="slide-inner">
+    <p class="eyebrow">2 · Hepatotoxicita · mykotoxin</p>
+    <h2 class="headline">Aflatoxin B1: genotoxický hepatokarcinogen</h2>
+    <div class="grid-2">
+      <div class="box amber"><div class="box-title">Výskyt</div><p>Sekundární metabolit plísní <em>Aspergillus flavus</em> a <em>A. parasiticus</em>. Kontaminuje nevhodně skladované podzemnice olejné, kukuřici, pistácie a koření, zejména v teplém a vlhkém klimatu.</p></div>
+      <div class="box red"><div class="box-title">Mechanismus</div><p>Enzymy CYP (zejména CYP3A4) katalyzují vznik <strong>exo-8,9-epoxidu</strong>, který se kovalentně váže na N7 guaninu v DNA. Výsledkem jsou mutace, typicky transverze v kodonu 249 tumor supresorového genu <em>TP53</em> (přednáška 8).</p></div>
+    </div>
+    <div class="box violet mt"><div class="box-title">Interakce rizikových faktorů</div><p>Chronická infekce virem hepatitidy B a expozice aflatoxinu působí <strong>synergicky</strong>: relativní riziko hepatocelulárního karcinomu je při kombinaci obou faktorů podstatně vyšší než součet rizik jednotlivých faktorů.</p></div>
+    <div class="box green mt"><p>Aflatoxin B1 je zařazen do skupiny 1 podle IARC. V EU platí maximální limity v potravinách a dovoz je kontrolován (systém RASFF).</p></div>
+    <div class="abbr"><span class="lbl">ZKRATKY</span><b>IARC</b> = Mezinárodní agentura pro výzkum rakoviny · <b>RASFF</b> = systém rychlého varování pro potraviny a krmiva · <b>transverze</b> = záměna purinové báze za pyrimidinovou nebo naopak</div>
+  </div>
+`);
+
+slide('kviz-jatra','Kvíz: játra', `
+  <div class="slide-inner">
+    <p class="eyebrow">Kontrolní kvíz · 1 minuta</p>
+    <h2 class="headline">Hepatotoxicita</h2>
+    <div class="quiz-card" id="q-jatra">
+      <div class="quiz-q">Čím je podmíněna centrilobulární lokalizace nekrózy po expozici tetrachlormethanu?</div>
+      <button class="quiz-opt" data-correct="false">Nejvyšším parciálním tlakem kyslíku v zóně 3 acinu.</button>
+      <button class="quiz-opt" data-correct="true">Nejvyšší expresí CYP2E1 v zóně 3, a tedy nejvyšší rychlostí tvorby trichlormethylového radikálu.</button>
+      <button class="quiz-opt" data-correct="false">Nejvyšší koncentrací žlučových kyselin v této oblasti.</button>
+      <div class="quiz-feedback" id="q-jatra-fb"></div>
+    </div>
+  </div>
+`);
+
+/* =====================================================================
+   3 · LEDVINY (≈ 10 min)
+   ===================================================================== */
+slide('ledviny-proc','Ledviny – proč jsou terčem', `
+  <div class="slide-inner">
+    <p class="eyebrow">3 · Nefrotoxicita</p>
+    <h2 class="headline">Ledviny: orgán s vysokou perfuzí a koncentrační schopností</h2>
+    <div class="grid-2">
+      <div class="box red"><div class="box-title">Vysoká perfuze</div><p>Ledviny přijímají asi 20–25 % srdečního výdeje, přestože tvoří jen asi 0,5 % tělesné hmotnosti. Na jednotku hmotnosti jim je dodáno velké množství látky.</p></div>
+      <div class="box amber"><div class="box-title">Koncentrační gradient</div><p>Zpětná resorpce vody podél nefronu zvyšuje koncentraci nereabsorbovaných látek v tubulárním lumen až řádově.</p></div>
+      <div class="box blue"><div class="box-title">Transportní aktivita</div><p>Buňky <strong>proximálního tubulu</strong> aktivně transportují organické anionty a kationty z lumen i z peritubulární krve, čímž látky intracelulárně akumulují. Jsou proto nejčastějším místem poškození.</p></div>
+      <div class="box violet"><div class="box-title">Lokální biotransformace</div><p>V ledvinách probíhá terminální metabolismus konjugátů s glutathionem (P4). Dráhou cysteinkonjugát-β-lyázy z nich mohou vznikat reaktivní thioly až v cílové tkáni.</p></div>
+    </div>
+    <div class="box green mt"><p>Pokles glomerulární filtrace snižuje renální clearance látky, prodlužuje její biologický poločas a dále zvyšuje systémovou expozici. Vzniká tak autoamplifikační smyčka.</p></div>
+  </div>
+`);
+
+slide('kadmium','Kadmium a nemoc itai-itai', `
+  <div class="slide-inner">
+    <p class="eyebrow">3 · Nefrotoxicita · kazuistika populačního rozsahu</p>
+    <h2 class="headline">Kadmium: kumulativní nefrotoxikant</h2>
+    <div class="grid-2">
+      <div class="box blue"><div class="box-title">Mechanismus</div><p>V játrech indukuje kadmium syntézu <strong>metalothioneinu</strong>. Komplex Cd-metalothionein je filtrován glomerulem a endocytózou vychytáván v proximálním tubulu, kde se lyzosomálně degraduje. Uvolněné Cd²⁺ vyvolá oxidační stres a tubulární dysfunkci.</p></div>
+      <div class="box red"><div class="box-title">Kumulace</div><p>Biologický poločas v renální kůře činí <strong>10–30 let</strong>. Tělesná zátěž proto roste s věkem; to odůvodňuje stanovení TWI namísto TDI.</p></div>
+    </div>
+    <div class="box amber mt"><div class="box-title">Itai-itai (povodí řeky Džinzú, prefektura Tojama)</div><p>Odpadní vody z těžby a úpravy zinkových rud kontaminovaly závlahovou vodu rýžových polí. Nejvíce postiženy byly ženy po menopauze: kombinace tubulární dysfunkce, poruchy metabolismu vitaminu D a negativní kalciové bilance vedla k měknutí kostí a mnohočetným frakturám.</p></div>
+    <p class="hint">Kadmium a jeho sloučeniny jsou zároveň klasifikovány jako karcinogen skupiny 1 podle IARC (přednáška 8).</p>
+  </div>
+`);
+
+slide('ledviny-latky','Další nefrotoxické látky', `
+  <div class="slide-inner">
+    <p class="eyebrow">3 · Nefrotoxicita · přehled</p>
+    <h2 class="headline">Hlavní skupiny nefrotoxických látek</h2>
+    <table class="data-table">
+      <tr><th>Skupina</th><th>Zástupci</th><th>Mechanismus</th></tr>
+      <tr class="c1"><td>Kovy</td><td>Cd, anorganická Hg²⁺, Pb, Cr(VI)</td><td>vazba na thiolové skupiny bílkovin, oxidační stres (P2)</td></tr>
+      <tr class="c2"><td>Glykoly</td><td>ethylenglykol</td><td>metabolit kyselina šťavelová precipituje jako šťavelan vápenatý v tubulech; terapie analogická otravě methanolem (P4)</td></tr>
+      <tr class="c4"><td>Halogenované uhlovodíky</td><td>chloroform, trichlorethylen, hexachlorbutadien</td><td>aktivace konjugátů s GSH dráhou β-lyázy přímo v tubulu</td></tr>
+      <tr class="c3"><td>Léčiva</td><td>aminoglykosidová antibiotika, amfotericin B, cisplatina, cyklosporin, NSAID</td><td>lyzosomální akumulace, vazokonstrikce, inhibice syntézy prostaglandinů; riziko stoupá při hypovolemii</td></tr>
+      <tr class="c1"><td>Přírodní toxiny</td><td>orelanin (pavučinec plyšový), kyselina aristolochová</td><td>opožděná manifestace (dny až týdny); kyselina aristolochová je i urotelový karcinogen</td></tr>
+    </table>
+    <div class="abbr"><span class="lbl">ZKRATKY</span><b>NSAID</b> = nesteroidní protizánětlivá léčiva · <b>GSH</b> = glutathion · <b>thiolová (sulfanylová) skupina</b> = –SH, zejména cysteinu</div>
+  </div>
+`);
+
+/* =====================================================================
+   4 · PLÍCE (≈ 12 min)
+   ===================================================================== */
+slide('castice','Kam se usadí částice', `
+  <div class="slide-inner">
+    <p class="eyebrow">4 · Pneumotoxicita · depozice aerosolů</p>
+    <h2 class="headline">Depozice částic v respiračním traktu</h2>
+    <div class="diagram-box">
+      <svg viewBox="0 0 1000 340" xmlns="http://www.w3.org/2000/svg" font-family="Helvetica, Arial, sans-serif">
+        <rect x="10" y="20" width="220" height="150" rx="14" fill="#EAF2F8" stroke="#7FA3BF" stroke-width="2"/>
+        <text x="120" y="56" font-size="20" text-anchor="middle" font-weight="bold" fill="#233C4E">Nosohltanová oblast</text>
+        <text x="120" y="90" font-size="18" text-anchor="middle" fill="#1E2019">&gt; 10 µm</text>
+        <text x="120" y="118" font-size="16" text-anchor="middle" fill="#5A5D51">impakce, odstranění</text>
+        <text x="120" y="142" font-size="16" text-anchor="middle" fill="#5A5D51">sekretem</text>
+        <text x="245" y="103" font-size="30" fill="#8A8C7E">→</text>
+        <rect x="275" y="20" width="220" height="150" rx="14" fill="#FDF3E1" stroke="#D9AE62" stroke-width="2"/>
+        <text x="385" y="56" font-size="20" text-anchor="middle" font-weight="bold" fill="#8F5D14">Tracheobronchiální</text>
+        <text x="385" y="90" font-size="18" text-anchor="middle" fill="#1E2019">asi 2,5–10 µm</text>
+        <text x="385" y="118" font-size="16" text-anchor="middle" fill="#5A5D51">sedimentace,</text>
+        <text x="385" y="142" font-size="16" text-anchor="middle" fill="#5A5D51">mukociliární clearance</text>
+        <text x="510" y="103" font-size="30" fill="#8A8C7E">→</text>
+        <rect x="540" y="20" width="220" height="150" rx="14" fill="#FBECE9" stroke="#D9897B" stroke-width="2"/>
+        <text x="650" y="56" font-size="20" text-anchor="middle" font-weight="bold" fill="#9C3B2E">Alveolární oblast</text>
+        <text x="650" y="90" font-size="18" text-anchor="middle" fill="#1E2019">&lt; 2,5 µm</text>
+        <text x="650" y="118" font-size="16" text-anchor="middle" fill="#5A5D51">maximum retence</text>
+        <text x="650" y="142" font-size="16" text-anchor="middle" fill="#5A5D51">při 1–3 µm</text>
+        <text x="775" y="103" font-size="30" fill="#8A8C7E">→</text>
+        <rect x="805" y="20" width="185" height="150" rx="14" fill="#F1EDF9" stroke="#A797D2" stroke-width="2"/>
+        <text x="897" y="56" font-size="20" text-anchor="middle" font-weight="bold" fill="#6A55A8">Systémová distribuce</text>
+        <text x="897" y="90" font-size="18" text-anchor="middle" fill="#1E2019">&lt; 0,1 µm</text>
+        <text x="897" y="118" font-size="16" text-anchor="middle" fill="#5A5D51">difuze, translokace</text>
+        <text x="897" y="142" font-size="16" text-anchor="middle" fill="#5A5D51">do krve</text>
+        <rect x="10" y="200" width="980" height="120" rx="14" fill="#FFFFFE" stroke="#D6D6C6" stroke-width="2"/>
+        <text x="30" y="238" font-size="18" fill="#1E2019">Rozhodující veličinou je aerodynamický průměr částice, nikoli její chemické složení.</text>
+        <text x="30" y="270" font-size="18" fill="#1E2019">V alveolech chybí mukociliární aparát: clearance závisí na fagocytóze alveolárními makrofágy</text>
+        <text x="30" y="300" font-size="18" fill="#1E2019">a na lymfatické drenáži, poločas odstranění je proto řádově měsíce až roky.</text>
+      </svg>
+    </div>
+    <div class="abbr"><span class="lbl">ZKRATKY</span><b>PM10, PM2,5</b> = frakce částic s aerodynamickým průměrem do 10 a do 2,5 µm (imisní limity, přednáška 5) · <b>impakce</b> = náraz setrvačností v místě změny směru proudu · <b>mukociliární clearance</b> = posun hlenu řasinkovým epitelem orálním směrem</div>
+  </div>
+`);
+
+slide('plyny','Plyny a rozpustnost', `
+  <div class="slide-inner">
+    <p class="eyebrow">4 · Pneumotoxicita · dráždivé plyny</p>
+    <h2 class="headline">Místo účinku plynů určuje jejich rozpustnost ve vodě</h2>
+    <div class="grid-2">
+      <div class="box amber"><div class="box-title">Dobře rozpustné</div><p><strong>NH₃, HCl, SO₂, formaldehyd</strong></p><p>Absorbují se již ve vlhké sliznici <strong>horních</strong> cest dýchacích. Vyvolávají okamžitou senzorickou iritaci, která působí jako <strong>varovný signál</strong> a zpravidla vede k opuštění prostoru.</p></div>
+      <div class="box red"><div class="box-title">Málo rozpustné</div><p><strong>NO₂, O₃, fosgen (COCl₂)</strong></p><p>Pronikají až do <strong>alveolární oblasti</strong>. Iritace je slabá, chybí tedy varovný signál. Toxický plicní edém se může rozvinout s latencí několika hodin (u fosgenu typicky 24–48 h).</p></div>
+    </div>
+    <div class="box blue mt"><div class="box-title">Patogeneze toxického plicního edému</div><p>Tvorba reaktivních forem kyslíku a dusíku → peroxidace membránových lipidů → porušení integrity alveolokapilární bariéry → přestup tekutiny do intersticia a alveolů → porucha difuze O₂ a CO₂.</p></div>
+    <div class="box green mt"><p><strong>Klinický důsledek:</strong> po expozici málo rozpustným plynům je indikováno sledování pacienta i při iniciálně asymptomatickém průběhu.</p></div>
+  </div>
+`);
+
+slide('kviz-fosgen','Kvíz: fosgen', `
+  <div class="slide-inner">
+    <p class="eyebrow">Kontrolní kvíz · 1 minuta</p>
+    <h2 class="headline">Proč byl fosgen v 1. světové válce účinnější bojovou látkou než chlor?</h2>
+    <div class="quiz-card" id="q-fosgen">
+      <div class="quiz-q">Vyberte toxikologicky správné zdůvodnění.</div>
+      <button class="quiz-opt" data-correct="false">Má vyšší rozpustnost ve vodě, a proto intenzivněji dráždí spojivky a horní cesty dýchací.</button>
+      <button class="quiz-opt" data-correct="true">Má nízkou rozpustnost: chybí varovná senzorická iritace, expozice proto trvá déle a plicní edém se rozvíjí s latencí.</button>
+      <button class="quiz-opt" data-correct="false">Má vyšší relativní hustotu par než chlor, a proto se déle udrží v zákopech.</button>
+      <div class="quiz-feedback" id="q-fosgen-fb"></div>
+    </div>
+    <p class="hint">Chemickým bojovým látkám se budeme věnovat v přednášce 8.</p>
+  </div>
+`);
+
+slide('fibroza','Fibróza a pneumokoniózy', `
+  <div class="slide-inner">
+    <p class="eyebrow">4 · Pneumotoxicita · chronické poškození</p>
+    <h2 class="headline">Fibrotizující procesy v plicní tkáni</h2>
+    <div class="grid-3">
+      <div class="box amber"><div class="box-title">Silikóza</div><p>Krystalický SiO₂ (hlubinná i povrchová těžba, pískování, opracování konglomerovaného kamene). Fagocytovaná částice poškodí lyzosomální membránu, makrofág zaniká a uvolněné mediátory udržují zánět a fibroprodukci.</p></div>
+      <div class="box red"><div class="box-title">Azbestóza</div><p>Dlouhá tenká vlákna makrofág nedokáže fagocytovat (frustrovaná fagocytóza). Následkem je zjizvení plicní tkáně, zhoubný nádro plic a pohrudnice s latencí 20–40 let.</p></div>
+      <div class="box violet"><div class="box-title">Paraquat</div><p>Herbicid aktivně akumulovaný polyaminovým transportérem v pneumocytech. Podléhá <strong>redoxnímu cyklu</strong> s opakovanou tvorbou superoxidu, což vede k difuznímu alveolárnímu poškození a následné fibróze. V EU zakázán od roku 2007.</p></div>
+    </div>
+    <div class="box blue mt"><div class="box-title">Pneumokonióza</div><p>Souhrnné označení pro intersticiální plicní onemocnění způsobená depozicí a retencí minerálního prachu. Patří k nejdéle dokumentovaným nemocem z povolání.</p></div>
+    <p class="hint">Azbest je v EU zakázán od roku 2005; reziduální expozice nastává zejména při demolicích a rekonstrukcích starších staveb.</p>
+  </div>
+`);
+
+slide('plice-rakovina','Rakovina plic', `
+  <div class="slide-inner">
+    <p class="eyebrow">4 · Pneumotoxicita · nádorová onemocnění</p>
+    <h2 class="headline">Karcinom plic: dominantně environmentální etiologie</h2>
+    <div class="grid-2">
+      <div class="box red"><div class="box-title">1 · Tabákový kouř</div><p>Hlavní etiologický faktor. Obsahuje desítky prokázaných karcinogenů: PAU (benzo[a]pyren), N-nitrosaminy (NNK), aromatické aminy, <sup>210</sup>Po.</p></div>
+      <div class="box amber"><div class="box-title">2 · Radon</div><p>Dceřiné produkty rozpadu <sup>222</sup>Rn emitující záření α deponované v bronchiálním epitelu. Druhý nejvýznamnější faktor; ČR patří vzhledem ke geologickému podloží k zemím s vysokými koncentracemi v budovách.</p></div>
+      <div class="box blue"><div class="box-title">3 · Profesionální expozice</div><p>Azbest, sloučeniny Cr(VI) a Ni, anorganické sloučeniny arsenu, krystalický SiO₂, výfukové plyny vznětových motorů (IARC skupina 1).</p></div>
+      <div class="box violet"><div class="box-title">Interakce faktorů</div><p>Kombinace kouření s expozicí azbestu nebo radonu vykazuje <strong>multiplikativní</strong>, nikoli aditivní nárůst rizika.</p></div>
+    </div>
+    <div class="abbr"><span class="lbl">ZKRATKY</span><b>PAU</b> = polycyklické aromatické uhlovodíky · <b>NNK</b> = nitrosamin specifický pro tabák · <b>Cr(VI)</b> = šestimocný chrom</div>
+  </div>
+`);
+
+/* =====================================================================
+   5 · KREV A IMUNITA (≈ 20 min)
+   ===================================================================== */
+slide('krev','Hematotoxicita – přehled', `
+  <div class="slide-inner">
+    <p class="eyebrow">5 · Hematotoxicita</p>
+    <h2 class="headline">Krev a krvetvorba jako cílový systém</h2>
+    <table class="data-table">
+      <tr><th>Projev</th><th>Patogeneze</th><th>Příklady látek</th></tr>
+      <tr class="c1"><td><strong>Methemoglobinemie</strong></td><td>oxidace hemového Fe²⁺ na Fe³⁺, ztráta schopnosti vázat O₂</td><td>dusitany, anilin, nitrobenzen, chlorečnany</td></tr>
+      <tr class="c2"><td><strong>Karboxyhemoglobinemie</strong></td><td>kompetitivní vazba CO s afinitou asi 200–250× vyšší než O₂</td><td>oxid uhelnatý (P3)</td></tr>
+      <tr class="c4"><td><strong>Hemolýza</strong></td><td>poškození membrány erytrocytu, oxidační stres</td><td>arsenovodík AsH₃, Pb, Cu</td></tr>
+      <tr class="c3"><td><strong>Toxická porfyrie</strong></td><td>inhibice enzymů biosyntézy hemu, akumulace prekurzorů</td><td>olovo, hexachlorbenzen</td></tr>
+      <tr class="c1"><td><strong>Aplastická anemie, leukemie</strong></td><td>poškození hematopoetických kmenových buněk kostní dřeně</td><td>benzen (P4), ethylenoxid, ionizující záření</td></tr>
+    </table>
+    <p class="hint">Kostní dřeň patří k tkáním s nejvyšší proliferační aktivitou, a je proto zvláště citlivá k látkám poškozujícím DNA.</p>
+  </div>
+`);
+
+slide('methb','Methemoglobinemie', `
+  <div class="slide-inner">
+    <p class="eyebrow">5 · Hematotoxicita · mechanismus</p>
+    <h2 class="headline">Methemoglobinemie</h2>
+    <div class="flow">
+      <div class="step s-red"><b>Hemoglobin, Fe²⁺</b>reverzibilně váže O₂</div>
+      <div class="arr">→</div>
+      <div class="step s-amber"><b>Oxidační činidlo</b>dusitan, metabolity anilinu a nitrobenzenu</div>
+      <div class="arr">→</div>
+      <div class="step s-violet"><b>Methemoglobin, Fe³⁺</b>neváže O₂ a zvyšuje afinitu zbylých podjednotek</div>
+      <div class="arr">→</div>
+      <div class="step s-blue"><b>Tkáňová hypoxie</b>posun disociační křivky doleva</div>
+    </div>
+    <div class="grid-2 mt">
+      <div class="box blue"><div class="box-title">Klinický obraz</div><p>Šedomodré zbarvení kůže a sliznic (cyanóza) neodpovídající dušnosti, únava, cefalea; krev má hnědé zbarvení. Pulzní oxymetrie poskytuje falešně zkreslené hodnoty.</p></div>
+      <div class="box green"><div class="box-title">Antidotum</div><p><strong>Methylenová modř</strong> funguje jako umělý akceptor elektronů pro NADPH-methemoglobinreduktázu a urychluje redukci Fe³⁺ zpět na Fe²⁺.</p></div>
+    </div>
+    <div class="box amber mt"><p>Fyziologicky vzniká methemoglobin trvale v malém množství a je redukován enzymem <strong>NADH-cytochrom b₅-reduktázou</strong>. Klinicky významná methemoglobinemie nastává při překročení této redukční kapacity.</p></div>
+  </div>
+`);
+
+slide('ukolB','Úkol B – zadání', `
+  <div class="slide-inner">
+    <p class="eyebrow">Úkol B · výpočet a interpretace · 6 minut</p>
+    <h2 class="headline">Expozice kojence dusičnanům z individuálního zdroje vody</h2>
+    <p class="body-text">Kojenecká výživa je připravována z vody z domovní studny. Laboratorní rozbor prokázal <strong>80 mg·l⁻¹ dusičnanů</strong>. Kojenec má hmotnost <strong>5 kg</strong> a denně přijme výživu připravenou z <strong>0,8 l vody</strong>.</p>
+    <div class="task-box"><ol>
+      <li>Vypočtěte denní přívod dusičnanů v mg na kg tělesné hmotnosti.</li>
+      <li>Porovnejte jej s ADI pro dusičnanový iont (<strong>3,7 mg/kg t. hm. za den</strong>) a proveďte týž výpočet pro vodu na úrovni limitu pitné vody (<strong>50 mg·l⁻¹</strong>) a pro balenou kojeneckou vodu (<strong>nejvýše 10 mg·l⁻¹</strong>).</li>
+      <li>Uveďte alespoň tři fyziologické důvody vyšší vnímavosti kojenců k dusičnanům.</li>
+      <li>Formulujte doporučení. Sníží obsah dusičnanů převaření vody?</li>
+    </ol></div>
+    <div class="abbr"><span class="lbl">ZKRATKY A PŘEDPISY</span><b>ADI</b> = přijatelný denní příjem (EFSA 2017) · limity: vyhláška č. 252/2004 Sb. (pitná voda), vyhláška č. 275/2004 Sb. (balené vody)</div>
+  </div>
+`);
+
+slide('ukolB-res1','Úkol B – řešení (1, 2)', `
+  <div class="slide-inner">
+    <p class="eyebrow">Úkol B · řešení</p>
+    <h2 class="headline">Kvantifikace přívodu</h2>
+    <div class="sol-box">
+      <div class="sol-label">1 · VODA Z INDIVIDUÁLNÍHO ZDROJE (80 mg·l⁻¹)</div>
+      <div class="calc-step">80 × 0,8 = 64 mg za den → 64 ÷ 5 = <span class="bad">12,8 mg/kg t. hm. za den</span></div>
+      <div class="sol-label mt">2 · POROVNÁNÍ S ADI 3,7 mg/kg</div>
+      <div class="calc-step">studna: 12,8 ÷ 3,7 = <span class="bad">3,5násobek ADI</span></div>
+      <div class="calc-step">voda na limitu 50 mg·l⁻¹: 50 × 0,8 ÷ 5 = 8,0 mg/kg = <span class="bad">2,2násobek ADI</span></div>
+      <div class="calc-step">kojenecká voda 10 mg·l⁻¹: 10 × 0,8 ÷ 5 = 1,6 mg/kg = <span class="res">0,4násobek ADI</span></div>
+    </div>
+    <div class="box amber mt"><p><strong>Metodická poznámka:</strong> ADI byl odvozen pro obecnou populaci a na kojence do 3 měsíců se nevztahuje, neboť u nich existuje specifický mechanismus toxicity. Vypočtený násobek proto riziko spíše podhodnocuje. Výpočet rovněž nezahrnuje příjem dusičnanů z příkrmů.</p></div>
+  </div>
+`);
+
+slide('ukolB-res2','Úkol B – řešení (3, 4)', `
+  <div class="slide-inner">
+    <p class="eyebrow">Úkol B · řešení</p>
+    <h2 class="headline">Determinanty vnímavosti a doporučení</h2>
+    <div class="grid-2">
+      <div class="box red"><div class="box-title">3 · Fyziologické determinanty</div><ul class="plain">
+        <li>Vyšší příjem tekutin vztažený na kg tělesné hmotnosti.</li>
+        <li>Vyšší pH žaludku umožňuje kolonizaci bakteriemi redukujícími dusičnany na <strong>dusitany</strong>.</li>
+        <li>Fetální hemoglobin (HbF) se oxiduje snáze než hemoglobin dospělého typu.</li>
+        <li>Nižší aktivita NADH-cytochrom b₅-reduktázy v prvních měsících života.</li>
+        <li>Gastroenteritida riziko dále zvyšuje (endogenní tvorba dusitanů, dehydratace).</li>
+      </ul></div>
+      <div class="box green"><div class="box-title">4 · Doporučení</div><ul class="plain">
+        <li>Použít balenou <strong>kojeneckou vodu</strong>, případně vodu s prokazatelně nízkým obsahem dusičnanů.</li>
+        <li><strong>Převaření je kontraproduktivní</strong>: odparem vody se dusičnany zakoncentrují.</li>
+        <li>Identifikovat zdroj kontaminace (hnojení, netěsná jímka, statková hnojiva v ochranném pásmu studny).</li>
+        <li>Zajistit pravidelný rozbor vody z individuálního zdroje.</li>
+      </ul></div>
+    </div>
+    <p class="hint">Alimentární methemoglobinemie kojenců byla v ČR historicky vázána právě na individuální zdroje vody v zemědělských oblastech.</p>
+  </div>
+`);
+
+slide('porfyrie','Porfyrie a olovo', `
+  <div class="slide-inner">
+    <p class="eyebrow">5 · Hematotoxicita · biosyntéza hemu</p>
+    <h2 class="headline">Toxické porfyrie</h2>
+    <div class="grid-2">
+      <div class="box blue"><div class="box-title">Olovo</div><p>Inhibuje <strong>dehydratázu kyseliny δ-aminolevulové (ALAD)</strong> a <strong>ferrochelatázu</strong>. Důsledkem je anemie, akumulace kyseliny δ-aminolevulové a zinkprotoporfyrinu. Obě veličiny se využívají jako biomarkery účinku v biologickém monitorování (přednáška 5).</p></div>
+      <div class="box red"><div class="box-title">Hexachlorbenzen · Turecko 1955–1959</div><p>Osivo mořené hexachlorbenzenem bylo použito k výrobě mouky. Vznikla epidemie <strong>porphyria cutanea tarda</strong> postihující tisíce osob. Projevy se omezovaly na kůži vystavenou slunečnímu záření: puchýře, erozivní defekty s následným jizvením, hypertrichóza a hyperpigmentace. U kojených dětí byla popsána vysoká úmrtnost.</p></div>
+    </div>
+    <div class="box amber mt"><div class="box-title">Patofyziologie kožních projevů</div><p>Akumulované porfyriny absorbují záření v oblasti asi 400 nm (Soretův pás) a fotosenzibilizují tvorbu singletového kyslíku, který poškozuje membrány a bílkoviny kůže. Projevy se proto objevují výhradně na místech vystavených slunečnímu záření — na obličeji, hřbetech rukou a předloktích.</p></div>
+  </div>
+`);
+
+slide('imunita','Imunotoxicita – dvě tváře', `
+  <div class="slide-inner">
+    <p class="eyebrow">5 · Imunotoxicita</p>
+    <h2 class="headline">Dva směry narušení imunitní funkce</h2>
+    <div class="grid-2">
+      <div class="box blue"><div class="box-title">Imunosuprese</div><p>Snížená odolnost k infekcím, oslabená protinádorová imunita, snížená tvorba protilátek po vakcinaci.</p><p><strong>Příklady:</strong> TCDD a dioxinům podobné látky, PCB, PFAS, benzen, organocíničité sloučeniny, glukokortikoidy.</p></div>
+      <div class="box red"><div class="box-title">Imunostimulace a dysregulace</div><p><strong>Hypersenzitivita</strong> (alergie) a <strong>autoimunitní reakce</strong> namířené proti vlastním tkáním.</p><p><strong>Příklady:</strong> nikl, diisokyanáty, formaldehyd, přírodní latex, některá léčiva; krystalický SiO₂ a vybraná rozpouštědla u autoimunitních onemocnění.</p></div>
+    </div>
+    <div class="box amber mt"><div class="box-title">Specifikum hypersenzitivity</div><p>Po proběhlé <strong>senzibilizaci</strong> vyvolává elicitaci i expozice o několik řádů nižší. Klasická monotónní závislost dávka–odpověď na úrovni jedince proto neplatí; na úrovni populace závislost přetrvává u <strong>indukce</strong> senzibilizace.</p></div>
+    <div class="abbr"><span class="lbl">ZKRATKY</span><b>TCDD</b> = 2,3,7,8-tetrachlordibenzo-<em>p</em>-dioxin · <b>PCB</b> = polychlorované bifenyly · <b>senzibilizace</b> = indukční fáze, při níž vzniká imunologická paměť · <b>elicitace</b> = vyvolání reakce při opakované expozici</div>
+  </div>
+`);
+
+slide('alergie','Nikl a diisokyanáty', `
+  <div class="slide-inner">
+    <p class="eyebrow">5 · Imunotoxicita · regulované senzibilizátory</p>
+    <h2 class="headline">Dva senzibilizátory, dvě cesty expozice</h2>
+    <div class="grid-2">
+      <div class="box violet"><div class="box-title">Nikl · kožní senzibilizace</div><p>Nejčastější kontaktní alergen v Evropě. Ni²⁺ působí jako hapten: váže se na kožní bílkoviny a vzniklý komplex je rozpoznán T-lymfocyty (alergická kontaktní dermatitida IV. typu).</p><p><strong>Regulace:</strong> REACH, příloha XVII, položka 27 omezuje uvolňování niklu z předmětů v dlouhodobém kontaktu s kůží na 0,5 µg·cm⁻² za týden.</p></div>
+      <div class="box red"><div class="box-title">Diisokyanáty · respirační senzibilizace</div><p>Monomery pro polyuretanové pěny, lepidla a nátěrové hmoty. Patří k nejčastějším příčinám <strong>profesionálního astmatu</strong>.</p><p><strong>Regulace:</strong> REACH, příloha XVII, položka 74 (nařízení 2020/1149): od 24. 8. 2023 je pro průmyslové a profesionální použití nad 0,1 % hmotnostních povinné školení.</p></div>
+    </div>
+    <div class="box green mt"><p>Obě opatření ilustrují <strong>řízení rizika</strong>: látka není zakázána, regulován je expoziční scénář.</p></div>
+    <div class="abbr"><span class="lbl">ZKRATKY</span><b>REACH</b> = nařízení (ES) č. 1907/2006 · <b>hapten</b> = nízkomolekulární látka, která se stává imunogenní až po vazbě na nosičovou bílkovinu</div>
+  </div>
+`);
+
+slide('pfas','PFAS a očkování', `
+  <div class="slide-inner">
+    <p class="eyebrow">5 · Imunotoxicita · aktuální hodnocení</p>
+    <h2 class="headline">PFAS: imunotoxicita jako kritický účinek</h2>
+    <div class="grid-2">
+      <div class="box blue"><div class="box-title">Charakteristika</div><p>Rozsáhlá skupina perfluorovaných a polyfluorovaných sloučenin. Vysoká energie vazby C–F podmiňuje perzistenci v prostředí a biologický poločas v lidském organismu v řádu let. Sorbují se na bílkoviny plazmy, nikoli do tukové tkáně.</p></div>
+      <div class="box amber"><div class="box-title">Hodnocení EFSA (2020)</div><p>Pro součet PFOA, PFOS, PFNA a PFHxS stanoven <strong>TWI 4,4&nbsp;ng/kg t. hm. za týden</strong>. Kritickým účinkem je <strong>snížená tvorba protilátek po vakcinaci</strong> u ročních dětí;<br>výchozí bod BMDL₁₀ = 17,5 ng·ml⁻¹ v séru.</p></div>
+    </div>
+    <div class="box red mt"><div class="box-title">Princip kritického účinku</div><p>Zdravotně bezpečná dávka se odvozuje z účinku, který nastává při <strong>nejnižší</strong> expozici, nikoli z účinku subjektivně nejzávažnějšího. Ochrana před kritickým účinkem implicitně zajišťuje ochranu před ostatními.</p></div>
+    <p class="hint">Podle EFSA část evropské populace tuto hodnotu překračuje. Směrnice (EU) 2020/2184 zavádí limity PFAS v pitné vodě.</p>
+  </div>
+`);
+
+slide('kviz-pfas','Kvíz: kritický účinek', `
+  <div class="slide-inner">
+    <p class="eyebrow">Kontrolní kvíz · 1 minuta</p>
+    <h2 class="headline">Volba kritického účinku</h2>
+    <div class="quiz-card" id="q-pfas">
+      <div class="quiz-q">Látka vyvolává u potkana hepatotoxicitu od 10 mg/kg, nefrotoxicitu od 3 mg/kg a sníženou protilátkovou odpověď od 0,5 mg/kg za den. Z kterého účinku se odvodí výchozí bod?</div>
+      <button class="quiz-opt" data-correct="false">Z hepatotoxicity, protože jde o nejzávažnější morfologické poškození.</button>
+      <button class="quiz-opt" data-correct="true">Ze snížené protilátkové odpovědi, protože nastává při nejnižší dávce.</button>
+      <button class="quiz-opt" data-correct="false">Z aritmetického průměru všech tří hodnot.</button>
+      <div class="quiz-feedback" id="q-pfas-fb"></div>
+    </div>
+    <p class="hint">Modelové hodnoty pro procvičení principu.</p>
+  </div>
+`);
+
+slide('ukolC','Úkol C – přiřaďte orgán', `
+  <div class="slide-inner">
+    <p class="eyebrow">Úkol C · interaktivní · 3 minuty</p>
+    <h2 class="headline">Přiřaďte látku k cílovému orgánu a typu poškození</h2>
+    <p class="body-text">Zvolte látku v levém sloupci a následně odpovídající účinek v pravém sloupci.</p>
+    <div class="match-wrap">
+      <div><div class="match-col-title">LÁTKA</div><div id="mC-left"></div></div>
+      <div><div class="match-col-title">CÍLOVÝ ORGÁN A TYP POŠKOZENÍ</div><div id="mC-right"></div></div>
+    </div>
+    <div class="match-result" id="mC-result"></div>
+  </div>
+`);
+
+/* =====================================================================
+   6 · ZDROJE DAT (≈ 10 min)
+   ===================================================================== */
+slide('h-vety','Jak se orgánová toxicita značí', `
+  <div class="slide-inner">
+    <p class="eyebrow">6 · Zdroje dat · klasifikace podle CLP</p>
+    <h2 class="headline">Vyjádření orgánové toxicity v klasifikaci CLP</h2>
+    <table class="data-table">
+      <tr><th>Třída a kategorie</th><th>Standardní věta</th><th>Znění</th></tr>
+      <tr class="c1"><td>STOT SE 1</td><td>H370</td><td>Způsobuje poškození orgánů</td></tr>
+      <tr class="c2"><td>STOT SE 2</td><td>H371</td><td>Může způsobit poškození orgánů</td></tr>
+      <tr class="c1"><td>STOT RE 1</td><td>H372</td><td>Způsobuje poškození orgánů při prodloužené nebo opakované expozici</td></tr>
+      <tr class="c2"><td>STOT RE 2</td><td>H373</td><td>Může způsobit poškození orgánů při prodloužené nebo opakované expozici</td></tr>
+      <tr class="c4"><td>Resp. Sens. 1 / Skin Sens. 1</td><td>H334 / H317</td><td>Při vdechování může vyvolat příznaky alergie nebo astmatu / může vyvolat alergickou kožní reakci</td></tr>
+    </table>
+    <div class="box blue mt"><p>Je-li cílový orgán znám, uvádí se ve větě v závorce; je-li známa i relevantní cesta expozice, doplňuje se rovněž. Konkrétní orgán bývá specifikován v oddíle 11 bezpečnostního listu a v databázi GESTIS.</p></div>
+    <div class="abbr"><span class="lbl">ZKRATKY</span><b>CLP</b> = nařízení (ES) č. 1272/2008 o klasifikaci, označování a balení · <b>STOT</b> = specific target organ toxicity · <b>SE</b> = single exposure · <b>RE</b> = repeated exposure · <b>GESTIS</b> = databáze nebezpečných látek německého úrazového pojištění</div>
+  </div>
+`);
+
+slide('ukolD','Úkol D – zadání', `
+  <div class="slide-inner">
+    <p class="eyebrow">Úkol D · práce s databázemi · ve dvojicích · 8 minut</p>
+    <h2 class="headline">Klasifikace a cílový orgán laboratorních látek</h2>
+    <p class="body-text">Každá dvojice zpracuje dvě látky z výběru. Všechny čtyři patří k běžnému vybavení chemické laboratoře.</p>
+    <table class="data-table">
+      <tr><th>Český název</th><th>Anglický název</th><th>CAS</th><th>Užití v laboratoři</th></tr>
+      <tr class="c1"><td>Trichlormethan (chloroform)</td><td>chloroform (trichloromethane)</td><td>67-66-3</td><td>extrakce, rozpouštědlo pro NMR</td></tr>
+      <tr class="c2"><td>N,N-dimethylformamid</td><td>N,N-dimethylformamide</td><td>68-12-2</td><td>aprotické rozpouštědlo pro syntézu</td></tr>
+      <tr class="c4"><td>Acetonitril</td><td>acetonitrile</td><td>75-05-8</td><td>mobilní fáze v HPLC</td></tr>
+      <tr class="c3"><td>Toluen-2,4-diisokyanát</td><td>toluene-2,4-diisocyanate</td><td>584-84-9</td><td>příprava polyurethanů</td></tr>
+    </table>
+    <div class="task-box"><ol>
+      <li>V databázi <strong>ECHA CHEM</strong> (chem.echa.europa.eu) vyhledejte harmonizovanou klasifikaci podle přílohy VI CLP. Které standardní věty se vztahují k orgánové toxicitě, senzibilizaci, karcinogenitě a reprodukční toxicitě?</li>
+      <li>V databázi <strong>GESTIS</strong> (gestis.dguv.de) zjistěte primární cílový orgán a relevantní cestu expozice.</li>
+      <li>Uvádí harmonizovaná klasifikace cílový orgán? Z kterého ze dvou zdrojů jste tento údaj museli získat a co z toho plyne pro práci s klasifikací?</li>
+      <li>Lze z věty H372 usuzovat na riziko spojené se stopovým výskytem látky v pitné vodě? Odpověď zdůvodněte.</li>
+    </ol></div>
+    <p class="hint">Zaznamenejte zdroj a datum přístupu: harmonizovaná klasifikace se mění novelami přílohy VI, výsledek proto platí k danému dni.</p>
+    <div class="abbr"><span class="lbl">ZKRATKY</span><b>ECHA</b> = Evropská agentura pro chemické látky · <b>GESTIS</b> = databáze nebezpečných látek německého úrazového pojištění · <b>HPLC</b> = vysokoúčinná kapalinová chromatografie</div>
+  </div>
+`);
+
+slide('ukolD-res1','Úkol D – řešení (1–3)', `
+  <div class="slide-inner">
+    <p class="eyebrow">Úkol D · řešení</p>
+    <h2 class="headline">Výstupy z databází</h2>
+    <table class="data-table">
+      <tr><th>Látka</th><th>Harmonizovaná klasifikace – relevantní věty</th><th>Cílová tkáň podle GESTIS</th></tr>
+      <tr class="c1"><td>Trichlormethan</td><td>H351, H361d, <b>H372</b>, H302, H331, H315, H319</td><td>játra a ledviny; při akutní inhalaci centrální nervový systém</td></tr>
+      <tr class="c2"><td>N,N-dimethylformamid</td><td>H360D, H332, H312, H319 — <b>bez věty o orgánové toxicitě</b></td><td>játra</td></tr>
+      <tr class="c4"><td>Acetonitril</td><td>H225, H302, H312, H332, H319 — <b>bez věty o orgánové toxicitě</b></td><td>centrální nervový systém a myokard; účinek zprostředkuje kyanid uvolněný při biotransformaci</td></tr>
+      <tr class="c3"><td>Toluen-2,4-diisokyanát</td><td>H330, H334, H317, H351, H335</td><td>dýchací cesty a kůže</td></tr>
+    </table>
+    <div class="box amber mt"><div class="box-title">3 · Co klasifikace neobsahuje</div><p>Cílový orgán se ve standardní větě uvádí jen tam, kde je součástí harmonizovaného záznamu. U dvou ze čtyř látek <strong>není žádná věta o orgánové toxicitě</strong>, přesto jde o doložené orgánové toxikanty. Klasifikace je právně závazné minimum odvozené z dostupných dat, nikoli úplný toxikologický profil; ten je nutné hledat v bezpečnostním listu, v databázi GESTIS nebo v hodnotící dokumentaci.</p></div>
+    <p class="hint">Uvedeno podle stavu v roce 2026. U trichlormethanu je navrhována změna záznamu, proto rozhoduje aktuální znění přílohy VI.</p>
+  </div>
+`);
+
+slide('ukolD-res2','Úkol D – řešení (4)', `
+  <div class="slide-inner">
+    <p class="eyebrow">Úkol D · řešení · metodický závěr</p>
+    <h2 class="headline">Lze z klasifikace usuzovat na riziko?</h2>
+    <p class="body-text">Trichlormethan vzniká jako vedlejší produkt chlorace a v pitné vodě je trvale přítomen ve stopovém množství. Tatáž látka tedy nese větu H372 a zároveň se legálně vyskytuje ve vodovodní vodě.</p>
+    <div class="grid-2">
+      <div class="box red"><div class="box-title">Klasifikace vyjadřuje nebezpečnost</div><p>Věta H372 charakterizuje <strong>inherentní vlastnost</strong> látky při opakované expozici, a to za podmínek odpovídajících nakládání s látkou v koncentrované formě. Neobsahuje informaci o koncentraci, přijatém množství ani o expozičním scénáři.</p></div>
+      <div class="box green"><div class="box-title">Riziko vyžaduje kvantifikaci expozice</div><p>Pro posouzení je nutné znát <strong>koncentraci v komoditě, spotřebu a zdravotně bezpečnou dávku</strong>, a následně stanovit HQ. Vyhláška č. 252/2004 Sb. proto nestanoví zákaz, nýbrž mezní hodnotu 30 µg/l pro trichlormethan a 100 µg/l pro součet trihalomethanů.</p></div>
+    </div>
+    <div class="box amber mt"><div class="box-title">Shrnutí vztahu obou systémů</div><p>Klasifikace podle CLP slouží k označování a k bezpečnému nakládání s látkou, typicky v laboratoři nebo v provozu. Zdravotně bezpečné dávky (ADI, TDI, TWI) a koeficient HQ slouží k hodnocení rizika při reálné expozici obyvatel; tento postup jsme provedli v úkolu A. Oba systémy se doplňují a nelze je zaměňovat: z věty H372 neplyne, že stopová koncentrace je nebezpečná, a z dodrženého limitu neplyne, že látka je neškodná.</p></div>
+  </div>
+`);
+
+/* =====================================================================
+   ZÁVĚR (≈ 5 min)
+   ===================================================================== */
+slide('diskuse','Diskusní otázky', `
+  <div class="slide-inner">
+    <p class="eyebrow">Závěr · diskuse</p>
+    <h2 class="headline">Diskusní otázky</h2>
+    <div id="discussion-list" style="display:grid;gap:10px;margin-top:10px;"></div>
+  </div>
+`);
+
+slide('shrnuti','Shrnutí', `
+  <div class="slide-inner">
+    <p class="eyebrow">Závěr</p>
+    <h2 class="headline">Shrnutí</h2>
+    <div class="grid-2">
+      <div class="box amber"><div class="box-title">Analýza rizika</div><p>Bezpečná dávka = výchozí bod ÷ součin faktorů nejistoty. Charakterizace rizika u prahových látek vychází z poměru HQ.</p></div>
+      <div class="box red"><div class="box-title">Játra a ledviny</div><p>Orgánovou selektivitu určuje perfuze, metabolická aktivace, transportní akumulace a koncentrační gradient.</p></div>
+      <div class="box green"><div class="box-title">Plíce</div><p>Aerodynamický průměr částic určuje místo depozice; rozpustnost plynů určuje lokalizaci a latenci účinku.</p></div>
+      <div class="box violet"><div class="box-title">Krev a imunitní systém</div><p>Methemoglobinemie, porfyrie, senzibilizace a imunosuprese. Imunotoxicita bývá kritickým účinkem (PFAS).</p></div>
+    </div>
+    <p class="footer-note">Přednáška 8: neurotoxicita, mutagenita a karcinogenita, chemické bojové látky.</p>
+  </div>
+`);
+
+slide('zdroje','Zdroje', `
+  <div class="slide-inner">
+    <p class="eyebrow">Zdroje literatury a obrázků</p>
+    <h2 class="headline" style="font-size:26px;">Zdroje</h2>
+    <div class="sources">
+      <h4>UČEBNICE</h4>
+      <p>Linhart I (2014) Toxikologie: interakce škodlivých látek s živými organismy, jejich mechanismy, projevy a důsledky. 2., upr. a rozš. vyd. Praha: VŠCHT. ISBN 978-80-7080-877-1.</p>
+      <p>Klaassen CD (ed.) (2019) Casarett &amp; Doull's Toxicology: The Basic Science of Poisons. 9th ed. New York: McGraw-Hill.</p>
+      <h4>ODBORNÁ STANOVISKA</h4>
+      <p>EFSA CONTAM Panel (2009) Cadmium in food. EFSA Journal 980:1–139.</p>
+      <p>EFSA CONTAM Panel (2020) Risk to human health related to the presence of perfluoroalkyl substances in food. EFSA Journal 18:6223.</p>
+      <p>EFSA ANS Panel (2017) Re-evaluation of sodium nitrate and potassium nitrate as food additives. EFSA Journal 15:4787.</p>
+      <p>EFSA Scientific Committee (2022) Guidance on the use of the benchmark dose approach in risk assessment. EFSA Journal 20:7584.</p>
+      <p>JECFA (2011) Safety evaluation of certain food additives and contaminants: cadmium. WHO Food Additives Series 64.</p>
+      <p>NRC (1983) Risk Assessment in the Federal Government: Managing the Process. Washington: National Academy Press.</p>
+      <h4>PŘEDPISY</h4>
+      <p>Nařízení (ES) č. 1272/2008 (CLP), příloha VI; nařízení (ES) č. 1907/2006 (REACH), příloha XVII, položky 27 a 74 (nař. 2020/1149).</p>
+      <p>Vyhláška č. 252/2004 Sb., ve znění pozdějších předpisů; vyhláška č. 275/2004 Sb.; směrnice (EU) 2020/2184.</p>
+      <p>Nařízení (EU) 2023/915, o maximálních limitech některých kontaminujících látek v potravinách.</p>
+      <h4>DATABÁZE</h4>
+      <p>ECHA CHEM: chem.echa.europa.eu · GESTIS: gestis.dguv.de · Státní zdravotní ústav, monitoring dietární expozice: szu.cz</p>
+      <h4>OBRÁZKY</h4>
+      <p>Všechna schémata: vlastní zpracování podle uvedených zdrojů.</p>
+    </div>
+  </div>
+`);
+
+
+const deck = document.getElementById('deck');
+slides.forEach((s,i)=>{
+  const el = document.createElement('div');
+  el.className='slide'; el.id='slide-'+i; el.innerHTML=s.html;
+  deck.appendChild(el);
+});
+const overlayList = document.getElementById('overlay-list');
+slides.forEach((s,i)=>{
+  const li = document.createElement('li');
+  li.innerHTML = '<span>'+String(i+1).padStart(2,'0')+'</span>'+s.title;
+  li.onclick = ()=>{ goTo(i); toggleOverlay(false); };
+  overlayList.appendChild(li);
+});
+
+let current = 0;
+function render(){
+  document.querySelectorAll('.slide').forEach((el,i)=> el.classList.toggle('active', i===current));
+  document.getElementById('progress-fill').style.width = ((current+1)/slides.length*100)+'%';
+  document.getElementById('counter').textContent = (current+1)+' / '+slides.length;
+  document.getElementById('prevBtn').disabled = current===0;
+  document.getElementById('nextBtn').disabled = current===slides.length-1;
+  initSlideWidgets(current);
+  renderNotes();
+}
+function goTo(i){ current = Math.max(0, Math.min(slides.length-1, i)); render(); }
+function nextSlide(){ goTo(current+1); }
+function prevSlide(){ goTo(current-1); }
+document.addEventListener('keydown', (e)=>{
+  if(document.getElementById('lightbox').classList.contains('show')){ if(e.key==='Escape') closeLightbox(); return; }
+  if(document.getElementById('overlay').classList.contains('show')){ if(e.key==='Escape') toggleOverlay(false); return; }
+  if(e.key==='ArrowRight' || e.key===' ') nextSlide();
+  if(e.key==='ArrowLeft') prevSlide();
+  if(e.key==='Escape') toggleOverlay(false);
+  if(e.key==='n' || e.key==='N'){ document.getElementById('notes').classList.toggle('show'); renderNotes(); }
+});
+function toggleOverlay(show){ document.getElementById('overlay').classList.toggle('show', show); }
+
+/* ---- poznámky vyučujícího: obsah jen z lokálního souboru Lektor_poznamky_P7.js (klávesa N) ---- */
+function renderNotes(){
+  const box = document.getElementById('notes');
+  if(!box.classList.contains('show')) return;
+  const N = window.LEKTOR_NOTES || null;
+  const id = slides[current].id;
+  if(!N){ box.innerHTML = '<div class="nh">POZNÁMKY VYUČUJÍCÍHO</div>Soubor Lektor_poznamky_P7.js nebyl nalezen.'; return; }
+  box.innerHTML = '<div class="nh">POZNÁMKY VYUČUJÍCÍHO · '+(current+1)+' / '+slides.length+' · '+slides[current].title+' · (N = skrýt)</div>' + (N[id] || '<em>K tomuto slidu nejsou poznámky.</em>');
+}
+
+/* ---- lightbox ---- */
+deck.addEventListener('click', (e)=>{
+  const img = e.target.closest('.scheme-img');
+  if(img){ openLightbox('<img src="'+img.getAttribute('src')+'" alt="'+(img.getAttribute('alt')||'')+'">'); return; }
+  const svg = e.target.closest('.diagram-box svg');
+  if(svg){ openLightbox(svg.outerHTML); return; }
+});
+function openLightbox(html){ document.getElementById('lightbox-inner').innerHTML = html; document.getElementById('lightbox').classList.add('show'); }
+function closeLightbox(){ document.getElementById('lightbox').classList.remove('show'); document.getElementById('lightbox-inner').innerHTML = ''; }
+
+
+/* ================= WIDGETS ================= */
+const initialized = {};
+function initSlideWidgets(i){
+  const id = slides[i].id;
+  if(initialized[id]) return;
+  initialized[id] = true;
+  const Q = {
+    'kviz-twi':[['q-twi','q-twi-fb','Správně. Biologický poločas kadmia v renální kůře činí 10–30 let. Rozhodující veličinou je kumulovaná tělesná zátěž, nikoli denní kolísání příjmu; týdenní vyjádření tuto skutečnost zohledňuje.','Nesprávně. Kadmium se kumuluje s poločasem 10–30 let, takže rozhoduje dlouhodobá tělesná zátěž. Týdenní vyjádření se proto volí u látek s dlouhým biologickým poločasem.']],
+    'kviz-jatra':[['q-jatra','q-jatra-fb','Správně. Exprese CYP2E1 je nejvyšší v zóně 3 acinu, a tedy právě zde vzniká nejvíce trichlormethylového radikálu.','Nesprávně. Rozhodující je místo metabolické aktivace: exprese CYP2E1 je nejvyšší v zóně 3 acinu, odkud se poškození šíří.']],
+    'kviz-fosgen':[['q-fosgen','q-fosgen-fb','Správně. Nízká rozpustnost znamená slabou senzorickou iritaci, tedy chybějící varovný signál; látka proniká až do alveolární oblasti a edém se rozvíjí s latencí.','Nesprávně. Určující je nízká rozpustnost ve vodě: chybí varovná iritace, expozice proto trvá déle a plicní edém nastupuje opožděně.']],
+    'kviz-pfas':[['q-pfas','q-pfas-fb','Správně. Výchozí bod se odvozuje z kritického účinku, tedy z účinku nastupujícího při nejnižší dávce. Ochrana před ním zajišťuje ochranu i před ostatními účinky.','Nesprávně. Použije se kritický účinek, tj. ten s nejnižší hodnotou výchozího bodu (zde protilátková odpověď, 0,5 mg/kg).']]
+  };
+  if(Q[id]) initSimpleQuizzes(Q[id]);
+  if(id==='ukolC') initMatching('mC', [
+    {left:'Tetrachlormethan', right:'játra · centrilobulární nekróza a steatóza'},
+    {left:'Kadmium', right:'ledviny · dysfunkce proximálního tubulu'},
+    {left:'Fosgen', right:'plíce · toxický edém s latencí'},
+    {left:'Anilin', right:'erytrocyty · methemoglobinemie'},
+    {left:'Nikl', right:'kůže · alergická kontaktní dermatitida'},
+    {left:'Azbest', right:'pleura · maligní mezoteliom'}
+  ], 'Správně, všech šest dvojic je přiřazeno.');
+  if(id==='diskuse') initDiscussion();
+}
+
+function initSimpleQuizzes(list){
+  list.forEach(([cardId, fbId, correctMsg, wrongMsg])=>{
+    const card = document.getElementById(cardId);
+    const opts = card.querySelectorAll('.quiz-opt');
+    opts.forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const isCorrect = btn.dataset.correct==='true';
+        opts.forEach(o=>o.disabled=true);
+        btn.classList.add(isCorrect?'correct':'wrong');
+        if(!isCorrect){ opts.forEach(o=>{ if(o.dataset.correct==='true') o.classList.add('correct'); }); }
+        const fb = document.getElementById(fbId);
+        fb.textContent = isCorrect? correctMsg: wrongMsg;
+        fb.classList.add('show');
+      });
+    });
+  });
+}
+
+function initDiscussion(){
+  const qa = [
+    {q:'Pro průměrnou dospělou populaci EU vychází u kadmia HQ přibližně 0,9. Lze z toho usuzovat, že expozice je bez rizika?',
+     a:'Nikoli bez výhrad. Populační průměr nevypovídá o distribuci expozice: vyšší hodnoty vykazují děti, vegetariáni a kuřáci. Bezpečnostní rezerva je navíc prakticky vyčerpána a kadmium se kumuluje po celý život. Vzhledem ke klasifikaci kadmia jako karcinogenu skupiny 1 je snižování expozice odůvodněné i při HQ pod 1.'},
+    {q:'Proč je u senzibilizátorů (nikl, diisokyanáty) obtížné stanovit zdravotně bezpečnou dávku obvyklým postupem?',
+     a:'Po proběhlé senzibilizaci vyvolává elicitaci expozice o několik řádů nižší než indukční dávka a interindividuální variabilita prahu je mimořádně velká. Standardní odvození z NOAEL s faktorem 100 proto neposkytuje spolehlivou ochranu. Regulace se zaměřuje na zabránění indukci senzibilizace: limity uvolňování, technická opatření a povinné školení.'},
+    {q:'Proč nelze pro kojence použít tytéž zdravotně bezpečné dávky jako pro dospělou populaci?',
+     a:'Standardní vnitrodruhový faktor 10 pokrývá běžnou variabilitu dospělé populace, nikoli kvalitativně odlišnou fyziologii časného kojeneckého období: vyšší pH žaludku, přítomnost fetálního hemoglobinu, nezralost enzymových systémů a vyšší příjem na kilogram hmotnosti. Pro tuto skupinu se proto stanovují samostatné, přísnější limity.'}
+  ];
+  const wrap = document.getElementById('discussion-list');
+  qa.forEach((item,i)=>{
+    const div = document.createElement('div');
+    div.className='tl-item';
+    div.innerHTML = '<div class="tl-year">Otázka '+(i+1)+' · klikněte pro možnou odpověď</div><div class="tl-title">'+item.q+'</div><div class="tl-detail">'+item.a+'</div>';
+    div.onclick = ()=> div.classList.toggle('open');
+    wrap.appendChild(div);
+  });
+}
+
+function initMatching(prefix, pairs, doneMsg){
+  const leftItems = pairs.map((p,i)=>({text:p.left, idx:i}));
+  const rightItems = pairs.map((p,i)=>({text:p.right, idx:i}));
+  for(let i=rightItems.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [rightItems[i],rightItems[j]]=[rightItems[j],rightItems[i]]; }
+  const leftEl = document.getElementById(prefix+'-left');
+  const rightEl = document.getElementById(prefix+'-right');
+  let selectedLeft = null, solved = 0;
+  leftItems.forEach(item=>{
+    const div = document.createElement('div');
+    div.className='match-item'; div.textContent = item.text; div.dataset.idx = item.idx;
+    div.onclick = ()=>{
+      if(div.classList.contains('correct')) return;
+      leftEl.querySelectorAll('.match-item').forEach(x=>x.classList.remove('selected'));
+      div.classList.add('selected'); selectedLeft = div;
+    };
+    leftEl.appendChild(div);
+  });
+  rightItems.forEach(item=>{
+    const div = document.createElement('div');
+    div.className='match-item'; div.textContent = item.text; div.dataset.idx = item.idx;
+    div.onclick = ()=>{
+      if(!selectedLeft || div.classList.contains('correct')) return;
+      if(selectedLeft.dataset.idx === div.dataset.idx){
+        selectedLeft.classList.remove('selected'); selectedLeft.classList.add('correct');
+        div.classList.add('correct'); solved++; selectedLeft = null;
+        if(solved===pairs.length) document.getElementById(prefix+'-result').textContent = doneMsg;
+      } else {
+        div.classList.add('wrong'); setTimeout(()=>div.classList.remove('wrong'), 500);
+      }
+    };
+    rightEl.appendChild(div);
+  });
+}
+
+render();
+</script>
+<script src="Lektor_poznamky_P7.js"></script>
+</body>
+</html>

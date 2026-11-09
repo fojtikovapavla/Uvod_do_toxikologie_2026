@@ -1,0 +1,1217 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Neurotoxicita, mutagenita a karcinogenita — Přednáška 8</title>
+<style>
+  :root{
+    --paper:#F4F5EF;
+    --ink:#1E2019;
+    --ink-soft:#5A5D51;
+    --amber:#B9791E;
+    --amber-deep:#8F5D14;
+    --tox-green:#3E5C42;
+    --tox-green-deep:#2A3F2D;
+    --danger:#9C3B2E;
+    --blue:#3A5A72;
+    --blue-deep:#233C4E;
+    --violet:#6A55A8;
+    --line:#D6D6C6;
+    --card:#FFFFFE;
+    --serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', 'Book Antiqua', serif;
+    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --mono: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{ margin:0; background:var(--paper); color:var(--ink); font-family:var(--sans); overflow:hidden; font-size:18px; }
+  ::selection{ background: var(--amber); color:#fff; }
+
+  #topbar{ position:fixed; top:0; left:0; right:0; height:54px; display:flex; align-items:center; gap:16px; padding:0 20px; z-index:50;
+    background:linear-gradient(to bottom, rgba(244,245,239,0.97), rgba(244,245,239,0.85)); border-bottom:1px solid var(--line); }
+  #topbar .brand{ font-family:var(--serif); font-size:16px; font-style:italic; color:var(--ink-soft); white-space:nowrap; }
+  #progress-track{ flex:1; height:3px; background:var(--line); border-radius:2px; overflow:hidden; }
+  #progress-fill{ height:100%; width:0%; background:var(--amber); transition:width .35s ease; }
+  #counter{ font-family:var(--mono); font-size:13px; color:var(--ink-soft); white-space:nowrap; }
+  #menu-btn{ font-family:var(--sans); font-size:14px; color:var(--ink); background:var(--card); border:1px solid var(--line); border-radius:6px; padding:6px 12px; cursor:pointer; }
+  #menu-btn:hover{ border-color:var(--amber); }
+
+  #deck{ position:relative; width:100%; height:100%; padding-top:54px; }
+  .slide{ position:absolute; inset:0; top:54px; display:flex; align-items:center; justify-content:center;
+    padding:30px 6vw 90px 6vw; opacity:0; visibility:hidden; transform:translateY(14px);
+    transition:opacity .4s ease, transform .4s ease; overflow-y:auto; }
+  .slide.active{ opacity:1; visibility:visible; transform:translateY(0); }
+  .slide-inner{ width:100%; max-width:1080px; }
+  .eyebrow{ font-family:var(--mono); font-size:16px; letter-spacing:.02em; color:var(--amber-deep); margin:0 0 10px 0; }
+  h1.headline{ font-family:var(--serif); font-weight:400; font-size:clamp(30px,4.6vw,50px); line-height:1.1; margin:0 0 16px 0; }
+  h2.headline{ font-family:var(--serif); font-weight:400; font-size:clamp(24px,3.2vw,34px); line-height:1.18; margin:0 0 16px 0; }
+  p.lede{ font-size:20px; line-height:1.55; color:var(--ink-soft); max-width:760px; }
+  .body-text{ font-size:19px; line-height:1.6; color:var(--ink); }
+  .grid-2{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .grid-3{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+  @media (max-width:860px){ .grid-2,.grid-3{ grid-template-columns:1fr; } }
+  ul.plain{ margin:0; padding-left:22px; font-size:18px; }
+  ul.plain li{ margin-bottom:8px; line-height:1.5; }
+  .mt{ margin-top:14px; }
+
+  /* ---------- barevná pole ---------- */
+  .box{ border-radius:12px; padding:14px 18px; border:1px solid; border-left-width:6px; font-size:18px; line-height:1.5; }
+  .box p{ margin:0; }
+  .box p + p{ margin-top:6px; }
+  .box ul.plain{ font-size:17.5px; }
+  .box-title{ font-family:var(--mono); font-size:13px; letter-spacing:.06em; text-transform:uppercase; margin-bottom:6px; font-weight:600; }
+  .box .big{ font-family:var(--serif); font-size:23px; margin-bottom:4px; display:block; }
+  .box.blue{ background:#EAF2F8; border-color:#C3D6E4; border-left-color:var(--blue); }   .box.blue .box-title{ color:var(--blue-deep); }
+  .box.green{ background:#EAF4EC; border-color:#C5DCC9; border-left-color:var(--tox-green); } .box.green .box-title{ color:var(--tox-green-deep); }
+  .box.amber{ background:#FDF3E1; border-color:#EBD3A8; border-left-color:var(--amber); } .box.amber .box-title{ color:var(--amber-deep); }
+  .box.red{ background:#FBECE9; border-color:#E8C4BD; border-left-color:var(--danger); }   .box.red .box-title{ color:var(--danger); }
+  .box.violet{ background:#F1EDF9; border-color:#D5CBEB; border-left-color:var(--violet); } .box.violet .box-title{ color:var(--violet); }
+  .box.grey{ background:#FFFFFE; border-color:var(--line); border-left-color:#9A9C8E; } .box.grey .box-title{ color:var(--ink-soft); }
+
+  /* zkratky */
+  .abbr{ margin-top:16px; padding:10px 14px; background:#F0F1EA; border:1px dashed #BFC1B2; border-radius:10px; font-size:15.5px; line-height:1.55; color:var(--ink-soft); }
+  .abbr b{ color:var(--ink); font-family:var(--mono); font-size:14.5px; }
+  .abbr .lbl{ font-family:var(--mono); font-size:12px; letter-spacing:.06em; color:var(--amber-deep); margin-right:6px; }
+
+  /* tok / řetězec */
+  .flow{ display:flex; align-items:stretch; gap:8px; margin-top:12px; }
+  .flow .step{ flex:1; border-radius:12px; padding:12px 10px; border:2px solid; text-align:center; font-size:17px; line-height:1.4; display:flex; flex-direction:column; justify-content:center; }
+  .flow .step b{ display:block; font-size:18px; margin-bottom:4px; }
+  .flow .arr{ align-self:center; font-size:26px; color:#8A8C7E; flex:0 0 18px; text-align:center; }
+  .s-red{ background:#FBECE9; border-color:#D9897B; } .s-blue{ background:#EAF2F8; border-color:#7FA3BF; }
+  .s-green{ background:#EAF4EC; border-color:#86AE8D; } .s-violet{ background:#F1EDF9; border-color:#A797D2; }
+  .s-amber{ background:#FDF3E1; border-color:#D9AE62; }
+  @media (max-width:860px){ .flow{ flex-direction:column; } .flow .arr{ transform:rotate(90deg); } }
+  .under{ display:flex; gap:8px; margin-top:8px; }
+  .under div{ flex:1; text-align:center; font-size:15px; color:var(--ink-soft); line-height:1.35; }
+  .under .gap{ flex:0 0 18px; }
+
+  /* časová osa */
+  .tline{ display:grid; gap:8px; margin-top:8px; }
+  .tline .ev{ display:grid; grid-template-columns:96px 1fr; gap:14px; align-items:center; }
+  .tline .yr{ font-family:var(--mono); font-size:17px; font-weight:700; color:#fff; border-radius:8px; padding:7px 0; text-align:center; }
+  .tline .tx{ font-size:17.5px; line-height:1.4; background:var(--card); border:1px solid var(--line); border-radius:8px; padding:7px 12px; }
+  .y-vivo{ background:#C4673A; } .y-vitro{ background:#3E8A5E; } .y-silico{ background:#6A55A8; } .y-reg{ background:#3A6FA0; }
+  .legend{ display:flex; gap:16px; flex-wrap:wrap; font-size:14.5px; color:var(--ink-soft); margin-top:12px; }
+  .legend span::before{ content:''; display:inline-block; width:12px; height:12px; border-radius:3px; margin-right:6px; vertical-align:-1px; background:var(--c); }
+
+  /* sloupcový graf */
+  .bars{ margin-top:10px; }
+  .bar-row{ display:grid; grid-template-columns:260px 1fr 80px; gap:12px; align-items:center; margin-bottom:10px; font-size:17.5px; }
+  .bar-track{ background:#E7E8DF; border-radius:6px; height:32px; overflow:hidden; }
+  .bar-fill{ height:100%; border-radius:6px; }
+  .bar-val{ font-family:var(--mono); font-weight:700; font-size:17px; text-align:right; }
+
+  /* pyramida */
+  .pyr{ display:flex; flex-direction:column; align-items:center; gap:6px; margin-top:6px; }
+  .pyr div{ border-radius:10px; padding:10px 14px; text-align:center; font-size:17px; line-height:1.35; border:2px solid; }
+  .pyr b{ display:block; font-size:18px; }
+
+  /* délka testů */
+  .dur-row{ display:grid; grid-template-columns:200px 1fr; gap:12px; align-items:center; margin-bottom:9px; font-size:18px; }
+  .dur-bar{ height:32px; border-radius:6px; color:#fff; font-size:15.5px; display:flex; align-items:center; padding:0 10px; white-space:nowrap; font-weight:600; }
+
+  #navbtns{ position:fixed; bottom:22px; right:28px; display:flex; gap:10px; z-index:50; }
+  .navbtn{ width:46px; height:46px; border-radius:50%; border:1px solid var(--line); background:var(--card); color:var(--ink); font-size:19px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .navbtn:hover{ border-color:var(--amber); color:var(--amber-deep); }
+  .navbtn:disabled{ opacity:.3; cursor:default; }
+  #overlay{ position:fixed; inset:0; background:rgba(30,32,25,.94); z-index:100; display:none; padding:56px 8vw; overflow-y:auto; }
+  #overlay.show{ display:block; }
+  #overlay h3{ font-family:var(--serif); color:#fff; font-weight:400; font-size:23px; margin-bottom:20px; }
+  #overlay-list{ list-style:none; margin:0; padding:0; columns:2; column-gap:40px; }
+  @media (max-width:800px){ #overlay-list{ columns:1; } }
+  #overlay-list li{ color:#EDEEE6; font-size:16px; padding:9px 0; border-bottom:1px solid rgba(255,255,255,.12); cursor:pointer; break-inside:avoid; }
+  #overlay-list li span{ font-family:var(--mono); color:var(--amber); margin-right:10px; font-size:13px; }
+  #overlay-list li:hover{ color:var(--amber); }
+  #overlay-close{ position:absolute; top:22px; right:30px; color:#fff; font-size:28px; background:none; border:none; cursor:pointer; }
+
+  /* poznámky vyučujícího (klávesa N; obsah jen z lokálního souboru Lektor_poznamky_P8.js) */
+  #notes{ position:fixed; left:0; right:0; bottom:0; max-height:42vh; overflow-y:auto; background:#1E2019; color:#EDEEE6; z-index:200;
+    padding:16px 6vw 20px 6vw; font-size:16px; line-height:1.55; display:none; border-top:3px solid var(--amber); }
+  #notes.show{ display:block; }
+  #notes .nh{ font-family:var(--mono); font-size:12.5px; color:var(--amber); letter-spacing:.05em; margin-bottom:6px; }
+  #notes ul{ margin:4px 0 0 0; padding-left:20px; } #notes li{ margin-bottom:4px; }
+  #notes b{ color:#F3D9A8; }
+
+  .quiz-card{ background:var(--card); border:1px solid var(--line); border-left:6px solid var(--blue); border-radius:12px; padding:20px 24px; margin-top:10px; }
+  .quiz-q{ font-size:19px; font-weight:600; margin-bottom:14px; line-height:1.45; }
+  .quiz-opt{ display:block; width:100%; text-align:left; padding:12px 16px; margin-bottom:9px; border:1px solid var(--line); border-radius:8px; background:#fff; cursor:pointer; font-size:18px; font-family:var(--sans); color:var(--ink); }
+  .quiz-opt:hover{ border-color:var(--amber); }
+  .quiz-opt.correct{ border-color:var(--tox-green); background:#EAF1EA; color:var(--tox-green-deep); font-weight:600; }
+  .quiz-opt.wrong{ border-color:var(--danger); background:#F7EAE7; color:var(--danger); }
+  .quiz-opt[disabled]{ cursor:default; }
+  .quiz-feedback{ margin-top:12px; font-size:18px; line-height:1.55; color:var(--ink-soft); display:none; }
+  .quiz-feedback.show{ display:block; }
+
+  table.data-table{ width:100%; border-collapse:collapse; font-size:18px; margin-top:10px; background:var(--card); border-radius:10px; overflow:hidden; }
+  table.data-table th{ text-align:left; font-family:var(--mono); font-size:14.5px; color:#fff; background:var(--blue); padding:9px 12px; }
+  table.data-table td{ padding:9px 12px; border-bottom:1px solid var(--line); }
+  table.data-table td.num, table.data-table th.num{ text-align:right; font-variant-numeric:tabular-nums; }
+  table.data-table tr.c1 td:first-child{ border-left:6px solid #D9897B; }
+  table.data-table tr.c2 td:first-child{ border-left:6px solid #D9AE62; }
+  table.data-table tr.c3 td:first-child{ border-left:6px solid #86AE8D; }
+  table.data-table tr.c4 td:first-child{ border-left:6px solid #7FA3BF; }
+
+  .tl-item{ background:var(--card); border:1px solid var(--line); border-left:6px solid var(--violet); border-radius:10px; padding:14px 16px; cursor:pointer; }
+  .tl-item .tl-year{ font-family:var(--mono); font-size:14px; color:var(--violet); }
+  .tl-item .tl-title{ font-family:var(--serif); font-size:20px; margin:4px 0 6px 0; }
+  .tl-item .tl-detail{ font-size:17.5px; color:var(--ink-soft); line-height:1.5; display:none; }
+  .tl-item.open .tl-detail{ display:block; }
+
+  .footer-note{ margin-top:16px; font-size:17px; color:var(--ink-soft); font-family:var(--mono); line-height:1.5; }
+  .sources{ font-size:12px; color:var(--ink-soft); line-height:1.45; column-count:2; column-gap:26px; background:#fff; border:1px solid var(--line); border-radius:10px; padding:14px 18px; }
+  .sources p{ margin:0 0 4px 0; break-inside:avoid; }
+  .sources h4{ font-family:var(--mono); font-size:12px; color:var(--amber-deep); margin:6px 0 4px 0; letter-spacing:.05em; }
+
+  .diagram-box{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:12px; }
+  .diagram-box svg{ cursor:zoom-in; display:block; width:100%; height:auto; }
+  .scheme-img{ width:100%; max-width:720px; display:block; margin:0 auto; border:1px solid var(--line); border-radius:8px; background:#fff; cursor:zoom-in; }
+  .scheme-img.tiny{ max-width:300px; }
+  .portrait{ max-height:290px; width:auto; max-width:100%; }
+  figure.fig{ margin:0; }
+  figure.fig figcaption{ font-size:15px; color:var(--ink-soft); text-align:center; margin-top:6px; line-height:1.45; }
+
+  #lightbox{ position:fixed; inset:0; background:rgba(15,16,12,.95); z-index:300; display:none; align-items:center; justify-content:center; padding:4vh 4vw; cursor:zoom-out; }
+  #lightbox.show{ display:flex; }
+  #lightbox-inner{ max-width:100%; max-height:100%; cursor:default; }
+  #lightbox-inner img{ display:block; max-width:92vw; max-height:92vh; border-radius:10px; background:#fff; }
+  #lightbox-inner svg{ display:block; width:92vw; height:auto; max-height:92vh; background:#fff; border-radius:10px; padding:28px; }
+  #lightbox-hint{ position:absolute; bottom:22px; left:50%; transform:translateX(-50%); color:#B9B9A8; font-family:var(--mono); font-size:13px; }
+
+  .match-wrap{ display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-top:14px; }
+  @media (max-width:760px){ .match-wrap{ grid-template-columns:1fr; } }
+  .match-col-title{ font-family:var(--mono); font-size:13px; color:var(--ink-soft); margin-bottom:8px; }
+  .match-item{ background:var(--card); border:1px solid var(--line); border-radius:8px; padding:11px 14px; margin-bottom:8px; font-size:18px; cursor:pointer; }
+  .match-item.selected{ border-color:var(--amber); background:#FBF0DD; }
+  .match-item.correct{ border-color:var(--tox-green); background:#EAF1EA; }
+  .match-item.wrong{ border-color:var(--danger); background:#F7EAE7; }
+  .match-result{ margin-top:12px; font-size:18px; color:var(--tox-green-deep); min-height:24px; font-weight:600; }
+
+  .sort-row{ display:grid; grid-template-columns:1fr auto; gap:12px; align-items:center; background:var(--card); border:1px solid var(--line); border-radius:8px; padding:10px 14px; margin-bottom:8px; font-size:17.5px; }
+  .sort-row.correct{ border-color:var(--tox-green); background:#EAF1EA; }
+  .sort-btns{ display:flex; gap:6px; }
+  .sort-btn{ font-family:var(--sans); font-size:14.5px; padding:6px 10px; border:1px solid var(--line); border-radius:6px; background:#fff; cursor:pointer; color:var(--ink); }
+  .sort-btn:hover{ border-color:var(--amber); }
+  .sort-btn.wrong{ border-color:var(--danger); background:#F7EAE7; color:var(--danger); }
+  .sort-btn.right{ border-color:var(--tox-green); background:var(--tox-green); color:#fff; }
+  .sort-why{ grid-column:1 / -1; font-size:15.5px; color:var(--ink-soft); display:none; }
+  .sort-row.correct .sort-why{ display:block; }
+
+  .task-box{ background:var(--card); border:1px solid var(--line); border-left:6px solid var(--amber); border-radius:12px; padding:16px 20px; margin-top:12px; }
+  .task-box ol{ margin:0; padding-left:24px; font-size:18.5px; }
+  .task-box ol li{ margin-bottom:8px; line-height:1.5; }
+  .sol-box{ background:#EAF4EC; border:1px solid #C5DCC9; border-left:6px solid var(--tox-green); border-radius:12px; padding:14px 20px; margin-top:12px; }
+  .calc-step{ font-family:var(--mono); font-size:18px; line-height:1.9; color:var(--ink); }
+  .calc-step .res{ color:var(--tox-green-deep); font-weight:700; }
+  .calc-step .bad{ color:var(--danger); font-weight:700; }
+  .sol-label{ font-family:var(--mono); font-size:13px; color:var(--tox-green-deep); letter-spacing:.05em; margin-bottom:6px; font-weight:600; }
+  .hint{ font-size:15.5px; color:var(--ink-soft); margin-top:10px; line-height:1.5; }
+
+  @media (prefers-reduced-motion: reduce){ .slide, .navbtn, #progress-fill{ transition:none !important; } }
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <div class="brand">Neurotoxicita, mutagenita a karcinogenita · Přednáška 8</div>
+  <div id="progress-track"><div id="progress-fill"></div></div>
+  <div id="counter">1 / 1</div>
+  <button id="menu-btn" onclick="toggleOverlay(true)">Obsah</button>
+</div>
+
+<div id="deck"></div>
+
+<div id="navbtns">
+  <button class="navbtn" id="prevBtn" onclick="prevSlide()">←</button>
+  <button class="navbtn" id="nextBtn" onclick="nextSlide()">→</button>
+</div>
+
+<div id="lightbox" onclick="closeLightbox()">
+  <div id="lightbox-inner" onclick="event.stopPropagation()"></div>
+  <div id="lightbox-hint">klikněte mimo obrázek nebo stiskněte Esc pro zavření</div>
+</div>
+
+<div id="overlay">
+  <button id="overlay-close" onclick="toggleOverlay(false)">×</button>
+  <h3>Přeskočit na</h3>
+  <ul id="overlay-list"></ul>
+</div>
+
+<div id="notes"></div>
+
+<script>
+const slides = [];
+function slide(id, title, html){ slides.push({id, title, html}); }
+
+/* =====================================================================
+   0 · ÚVOD (≈ 4 min)
+   ===================================================================== */
+slide('title','Titulní strana', `
+  <div class="slide-inner">
+    <p class="eyebrow">Ing. Pavla Fojtíková, Ph.D. · Přírodovědecká fakulta JU</p>
+    <h1 class="headline">Neurotoxicita, mutagenita a karcinogenita</h1>
+    <p class="lede">Přednáška 8: mechanismy poškození nervové soustavy, inhibitory acetylcholinesterázy jako případová studie, vícestupňový proces karcinogeneze a kvantifikace bezprahového rizika.</p>
+    <p class="footer-note">Laboratoř analytické a environmentální chemie</p>
+  </div>
+`);
+
+slide('outline','Osnova', `
+  <div class="slide-inner">
+    <p class="eyebrow">Obsah přednášky</p>
+    <h2 class="headline">Dvě velké části, šest tematických celků</h2>
+    <div class="grid-3">
+      <div class="box blue"><div class="box-title">1 · Nervová soustava jako cíl</div><p>Zranitelnost neuronu, hematoencefalická bariéra, pět mechanismů</p></div>
+      <div class="box red"><div class="box-title">2 · Přímé poškození neuronu</div><p>Hexan, těžké kovy, methylrtuť, Minamata</p></div>
+      <div class="box amber"><div class="box-title">3 · Zásah do synaptického přenosu</div><p>Agonisté a antagonisté, iontové kanály, inhibice AChE</p></div>
+      <div class="box violet"><div class="box-title">4 · Bojové látky</div><p>Látky G, V a A jako případová studie inhibice AChE</p></div>
+      <div class="box green"><div class="box-title">5 · Karcinogeneze</div><p>Iniciace, promoce, progrese; genotoxické a epigenetické karcinogeny</p></div>
+      <div class="box grey"><div class="box-title">6 · Kvantifikace a klasifikace</div><p>Jednotkové riziko, IARC a CLP, práce s databázemi</p></div>
+    </div>
+    <p class="footer-note">Součástí jsou čtyři úkoly (A–D), kontrolní kvízy a diskuse. Doporučuji kalkulačku a přístup k internetu.</p>
+  </div>
+`);
+
+/* =====================================================================
+   1 · NERVOVÁ SOUSTAVA JAKO CÍLOVÝ ORGÁN (≈ 8 min)
+   ===================================================================== */
+slide('ns-cil','Nervová soustava jako cílový orgán', `
+  <div class="slide-inner">
+    <p class="eyebrow">1 · Neurotoxicita · navazujeme na přednášku 7</p>
+    <h2 class="headline">Cílový orgán, který není lokalizován</h2>
+    <p class="body-text">Na rozdíl od jater či ledvin není nervová soustava ohraničeným orgánem: je rozložena po celém těle a řídí funkci orgánů ostatních. Narušení její funkce se proto projeví jak přímo (útlum, excitace, křeče), tak nepřímo změnami v řízení oběhu, dýchání a sekrece.</p>
+    <div class="grid-3 mt">
+      <div class="box blue"><div class="box-title">Omezená regenerace</div><p>Člověk se rodí s více než 10<sup>11</sup> neuronů. Zralé neurony se <strong>nedělí</strong>; jejich počet v průběhu života klesá, zatímco počet synaptických spojení roste. Ztráta neuronu je proto zpravidla nevratná.</p></div>
+      <div class="box amber"><div class="box-title">Vysoká energetická náročnost</div><p>Mozek představuje asi 2 % tělesné hmotnosti, ale spotřebuje přibližně 20 % klidové spotřeby kyslíku. Je proto mimořádně citlivý na látky narušující buněčné dýchání nebo transport kyslíku.</p></div>
+      <div class="box green"><div class="box-title">Evoluční kontext</div><p>Převážná většina přírodních jedů (rostlinných, živočišných i mikrobiálních) působí právě na nervovou soustavu. Rychlá imobilizace kořisti nebo predátora je účinnější obrannou strategií než pomalé orgánové poškození.</p></div>
+    </div>
+    <div class="box red mt"><div class="box-title">Sekundární neurotoxicita</div><p>Kyanidy (inhibice cytochrom-c-oxidázy), oxid uhelnatý (karboxyhemoglobin) a dusitany (methemoglobinemie, přednáška 7) nepoškozují neurony přímou vazbou na nervovou strukturu. Výsledkem je <strong>systémová hypoxie</strong>, vůči níž je nervová tkáň nejcitlivější, takže se intoxikace projeví neurologicky.</p></div>
+  </div>
+`);
+
+slide('heb','Hematoencefalická bariéra', `
+  <div class="slide-inner">
+    <p class="eyebrow">1 · Neurotoxicita · ochranná bariéra</p>
+    <h2 class="headline">Co se do mozku dostane a co ne</h2>
+    <div class="grid-2">
+      <div class="box blue"><div class="box-title">Stavba bariéry</div><p>Endotel mozkových kapilár má <strong>těsná spojení (tight junctions)</strong> bez fenestrací a je obklopen bazální membránou a výběžky astrocytů. Paracelulární difuze je prakticky vyloučena: látka musí projít <strong>přes</strong> buňku, nikoli mezi buňkami.</p><p>Bariéra je navíc vybavena efluxními transportéry (P-glykoprotein), které řadu xenobiotik aktivně vrací do krve.</p></div>
+      <div class="box red"><div class="box-title">Jak se bariéra obchází</div><p><strong>Lipofilita:</strong> malé nenabité lipofilní molekuly procházejí prostou difuzí (ethanol, organická rozpouštědla, tetraethylolovo).</p><p><strong>Napodobení substrátu:</strong> methylrtuť vytváří komplex s cysteinem, který je strukturně podobný methioninu a je přenášen aminokyselinovým transportérem LAT1.</p><p><strong>Nezralost:</strong> u plodu a novorozence není bariéra plně funkční, což je hlavní důvod zvýšené vnímavosti.</p></div>
+    </div>
+    <div class="box amber mt"><div class="box-title">Důsledek pro hodnocení rizika</div><p>Obecně platí, že u neurotoxických látek rozhoduje nejen systémová dávka, ale i schopnost překonat bariéru. Dvě látky se srovnatelnou systémovou toxicitou mohou mít zcela odlišný neurologický profil.</p></div>
+    <div class="abbr"><span class="lbl">ZKRATKY</span><b>HEB</b> = hematoencefalická bariéra · <b>LAT1</b> = large neutral amino acid transporter 1 · <b>eflux</b> = aktivní transport z buňky ven</div>
+  </div>
+`);
+
+slide('pet-mechanismu','Pět mechanismů', `
+  <div class="slide-inner">
+    <p class="eyebrow">1 · Neurotoxicita · systematika</p>
+    <h2 class="headline">Pět úrovní, na nichž lze neuron zasáhnout</h2>
+    <div class="flow">
+      <div class="step s-red"><b>1 · Přímé poškození neuronu</b>Smrt buňky, rozpad axonu nebo myelinové pochvy</div>
+      <div class="arr">→</div>
+      <div class="step s-amber"><b>2 · Uvolňování mediátoru</b>Blokáda výlevu z vezikulů do synaptické štěrbiny</div>
+      <div class="arr">→</div>
+      <div class="step s-green"><b>3 · Odbourávání mediátoru</b>Inhibice enzymu, který mediátor rozkládá</div>
+    </div>
+    <div class="flow mt">
+      <div class="step s-amber"><b>4 · Iontové kanály</b>Narušení transportu Na⁺, K⁺ a Ca²⁺ přes membránu</div>
+      <div class="arr">→</div>
+      <div class="step s-red"><b>5 · Receptory</b>Agonismus nebo antagonismus na postsynaptické membráně</div>
+      <div class="arr">→</div>
+      <div class="step s-green"><b>Společný rys</b>Mechanismy 2–5 nemění strukturu neuronu, mění signál</div>
+    </div>
+    <div class="box blue mt"><p>Toto členění je didaktické: řada látek působí současně několika mechanismy. Rozlišení je však praktické, protože <strong>určuje reverzibilitu</strong>. Poškozený neuron se nenahradí, kdežto zásah do přenosu signálu je zpravidla vratný, pominou-li podmínky, které jej vyvolaly.</p></div>
+  </div>
+`);
+
+/* =====================================================================
+   2 · PŘÍMÉ POŠKOZENÍ NEURONU (≈ 14 min)
+   ===================================================================== */
+slide('primo','Látky poškozující neuron přímo', `
+  <div class="slide-inner">
+    <p class="eyebrow">2 · Přímé poškození neuronu</p>
+    <h2 class="headline">Čtyři skupiny látek a tři typy léze</h2>
+    <div class="grid-2">
+      <div class="box red"><div class="box-title">Hlavní skupiny látek</div><p><strong>Kovy:</strong> arsen, olovo, rtuť, mangan, thallium</p><p><strong>Organokovové sloučeniny:</strong> methylrtuť, trimethylcín, tetraethylolovo</p><p><strong>Organická rozpouštědla:</strong> hexan, 2-hexanon, sirouhlík, methanol (přednáška 4), toluen</p><p><strong>Léčiva a pesticidy:</strong> aminoglykosidová antibiotika, některé cytostatika</p></div>
+      <div class="box blue"><div class="box-title">Typy léze</div><p><strong>Neuronopatie</strong> – zánik celého těla neuronu; postižení je trvalé (methylrtuť, trimethylcín).</p><p><strong>Axonopatie</strong> – rozpad axonu při zachovaném těle buňky; postupuje od nejdelších vláken, tedy zpravidla od dolních končetin (hexan, akrylamid).</p><p><strong>Myelinopatie</strong> – ztráta myelinové pochvy, zpomalení vedení vzruchu (hexachlorofen, tellur).</p></div>
+    </div>
+    <div class="box amber mt"><div class="box-title">Proč právě nejdelší axony</div><p>Axon může být i více než tisíckrát delší než průměr buněčného těla, přitom veškerou bílkovinu pro něj syntetizuje tělo neuronu a dopravuje ji axonálním transportem. Narušení cytoskeletu nebo energetického metabolismu se proto projeví nejdříve na distálním konci nejdelších vláken: hovoříme o <strong>distální axonopatii typu dying back</strong>.</p></div>
+  </div>
+`);
+
+slide('hexan','Hexan a 2,5-hexandion', `
+  <div class="slide-inner">
+    <p class="eyebrow">2 · Přímé poškození neuronu · metabolická aktivace</p>
+    <h2 class="headline">Hexan: toxický až po biotransformaci</h2>
+    <div class="grid-2">
+      <div>
+        <figure class="fig"><img class="scheme-img" style="max-height:420px;width:auto" src="obrázky_8/hexan_schema.png" alt="Metabolická aktivace hexanu a reakce s proteiny"><figcaption>Metabolická aktivace hexanu a následná reakce s bílkovinami</figcaption></figure>
+      </div>
+      <div>
+        <div class="box amber"><div class="box-title">Reakční sled</div><p>Cytochrom P450 oxiduje hexan na obou koncích řetězce na <strong>2,5-hexandion</strong>. Ten kondenzuje s aminoskupinami lysinu v bílkovinách na <strong>2,5-dimethylpyrrol</strong>, který se dále oxiduje na elektrofilní částici. Ta reaguje s další aminovou nebo sulfanylovou skupinou a tím <strong>kovalentně propojí dvě bílkovinné molekuly</strong>.</p></div>
+        <div class="box red mt"><div class="box-title">Důsledek</div><p>Zesíťováním neurofilament se mění struktura cytoskeletu. V axonech periferních nervů vznikají <strong>ohnisková nahromadění neurofilament</strong>, axon v těchto místech otéká a distálně od nich degeneruje.</p></div>
+      </div>
+    </div>
+    <div class="box blue mt"><div class="box-title">Klinický obraz a praktický kontext</div><p>Senzoricko-motorická polyneuropatie: svalová slabost, poruchy čití, bolestivost nebo naopak znecitlivění akrálních částí, poruchy vidění. Stejně působí <strong>2-hexanon</strong>; <strong>sirouhlík</strong> vede ke stejnému typu poškození bez nutnosti metabolické aktivace. Expozice je typicky profesionální (lepidla, technické benzíny) nebo úmyslná při zneužívání těkavých rozpouštědel.</p></div>
+    <div class="abbr"><span class="lbl">POJMY</span><b>neurofilamenta</b> = vláknité bílkoviny cytoskeletu axonu · <b>zesíťování (cross-linking)</b> = kovalentní propojení dvou makromolekul</div>
+  </div>
+`);
+
+slide('kovy','Těžké kovy a sulfanylová skupina', `
+  <div class="slide-inner">
+    <p class="eyebrow">2 · Přímé poškození neuronu · kovové kationty</p>
+    <h2 class="headline">Proč jsou kationty kovů tak univerzálně toxické</h2>
+    <div class="box red"><div class="box-title">Společný mechanismus</div><p>Kationty těžkých kovů mají vysokou afinitu k <strong>sulfanylové skupině (−SH) cysteinu</strong> v bílkovinách. Vzniká metalothiolátová vazba, u dvojvazných kovů můstek typu <strong>S−M−S</strong> mezi dvěma cysteinovými zbytky. Vazba je za fyziologických podmínek prakticky nevratná a mění konformaci bílkoviny, tedy i její funkci. Protože cystein se vyskytuje v aktivních místech stovek enzymů, je zásah nespecifický a postihuje mnoho dějů naráz.</p></div>
+    <table class="data-table">
+      <tr><th>Kov</th><th>Rozhodující forma</th><th>Převažující neurologický projev</th></tr>
+      <tr class="c1"><td><strong>Rtuť</strong></td><td>methylrtuť &gt; Hg²⁺ &gt; elementární páry</td><td>poškození mozečku a zrakové kůry, ataxie, zúžení zorného pole, parestezie</td></tr>
+      <tr class="c2"><td><strong>Olovo</strong></td><td>Pb²⁺, tetraethylolovo</td><td>u dětí porucha kognitivního vývoje bez prokázaného prahu, u dospělých periferní neuropatie</td></tr>
+      <tr class="c3"><td><strong>Mangan</strong></td><td>Mn²⁺ (inhalace dýmů při svařování)</td><td>manganismus: extrapyramidový syndrom podobný Parkinsonově nemoci</td></tr>
+      <tr class="c4"><td><strong>Arsen</strong></td><td>As³⁺</td><td>distální senzoricko-motorická axonopatie</td></tr>
+    </table>
+    <div class="box blue mt"><p>Organokovové sloučeniny jsou zpravidla <strong>neurotoxičtější než anorganické formy téhož kovu</strong>: jsou lipofilní, snadno procházejí hematoencefalickou bariérou a z organismu se vylučují jen pomalu. Platí to pro rtuť i pro cín.</p></div>
+  </div>
+`);
+
+slide('minamata','Minamata', `
+  <div class="slide-inner">
+    <p class="eyebrow">2 · Přímé poškození neuronu · případ</p>
+    <h2 class="headline">Minamata: methylrtuť v potravním řetězci</h2>
+    <div class="grid-2">
+      <div>
+        <figure class="fig"><img class="scheme-img" src="obrázky_8/minamata_museum.jpg" alt="Muzeum nemoci Minamata, Japonsko"><figcaption>Muzeum nemoci Minamata (Japonsko)</figcaption></figure>
+      </div>
+      <div>
+        <div class="box amber"><div class="box-title">Průběh</div><p>Chemický závod v zálivu Minamata vypouštěl od 30. let 20. století odpadní vody obsahující rtuť, používanou jako katalyzátor při výrobě acetaldehydu. Mikrobiální methylací ve dnovém sedimentu vznikala <strong>methylrtuť</strong>, která se <strong>biomagnifikovala</strong> potravním řetězcem do ryb a měkkýšů, hlavní složky místní stravy. Nemoc byla rozpoznána roku 1956, vypouštění ustalo až roku 1968.</p></div>
+        <div class="box red mt"><div class="box-title">Tři toxikologická poučení</div><p><strong>1 ·</strong> Toxická je forma, která v prostředí <em>vznikne</em>, nikoli nutně ta, která byla vypuštěna.</p><p><strong>2 ·</strong> Biomagnifikace zvyšuje koncentraci na každém trofickém stupni řádově; expoziční cestou se stává běžná potravina.</p><p><strong>3 ·</strong> Nejcitlivější skupinou byl <strong>plod</strong>. Matky s mírnými či žádnými příznaky rodily děti s těžkým postižením: placenta methylrtuť nejen propouští, ale aktivně koncentruje.</p></div>
+      </div>
+    </div>
+    <div class="box green mt"><p><strong>Regulační dopad:</strong> Minamatská úmluva o rtuti (2013, v platnosti od 2017) omezuje těžbu, obchod i použití rtuti celosvětově. V EU je pro methylrtuť stanoven TWI 1,3 µg/kg tělesné hmotnosti za týden (EFSA, 2012) a jsou stanoveny maximální limity v rybách; doporučení pro těhotné omezují konzumaci velkých dravých ryb.</p></div>
+  </div>
+`);
+
+slide('kviz-rtut','Kvíz: methylrtuť', `
+  <div class="slide-inner">
+    <p class="eyebrow">Kontrolní kvíz · 1 minuta</p>
+    <h2 class="headline">Proč je methylrtuť neurotoxičtější než rtuťnaté ionty?</h2>
+    <div class="quiz-card" id="q-rtut">
+      <div class="quiz-q">Vyberte toxikologicky správné zdůvodnění.</div>
+      <button class="quiz-opt" data-correct="false">Protože methylrtuť má vyšší afinitu k sulfanylové skupině cysteinu než Hg²⁺.</button>
+      <button class="quiz-opt" data-correct="true">Protože je lipofilní a jako komplex s cysteinem je navíc aktivně přenášena přes hematoencefalickou bariéru, takže se dostane k cílové struktuře.</button>
+      <button class="quiz-opt" data-correct="false">Protože se v organismu rozkládá na elementární rtuť, která je ze všech forem nejtoxičtější.</button>
+      <div class="quiz-feedback" id="q-rtut-fb"></div>
+    </div>
+  </div>
+`);
+
+/* =====================================================================
+   3 · ZÁSAH DO SYNAPTICKÉHO PŘENOSU (≈ 14 min)
+   ===================================================================== */
+slide('synapse','Synaptický přenos', `
+  <div class="slide-inner">
+    <p class="eyebrow">3 · Synaptický přenos · kde lze zasáhnout</p>
+    <h2 class="headline">Čtyři zásahová místa na jedné synapsi</h2>
+    <div class="diagram-box">
+      <svg viewBox="0 0 1000 380" xmlns="http://www.w3.org/2000/svg" font-family="Helvetica, Arial, sans-serif">
+        <path d="M180 20 C120 20 90 70 90 110 C90 160 130 190 200 195 L380 195 C450 190 490 160 490 110 C490 70 460 20 400 20 Z" fill="#EAF2F8" stroke="#7FA3BF" stroke-width="2"/>
+        <text x="290" y="80" font-size="19" text-anchor="middle" font-weight="bold" fill="#233C4E">presynaptické zakončení</text>
+        <circle cx="230" cy="130" r="17" fill="#FDF3E1" stroke="#D9AE62" stroke-width="2"/>
+        <circle cx="290" cy="150" r="17" fill="#FDF3E1" stroke="#D9AE62" stroke-width="2"/>
+        <circle cx="350" cy="130" r="17" fill="#FDF3E1" stroke="#D9AE62" stroke-width="2"/>
+        <text x="290" y="112" font-size="15" text-anchor="middle" fill="#5A5D51">vezikuly s mediátorem</text>
+        <rect x="90" y="245" width="400" height="95" rx="10" fill="#F6F7F1" stroke="#C9CBBB" stroke-width="2"/>
+        <text x="290" y="275" font-size="19" text-anchor="middle" font-weight="bold" fill="#1E2019">postsynaptická membrána</text>
+        <rect x="200" y="290" width="36" height="34" rx="6" fill="#FFFFFE" stroke="#6A55A8" stroke-width="2"/>
+        <rect x="272" y="290" width="36" height="34" rx="6" fill="#FFFFFE" stroke="#6A55A8" stroke-width="2"/>
+        <rect x="344" y="290" width="36" height="34" rx="6" fill="#FFFFFE" stroke="#6A55A8" stroke-width="2"/>
+        <text x="290" y="336" font-size="15" text-anchor="middle" fill="#5A5D51">receptory a iontové kanály</text>
+        <circle cx="255" cy="222" r="7" fill="#D9AE62"/><circle cx="300" cy="228" r="7" fill="#D9AE62"/><circle cx="345" cy="220" r="7" fill="#D9AE62"/>
+        <text x="470" y="248" font-size="16" text-anchor="end" fill="#5A5D51">synaptická štěrbina</text>
+        <text x="560" y="55" font-size="19" font-weight="bold" fill="#9C3B2E">① výlev mediátoru</text>
+        <text x="560" y="80" font-size="17" fill="#1E2019">botulotoxin blokuje splynutí vezikulu s membránou</text>
+        <text x="560" y="128" font-size="19" font-weight="bold" fill="#8F5D14">② zpětné vychytávání</text>
+        <text x="560" y="153" font-size="17" fill="#1E2019">blokáda transportéru prodlužuje působení mediátoru</text>
+        <text x="560" y="201" font-size="19" font-weight="bold" fill="#2A3F2D">③ odbourání mediátoru</text>
+        <text x="560" y="226" font-size="17" fill="#1E2019">inhibice acetylcholinesterázy: mediátor se hromadí</text>
+        <text x="560" y="274" font-size="19" font-weight="bold" fill="#6A55A8">④ receptor a iontový kanál</text>
+        <text x="560" y="299" font-size="17" fill="#1E2019">agonista spouští vzruch i bez mediátoru</text>
+        <text x="560" y="322" font-size="17" fill="#1E2019">antagonista obsadí receptor a přenos zablokuje</text>
+        <line x1="520" y1="38" x2="520" y2="340" stroke="#D6D6C6" stroke-width="2"/>
+      </svg>
+    </div>
+    <div class="box blue mt"><p>Cizorodá látka se může na receptor vázat i <strong>pevněji než vlastní mediátor</strong>. Rozhodující je, co se po navázání stane: <strong>agonista</strong> receptor aktivuje a vzruch se šíří i bez mediátoru, <strong>antagonista</strong> receptor obsadí, aniž jej aktivuje, a přenos tím zablokuje.</p></div>
+  </div>
+`);
+
+slide('uvolnovani','Výlev a zpětné vychytávání', `
+  <div class="slide-inner">
+    <p class="eyebrow">3 · Synaptický přenos · mechanismy ① a ②</p>
+    <h2 class="headline">Zásah před receptorem</h2>
+    <div class="grid-2">
+      <div class="box red"><div class="box-title">① Inhibice výlevu mediátoru</div><p><strong>Botulotoxin</strong>, neurotoxin bakterie <em>Clostridium botulinum</em>, patří k nejtoxičtějším známým látkám. Jeho lehký řetězec je zinečnatá proteáza, která štěpí bílkoviny komplexu SNARE. Bez nich nemůže vezikul splynout s presynaptickou membránou a acetylcholin se do štěrbiny neuvolní.</p><p><strong>Projev:</strong> chabá obrna sestupného charakteru, smrt nastává selháním dýchacího svalstva.</p><p><strong>Terapeutické využití:</strong> místní aplikace řádově v jednotkách nanogramů u spasticity, blefarospasmu, hyperhidrózy a v estetické medicíně. Ukázka Paracelsova principu: rozhoduje dávka a místo podání.</p></div>
+      <div class="box amber"><div class="box-title">② Inhibice zpětného vychytávání</div><p>Mediátor je za normálních okolností ze štěrbiny odstraňován zpětným transportem do presynaptického zakončení. Blokáda transportéru jeho koncentraci ve štěrbině zvyšuje a postsynaptický receptor je nadměrně drážděn.</p><p>Tímto mechanismem působí řada psychoaktivních a návykových látek. <strong>Podrobné receptorové mechanismy návykových látek jsou předmětem vaší semestrální práce</strong>, zde proto zůstáváme u obecného principu.</p><p>Nejde ovšem jen o drogy: stejný mechanismus mají některá antidepresiva a část nežádoucích účinků řady léčiv.</p></div>
+    </div>
+    <div class="abbr"><span class="lbl">POJMY</span><b>SNARE</b> = soubor bílkovin zajišťujících splynutí vezikulu s membránou · <b>chabá obrna</b> = ochrnutí se sníženým svalovým napětím · <b>Paracelsův princip</b> = jedem činí látku dávka (přednáška 1)</div>
+  </div>
+`);
+
+slide('kanaly','Iontové kanály', `
+  <div class="slide-inner">
+    <p class="eyebrow">3 · Synaptický přenos · mechanismus ④a</p>
+    <h2 class="headline">Narušení transportu iontů membránou</h2>
+    <p class="body-text">Akční potenciál vzniká řízeným otevíráním a zavíráním napěťově závislých sodíkových a draslíkových kanálů. Látka, která kanál trvale otevře nebo trvale uzavře, vyřadí vedení vzruchu z funkce, aniž by neuron jakkoli strukturně poškodila.</p>
+    <table class="data-table">
+      <tr><th>Látka</th><th>Zásah do sodíkového kanálu</th><th>Projev</th></tr>
+      <tr class="c1"><td><strong>Akonitin</strong><br><span style="font-size:15px;color:#5A5D51">oměj šalamounek, nejjedovatější rostlina našeho pásma</span></td><td>váže se na kanál a udržuje jej <strong>trvale otevřený</strong>; membrána zůstává depolarizovaná</td><td>pocit horka a brnění, zvracení, svalová slabost, poruchy vidění; smrt nastává srdeční arytmií a obrnou dýchacího svalstva</td></tr>
+      <tr class="c2"><td><strong>Tetrodotoxin</strong><br><span style="font-size:15px;color:#5A5D51">ryby čeledi čtverzubcovitých</span></td><td>kanál <strong>ucpe zvenčí</strong>, průchod Na⁺ znemožní</td><td>vzestupná obrna při plném vědomí; antidotum neexistuje, léčba je podpůrná</td></tr>
+      <tr class="c3"><td><strong>DDT a pyrethroidy</strong><br><span style="font-size:15px;color:#5A5D51">insekticidy</span></td><td>zpomalují uzavírání kanálu; po odeznění vzruchu zůstává membrána dráždivá</td><td>opakované výboje v nervu, třes a křeče; u hmyzu rychlé ochrnutí (efekt knockdown)</td></tr>
+    </table>
+    <div class="box blue mt"><p>Selektivní toxicita insekticidů spočívá v rozdílné stavbě hmyzího a savčího sodíkového kanálu a v tom, že savci pyrethroidy rychle hydrolyzují esterázami. Selektivita tedy není absolutní vlastností látky, ale důsledkem rozdílů v cílové struktuře a v biotransformaci (přednáška 4).</p></div>
+  </div>
+`);
+
+slide('receptory','Agonisté a antagonisté', `
+  <div class="slide-inner">
+    <p class="eyebrow">3 · Synaptický přenos · mechanismus ④b</p>
+    <h2 class="headline">Látky působící na receptorech</h2>
+    <div class="grid-2">
+      <div class="box green"><div class="box-title">Agonisté acetylcholinu</div><p><strong>Nikotin</strong> aktivuje nikotinové receptory v mozku, vegetativních gangliích a kosterním svalu; vyvolává vazokonstrikci a vzestup krevního tlaku.</p><p><strong>Muskarin</strong> (<em>Inocybe</em>, <em>Clitocybe</em>) aktivuje muskarinové receptory: slinění, slzení, zúžení zornic, zvýšená peristaltika, bradykardie. Antidotem je atropin.</p></div>
+      <div class="box red"><div class="box-title">Antagonisté</div><p><strong>Atropin a skopolamin</strong> (rulík zlomocný, durman, mandragora) blokují muskarinové receptory: rozšíření zornic, sucho v ústech, tachykardie, zmatenost, halucinace.</p><p><strong>Tubokurarin</strong> (šípový jed kurare) kompetitivně blokuje nikotinový receptor nervosvalové ploténky: chabá obrna při zachovaném vědomí.</p><p><strong>Strychnin</strong> blokuje receptor pro <strong>glycin</strong>, tlumivý mediátor míšních motoneuronů. Vypadne-li útlum, každý podnět vyvolá generalizovanou křeč; smrt nastává vyčerpáním a udušením.</p></div>
+    </div>
+    <div class="box amber mt"><div class="box-title">Dvě látky, opačný směr, stejný výsledek</div><p>Strychnin i tetanotoxin vedou ke křečím, ačkoli strychnin blokuje glycinový receptor a tetanotoxin brání výlevu glycinu z presynaptického zakončení. <strong>Ztráta inhibice se projeví stejně jako nadměrná excitace.</strong> Symptomatologie proto sama o sobě k určení mechanismu nestačí.</p></div>
+  </div>
+`);
+
+slide('ukolA','Úkol A – zadání', `
+  <div class="slide-inner">
+    <p class="eyebrow">Úkol A · úsudek · 6 minut · pracujte ve dvojicích</p>
+    <h2 class="headline">Od příznaků k mechanismu</h2>
+    <p class="body-text">U čtyř pacientů jsou popsány následující nálezy. Pro každý určete, kterým z pěti mechanismů látka nejspíše působí, a zdůvodněte.</p>
+    <div class="task-box"><ol>
+      <li><strong>Pacient 1:</strong> zúžené zornice, nadměrné slinění a pocení, křeče, obtížné dýchání, svalové záškuby. Nástup do 10 minut po expozici.</li>
+      <li><strong>Pacient 2:</strong> rozšířené zornice, suchá kůže, tachykardie, zmatenost a halucinace, žádné křeče.</li>
+      <li><strong>Pacient 3:</strong> po třech měsících práce s lepidlem bez odsávání postupně narůstající slabost a brnění chodidel, později i prstů rukou. Vědomí a zornice bez nálezu.</li>
+      <li><strong>Pacient 4:</strong> 18 hodin po konzervované potravině postupně klesající víčka, dvojité vidění, poruchy polykání, poté sestupná chabá obrna. Plné vědomí, zornice rozšířené.</li>
+    </ol></div>
+    <p class="hint">Vodítka: Rychlost nástupu. Jsou zornice zúžené, nebo rozšířené? Je obrna chabá, nebo provázená křečemi? Jde o jednorázovou, nebo opakovanou expozici?</p>
+  </div>
+`);
+
+slide('ukolA-res','Úkol A – řešení', `
+  <div class="slide-inner">
+    <p class="eyebrow">Úkol A · řešení</p>
+    <h2 class="headline">Rozbor</h2>
+    <div class="grid-2">
+      <div class="box red"><div class="box-title">1 · Inhibice acetylcholinesterázy</div><p>Organofosfát nebo karbamát. Současné postižení muskarinové složky (mióza, sekrece) i nikotinové složky (záškuby, slabost) a rychlý nástup jsou pro hromadění acetylcholinu typické. Mechanismus ③.</p></div>
+      <div class="box amber"><div class="box-title">2 · Antagonismus na muskarinovém receptoru</div><p>Tropanový alkaloid (atropin, skopolamin). Obraz je přesným zrcadlovým obrazem případu 1, protože jde o blokádu téhož receptoru. Mechanismus ④.</p></div>
+      <div class="box blue"><div class="box-title">3 · Přímé poškození axonu</div><p>Hexan v lepidle, distální axonopatie typu dying back. Rozhodující je pozvolný rozvoj při opakované expozici a vzestupné postižení od nejdelších vláken. Mechanismus ①.</p></div>
+      <div class="box violet"><div class="box-title">4 · Inhibice výlevu mediátoru</div><p>Botulotoxin. Pro botulismus svědčí latence v řádu hodin, postup obrny shora dolů, chabý charakter obrny, zachované vědomí a rozšířené zornice.</p></div>
+    </div>
+    <div class="box green mt"><p><strong>Diferenciálně diagnosticky rozhoduje stav zornic.</strong> Mióza svědčí pro cholinergní nadbytek (případ 1), mydriáza pro blokádu cholinergního přenosu (případy 2 a 4). Právě proto se velikost zornic hodnotí u otrav neznámou látkou jako jeden z prvních ukazatelů.</p></div>
+  </div>
+`);
+
+/* =====================================================================
+   4 · INHIBICE ACETYLCHOLINESTERÁZY A BOJOVÉ LÁTKY (≈ 20 min)
+   ===================================================================== */
+slide('ache','Acetylcholinesteráza', `
+  <div class="slide-inner">
+    <p class="eyebrow">4 · Inhibice AChE · mechanismus ③</p>
+    <h2 class="headline">Enzym, na kterém závisí ukončení signálu</h2>
+    <div class="box blue"><div class="box-title">Fyziologická úloha</div><p>Acetylcholinesteráza hydrolyzuje acetylcholin na cholin a kyselinu octovou, a tím <strong>ukončuje</strong> přenos vzruchu na cholinergní synapsi. Patří k nejrychlejším známým enzymům: jedna molekula zpracuje řádově tisíce molekul mediátoru za sekundu. Bez tohoto odbourávání by acetylcholin v štěrbině přetrvával a receptor zůstal trvale drážděn.</p></div>
+    <div class="grid-2 mt">
+      <div class="box green"><div class="box-title">Vratná inhibice</div><p><strong>Karbamáty.</strong> Enzym je karbamoylován, vazba se však sama hydrolyzuje v řádu minut až hodin.</p><p><strong>Fysostigmin</strong>, nejstarší známý inhibitor cholinesterázy, sehrál klíčovou úlohu při objasnění funkce acetylcholinu. Používá se jako antidotum otrav atropinem a tubokurarinem a byl zkoušen jako profylaktikum před expozicí nervově paralytickým látkám.</p><p>Vratně působí i <strong>steroidní glykoalkaloidy brambor a rajčat</strong> (solanin, chakonin) a karbamátové insekticidy.</p></div>
+      <div class="box red"><div class="box-title">Nevratná inhibice</div><p><strong>Organofosfáty.</strong> Látka fosforyluje hydroxylovou skupinu serinu v aktivním místě enzymu. Vzniklá vazba je stabilní, obnova aktivity závisí na syntéze nových molekul enzymu, která trvá týdny.</p><p>Sem patří <strong>organofosfátové pesticidy</strong> i <strong>nervově paralytické bojové látky</strong> (sarin, soman, tabun, VX, látky A).</p><p>Otravy organofosfátovými pesticidy jsou celosvětově významné: odhady uvádějí statisíce úmrtí ročně, z velké části sebevražedných, zejména v zemědělských oblastech jižní Asie.</p></div>
+    </div>
+    <div class="abbr"><span class="lbl">ZKRATKY</span><b>AChE</b> = acetylcholinesteráza · <b>ACh</b> = acetylcholin · <b>OP</b> = organofosfát</div>
+  </div>
+`);
+
+slide('starnuti','Fosforylace a stárnutí', `
+  <div class="slide-inner">
+    <p class="eyebrow">4 · Inhibice AChE · časový průběh</p>
+    <h2 class="headline">Proč o výsledku rozhodují minuty: stárnutí enzymu</h2>
+    <div class="diagram-box">
+      <svg viewBox="0 0 1000 300" xmlns="http://www.w3.org/2000/svg" font-family="Helvetica, Arial, sans-serif">
+        <rect x="10" y="30" width="215" height="130" rx="14" fill="#EAF4EC" stroke="#86AE8D" stroke-width="2"/>
+        <text x="117" y="66" font-size="19" text-anchor="middle" font-weight="bold" fill="#2A3F2D">Aktivní enzym</text>
+        <text x="117" y="98" font-size="17" text-anchor="middle" fill="#1E2019">volná −OH skupina</text>
+        <text x="117" y="122" font-size="17" text-anchor="middle" fill="#1E2019">serinu v aktivním místě</text>
+        <text x="240" y="100" font-size="30" fill="#8A8C7E">→</text>
+        <text x="282" y="80" font-size="15" fill="#5A5D51">organofosfát</text>
+        <rect x="285" y="30" width="215" height="130" rx="14" fill="#FDF3E1" stroke="#D9AE62" stroke-width="2"/>
+        <text x="392" y="66" font-size="19" text-anchor="middle" font-weight="bold" fill="#8F5D14">Fosforylovaný enzym</text>
+        <text x="392" y="98" font-size="17" text-anchor="middle" fill="#1E2019">inhibován, ale vazbu lze</text>
+        <text x="392" y="122" font-size="17" text-anchor="middle" fill="#1E2019">ještě rozštěpit oximem</text>
+        <text x="515" y="100" font-size="30" fill="#8A8C7E">→</text>
+        <text x="548" y="80" font-size="15" fill="#5A5D51">odštěpení alkylu</text>
+        <rect x="560" y="30" width="215" height="130" rx="14" fill="#FBECE9" stroke="#D9897B" stroke-width="2"/>
+        <text x="667" y="66" font-size="19" text-anchor="middle" font-weight="bold" fill="#9C3B2E">Zestárlý enzym</text>
+        <text x="667" y="98" font-size="17" text-anchor="middle" fill="#1E2019">vazba je nevratná,</text>
+        <text x="667" y="122" font-size="17" text-anchor="middle" fill="#1E2019">oxim je neúčinný</text>
+        <path d="M392 170 L392 205" stroke="#2A3F2D" stroke-width="2.5" marker-end="url(#ar8)"/>
+        <defs><marker id="ar8" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#2A3F2D"/></marker></defs>
+        <rect x="245" y="210" width="295" height="60" rx="12" fill="#EAF4EC" stroke="#86AE8D" stroke-width="2"/>
+        <text x="392" y="236" font-size="17" text-anchor="middle" fill="#2A3F2D">reaktivace oximem:</text>
+        <text x="392" y="258" font-size="17" text-anchor="middle" font-weight="bold" fill="#2A3F2D">enzym je obnoven</text>
+        <rect x="800" y="30" width="190" height="240" rx="14" fill="#F6F7F1" stroke="#C9CBBB" stroke-width="2"/>
+        <text x="895" y="62" font-size="17" text-anchor="middle" font-weight="bold" fill="#1E2019">Poločas stárnutí</text>
+        <text x="895" y="98" font-size="17" text-anchor="middle" fill="#1E2019">soman: minuty</text>
+        <text x="895" y="128" font-size="17" text-anchor="middle" fill="#1E2019">sarin: hodiny</text>
+        <text x="895" y="158" font-size="17" text-anchor="middle" fill="#1E2019">VX: desítky hodin</text>
+        <text x="895" y="200" font-size="15.5" text-anchor="middle" fill="#5A5D51">Čím rychleji enzym</text>
+        <text x="895" y="222" font-size="15.5" text-anchor="middle" fill="#5A5D51">zestárne, tím kratší</text>
+        <text x="895" y="244" font-size="15.5" text-anchor="middle" fill="#5A5D51">je okno pro léčbu</text>
+      </svg>
+    </div>
+    <div class="box amber mt"><div class="box-title">Důsledek pro terapii</div><p>Oximy (pralidoxim, obidoxim, asoxim HI-6) odštěpují fosforylovou skupinu ze serinu a enzym obnovují. Po zestárnutí však již účinné nejsou. <strong>Oxim je proto nutné podat co nejdříve</strong>, u somanu prakticky okamžitě, jinak zůstává k dispozici pouze symptomatická léčba. Přesné poločasy stárnutí se mezi zdroji liší, rozdíl v řádech mezi látkami je však dobře doložen.</p></div>
+  </div>
+`);
+
+slide('bl-deleni','Bojové látky: G, V, A', `
+  <div class="slide-inner">
+    <p class="eyebrow">4 · Bojové látky · systematika</p>
+    <h2 class="headline">Tři generace nervově paralytických látek</h2>
+    <div class="grid-3">
+      <div class="box amber"><div class="box-title">Látky G</div><p><strong>Německo, 30. a 40. léta</strong></p><p>GA tabun, GB sarin, GD soman; GF cyklosarin byl zaveden později v USA.</p><p>Těkavé kapaliny, působí především <strong>inhalačně</strong>. V terénu se rychle odpařují, jejich perzistence je nízká.</p></div>
+      <div class="box red"><div class="box-title">Látky V</div><p><strong>Velká Británie a USA, 50. léta</strong></p><p>Nejznámější je VX, ester kyseliny methylfosfonothiové.</p><p>Olejovité, málo těkavé kapaliny. Působí především <strong>přes kůži</strong>, v terénu přetrvávají dny až týdny. Toxicita je o řád vyšší než u látek G.</p></div>
+      <div class="box violet"><div class="box-title">Látky A</div><p><strong>SSSR, 70. a 80. léta, program Novičok</strong></p><p>A-230, A-232, A-234 a další. Struktury zveřejnil roku 2007 Vil Mirzajanov; <strong>jejich správnost ani toxicita nejsou nezávisle potvrzeny</strong>.</p><p>Nebyly použity na bojišti, ale při atentátech (Salisbury a Amesbury 2018, přednáška 2).</p></div>
+    </div>
+    <div class="box blue mt"><div class="box-title">Proč byly látky A vyvinuty</div><p>Nikoli primárně kvůli vyšší toxicitě, ale aby <strong>unikly detekci</strong> tehdejšími prostředky NATO, překonaly protichemickou ochranu a <strong>obešly seznam kontrolovaných prekurzorů</strong> Úmluvy o zákazu chemických zbraní. Jde o <strong>binární</strong> zbraně: dva málo toxické prekurzory se mísí až před použitím. To usnadňuje skladování a přepravu, ale ztěžuje odhalení. Nedokonalé smísení zároveň vysvětluje, proč některé pokusy o atentát selhaly.</p></div>
+    <div class="abbr"><span class="lbl">ZKRATKY</span><b>CWC</b> = Úmluva o zákazu chemických zbraní (1993) · <b>OPCW</b> = Organizace pro zákaz chemických zbraní · <b>perzistence</b> = doba, po kterou látka zůstává v terénu účinná</div>
+  </div>
+`);
+
+slide('bl-struktury','Struktury', `
+  <div class="slide-inner">
+    <p class="eyebrow">4 · Bojové látky · struktury (zdroj PubChem)</p>
+    <h2 class="headline">Společný strukturní motiv</h2>
+    <div class="grid-3">
+      <figure class="fig"><img class="scheme-img tiny" style="max-height:150px;width:auto" src="obrázky_8/sarin.png" alt="Strukturní vzorec sarinu"><figcaption><strong>Sarin</strong> (GB) · látka G</figcaption></figure>
+      <figure class="fig"><img class="scheme-img tiny" style="max-height:150px;width:auto" src="obrázky_8/Soman.png" alt="Strukturní vzorec somanu"><figcaption><strong>Soman</strong> (GD) · látka G</figcaption></figure>
+      <figure class="fig"><img class="scheme-img tiny" style="max-height:150px;width:auto" src="obrázky_8/Tabun.png" alt="Strukturní vzorec tabunu"><figcaption><strong>Tabun</strong> (GA) · látka G</figcaption></figure>
+    </div>
+    <div class="grid-3 mt">
+      <figure class="fig"><img class="scheme-img tiny" style="max-height:150px;width:auto" src="obrázky_8/cyklo-sarin.png" alt="Strukturní vzorec cyklosarinu"><figcaption><strong>Cyklosarin</strong> (GF) · látka G</figcaption></figure>
+      <figure class="fig"><img class="scheme-img tiny" style="max-height:150px;width:auto" src="obrázky_8/VX.png" alt="Strukturní vzorec VX"><figcaption><strong>VX</strong> · látka V</figcaption></figure>
+      <figure class="fig"><img class="scheme-img tiny" style="max-height:150px;width:auto" src="obrázky_8/A-234.png" alt="Strukturní vzorec A-234"><figcaption><strong>A-234</strong> · látka A (struktura podle Mirzajanova, nepotvrzená)</figcaption></figure>
+    </div>
+    <div class="box blue mt"><p>Všechny látky mají <strong>centrální atom fosforu s dvojnou vazbou na kyslík</strong> a <strong>odstupující skupinu</strong>, která se při reakci se serinem enzymu odštěpí: fluor u sarinu, somanu a cyklosarinu, kyanoskupina u tabunu, thiolátová skupina u VX. Zbylé substituenty určují těkavost, stabilitu a rychlost stárnutí. Kliknutím obrázek zvětšíte.</p></div>
+  </div>
+`);
+
+slide('bl-toxicita','Srovnání toxicity', `
+  <div class="slide-inner">
+    <p class="eyebrow">4 · Bojové látky · kvantitativní srovnání</p>
+    <h2 class="headline">Inhalační toxicita vyjádřená jako LCt₅₀</h2>
+    <p class="body-text">Čím <strong>nižší</strong> hodnota LCt₅₀, tím toxičtější látka. Délka pruhu proto vyjadřuje <strong>relativní toxicitu vztaženou k sarinu</strong>, nikoli samotnou hodnotu LCt₅₀.</p>
+    <div class="bars">
+      <div class="bar-row"><div>Sarin (GB) · látka G</div><div class="bar-track"><div class="bar-fill" style="width:3.5%;background:#86AE8D"></div></div><div class="bar-val">55</div></div>
+      <div class="bar-row"><div>VX · látka V</div><div class="bar-track"><div class="bar-fill" style="width:12.7%;background:#D9AE62"></div></div><div class="bar-val">15</div></div>
+      <div class="bar-row"><div>A-232 * · látka A</div><div class="bar-track"><div class="bar-fill" style="width:27%;background:#D9897B"></div></div><div class="bar-val">7</div></div>
+      <div class="bar-row"><div>A-230 * · látka A</div><div class="bar-track"><div class="bar-fill" style="width:100%;background:#9C3B2E"></div></div><div class="bar-val">1,9–3</div></div>
+    </div>
+    <p class="hint">Hodnoty v pravém sloupci jsou LCt₅₀ v mg·min·m⁻³. Pruh odpovídá podílu 55 ÷ LCt₅₀, tedy kolikrát je látka toxičtější než sarin (u A-230 počítáno z dolní meze 1,9).</p>
+    <div class="box amber mt"><div class="box-title">Jak se údaj čte</div><p><strong>LCt₅₀</strong> je součin koncentrace látky ve vzduchu a doby expozice, při němž uhyne polovina exponované populace; udává se v <strong>mg·min·m⁻³</strong>. <strong>Nižší hodnota znamená vyšší toxicitu.</strong> Na rozdíl od LD₅₀ (přednáška 3) zahrnuje i čas, protože u inhalační expozice nelze dávku vyjádřit bez doby působení. Předpoklad, že rozhoduje pouze součin, platí jen přibližně (Haberovo pravidlo).</p></div>
+    <div class="box red mt"><p><strong>*</strong> Hodnoty pro látky A jsou <strong>odhady</strong>. Nepocházejí z kontrolovaných experimentů a nejsou nezávisle ověřeny; nejistá je i samotná struktura těchto látek. Uvádíme je proto jako řádové srovnání, nikoli jako měřená data. Pro srovnání: deklarovaná pětinásobně až osminásobně vyšší účinnost oproti VX pochází z tvrzení ruských vědců, nikoli z publikovaných měření.</p></div>
+  </div>
+`);
+
+slide('toxidrom','Toxidrom', `
+  <div class="slide-inner">
+    <p class="eyebrow">4 · Bojové látky · klinický obraz</p>
+    <h2 class="headline">Cholinergní toxidrom</h2>
+    <p class="body-text">Hromadění acetylcholinu postihne současně tři typy cholinergních synapsí. Výsledný obraz je proto složen ze tří složek, jejichž poměr závisí na dávce a cestě vstupu.</p>
+    <div class="grid-3">
+      <div class="box amber"><div class="box-title">Muskarinová složka</div><p>Hladká svalovina a žlázy. <strong>Mióza</strong> (zúžení zornic až na špendlíkovou hlavičku), slzení, slinění, pocení, nadměrná sekrece v dýchacích cestách, bronchospasmus, bradykardie, zvracení, nedobrovolné močení a vyprazdňování.</p></div>
+      <div class="box red"><div class="box-title">Nikotinová složka</div><p>Nervosvalová ploténka. Svalové záškuby, poté narůstající slabost až <strong>úplná paralýza</strong> včetně dýchacího svalstva.</p></div>
+      <div class="box violet"><div class="box-title">Centrální složka</div><p>Látka proniká hematoencefalickou bariérou. Úzkost, zmatenost, <strong>křeče</strong>, útlum dechového centra, bezvědomí.</p></div>
+    </div>
+    <div class="box blue mt"><div class="box-title">Bezprostřední příčina smrti</div><p>Selhání dýchání ze tří současně působících příčin: zahlcení dýchacích cest sekretem a bronchospasmus (muskarinová složka), obrna dýchacího svalstva (nikotinová složka) a útlum dechového centra (centrální složka). Právě proto je prvním léčebným krokem zajištění dýchacích cest a atropin, nikoli oxim.</p></div>
+    <div class="box green mt"><p><strong>Mióza</strong> je nejcitlivějším a nejčasnějším příznakem; objevuje se již při dávkách, které nevyvolávají jiné obtíže, zvláště po expozici parám. Přeživší často trpí dlouhodobými následky: poruchami paměti a koncentrace, úzkostí a depresí, u části také periferní neuropatií s odstupem týdnů.</p></div>
+    <div class="abbr"><span class="lbl">POJMY</span><b>toxidrom</b> = charakteristická kombinace příznaků umožňující odhadnout třídu látky ještě před laboratorním průkazem · <b>bronchospasmus</b> = stah hladké svaloviny průdušek</div>
+  </div>
+`);
+
+slide('bl-lecba','Léčba otravy', `
+  <div class="slide-inner">
+    <p class="eyebrow">4 · Bojové látky · terapie</p>
+    <h2 class="headline">Čtyři pilíře léčby a jejich pořadí</h2>
+    <div class="flow">
+      <div class="step s-red"><b>1 · Dekontaminace</b>Svlečení oděvu odstraní až 80 % látky. Lipofilní kapalinu nejprve setřít suchým sorbentem (Fullerova zemina), teprve poté omýt teplou mýdlovou vodou</div>
+      <div class="arr">→</div>
+      <div class="step s-amber"><b>2 · Zajištění vitálních funkcí</b>Průchodnost dýchacích cest, odsávání sekretu, oxygenace, v případě potřeby řízená ventilace</div>
+    </div>
+    <div class="flow mt">
+      <div class="step s-green"><b>3 · Atropin</b>Blokuje muskarinové receptory, a tím vysušuje sekrety a uvolňuje bronchospasmus. Lék první volby; podává se opakovaně až do atropinizace</div>
+      <div class="arr">→</div>
+      <div class="step s-green"><b>4 · Oxim a diazepam</b>Oxim obnovuje aktivitu enzymu, musí být podán před zestárnutím. Benzodiazepin tlumí křeče a chrání mozek před sekundárním poškozením</div>
+    </div>
+    <div class="grid-2 mt">
+      <div class="box amber"><div class="box-title">Meze atropinu</div><p>Atropin je kvartérní bází pouze zčásti; prochází do CNS jen omezeně a centrální složku zvládá nedostatečně. Předávkování je při správné indikaci riziko přijatelné, vyžaduje však monitorování srdečního rytmu. Dávkování se neřídí hmotností, ale <strong>klinickou odpovědí</strong>.</p></div>
+      <div class="box blue"><div class="box-title">Další a experimentální postupy</div><p><strong>Předléčba pyridostigminem:</strong> vratná karbamoylace části enzymu jej chrání před nevratnou vazbou organofosfátu.</p><p><strong>Bioscavengery:</strong> exogenní enzymy (butyrylcholinesteráza) váží látku už v krvi, dříve než dosáhne synapse.</p><p><strong>Lipidová emulze</strong> a zvýšená diuréza se zkoušejí jako doplňkové postupy.</p></div>
+    </div>
+    <div class="box red mt"><p><strong>Ochrana zachránců:</strong> při použití osobních ochranných prostředků a po dekontaminaci je riziko pro zdravotnický personál nízké. Pozor na to, že organofosfáty <strong>pronikají do pryže a plastů</strong> zdravotnických přístrojů, které se tím stávají druhotným zdrojem kontaminace.</p></div>
+  </div>
+`);
+
+slide('ukolB','Úkol B – zadání', `
+  <div class="slide-inner">
+    <p class="eyebrow">Úkol B · práce s databází · 10 minut · PubChem</p>
+    <h2 class="headline">Co lze o bojové látce zjistit z veřejné databáze</h2>
+    <p class="body-text">Otevřete <strong>pubchem.ncbi.nlm.nih.gov</strong> a vyhledejte <strong>sarin</strong>, <strong>VX</strong> a <strong>A-234</strong>. Pracujte v oddílech Chemical and Physical Properties a Safety and Hazards.</p>
+    <div class="task-box"><ol>
+      <li>Zaznamenejte pro každou látku <strong>molekulovou hmotnost</strong>, <strong>tlak nasycených par</strong> a <strong>rozdělovací koeficient log P</strong>. U které z nich některý údaj chybí a proč?</li>
+      <li>Na základě tlaku par odhadněte, která látka je nebezpečnější <strong>inhalačně</strong> a která <strong>při kontaktu s kůží</strong>. Jak to souvisí s dělením na látky G a V?</li>
+      <li>Vyhledejte, zda je u některé z látek uvedena hodnota <strong>LD₅₀</strong>, a uveďte druh a cestu podání. Proč u takových látek nenajdete údaje o expozičních limitech na pracovišti běžného typu?</li>
+      <li>Porovnejte množství a kvalitu dostupných informací u sarinu a u A-234. Co z tohoto rozdílu plyne pro hodnocení rizika?</li>
+    </ol></div>
+    <div class="abbr"><span class="lbl">POJMY</span><b>tlak nasycených par</b> = míra těkavosti; určuje, jaká koncentrace látky vznikne ve vzduchu nad kapalinou · <b>log P</b> = dekadický logaritmus rozdělovacího koeficientu oktanol/voda, míra lipofility (přednáška 2)</div>
+  </div>
+`);
+
+slide('ukolB-res1','Úkol B – řešení (1, 2)', `
+  <div class="slide-inner">
+    <p class="eyebrow">Úkol B · řešení</p>
+    <h2 class="headline">Fyzikálně-chemické vlastnosti a jejich důsledky</h2>
+    <table class="data-table">
+      <tr><th>Vlastnost</th><th>Sarin</th><th>VX</th><th>A-234</th></tr>
+      <tr class="c1"><td>Molekulová hmotnost</td><td>asi 140 g/mol</td><td>asi 267 g/mol</td><td>asi 253 g/mol</td></tr>
+      <tr class="c2"><td>Tlak nasycených par</td><td><strong>vysoký</strong> (jednotky hPa při 25 °C)</td><td><strong>velmi nízký</strong> (setiny až tisíciny hPa)</td><td>údaj zpravidla <strong>chybí</strong></td></tr>
+      <tr class="c3"><td>Převažující cesta vstupu</td><td>inhalačně, páry</td><td>kůží, kapalina a aerosol</td><td>uváděn rozptyl ve formě jemného prášku</td></tr>
+      <tr class="c4"><td>Perzistence v terénu</td><td>hodiny</td><td>dny až týdny</td><td>podle dostupných údajů vysoká</td></tr>
+    </table>
+    <div class="box blue mt"><div class="box-title">2 · Interpretace</div><p>Čím vyšší tlak par, tím vyšší koncentrace látky ve vzduchu a tím větší <strong>inhalační</strong> riziko: proto jsou látky G především inhalačními jedy s rychlým nástupem a krátkou perzistencí. Málo těkavý VX naopak v terénu přetrvává a jako olejovitá kapalina se vstřebává <strong>kůží</strong>; nástup je pomalejší, ale smrtelná dávka je řádově nižší. <strong>Rozdělení na látky G a V tedy není chemickou kuriozitou, nýbrž odráží zamýšlený způsob použití.</strong></p></div>
+    <p class="hint">Konkrétní číselné hodnoty se mezi zdroji liší podle teploty a metody stanovení. Pro úkol je podstatný řád a vzájemné pořadí, nikoli desetinná místa.</p>
+  </div>
+`);
+
+slide('ukolB-res2','Úkol B – řešení (3, 4)', `
+  <div class="slide-inner">
+    <p class="eyebrow">Úkol B · řešení a interpretace</p>
+    <h2 class="headline">Meze databázového údaje</h2>
+    <div class="grid-2">
+      <div class="box amber"><div class="box-title">3 · Údaje o toxicitě</div><p>U sarinu a VX bývají uvedeny hodnoty LD₅₀ pro laboratorní druhy (potkan, myš, králík) pro různé cesty podání, často z vojenských zdrojů. <strong>Expoziční limity na pracovišti neexistují</strong>, protože tyto látky nemají legální průmyslové využití: nakládání s nimi je podle Úmluvy o zákazu chemických zbraní zakázáno a limity se stanovují pouze pro pracoviště likvidující zásoby nebo pro detekci.</p></div>
+      <div class="box red"><div class="box-title">4 · Rozdíl mezi sarinem a A-234</div><p>U sarinu najdete experimentálně stanovené fyzikálně-chemické vlastnosti, spektra, toxikologická data a analytické metody. U A-234 je většina položek <strong>vypočtená, nikoli změřená</strong>, chybí toxikologická data a sporná je i samotná struktura.</p></div>
+    </div>
+    <div class="box green mt"><div class="box-title">Závěr pro hodnocení rizika</div><p>Záznam v databázi není totéž co ověřený údaj. <strong>Vždy je třeba rozlišit, zda jde o hodnotu změřenou, vypočtenou in silico (přednáška 6), nebo převzatou z nerecenzovaného zdroje.</strong> U látek A je nejistota tak velká, že kvantitativní hodnocení rizika v obvyklém smyslu nelze provést; proto se pracuje s nejhorším předpokládaným scénářem. Tentýž princip platí pro nové látky obecně, nejen pro bojové.</p></div>
+    <div class="box blue mt"><p><strong>Analytický rozměr:</strong> detekce látek A byla ztížena právě tím, že jejich spektra nebyla v referenčních knihovnách. Po roce 2018 byly do seznamů OPCW doplněny a referenční standardy zpřístupněny určeným laboratořím. Bez referenčního standardu nelze látku potvrdit, byť ji přístroj zachytí.</p></div>
+  </div>
+`);
+
+/* =====================================================================
+   5 · MUTAGENITA A KARCINOGENITA (≈ 30 min)
+   ===================================================================== */
+slide('kanc-uvod','Karcinogeneze – úvod', `
+  <div class="slide-inner">
+    <p class="eyebrow">5 · Karcinogeneze · východiska</p>
+    <h2 class="headline">Nádorové onemocnění jako porucha genetické informace</h2>
+    <p class="body-text">Zhoubný nádor je geneticky podmíněná porucha regulace buněčného dělení a růstu. Přeměna normální buňky na nádorovou je podmíněna <strong>změnami v genetické informaci a v její expresi</strong>, nikoli jediným dějem: vzniká postupným hromaděním změn v průběhu let až desetiletí.</p>
+    <div class="grid-2 mt">
+      <div class="box blue"><div class="box-title">Historické vodítko: povolání</div><p>Souvislost mezi nádory a chemickou expozicí byla poprvé rozpoznána na základě povolání. Percivall Pott popsal roku 1775 nádory šourku u kominíků, později byly popsány nádory močového měchýře u dělníků v barvářském průmyslu a nádory plic u horníků. Profesní expozice je zpravidla vyšší a lépe ohraničená než expozice obecné populace, proto se karcinogeny často odhalí nejdříve zde.</p></div>
+      <div class="box red"><div class="box-title">Chemický princip</div><p>Většina chemických karcinogenů jsou <strong>elektrofilní</strong> látky nebo jejich metabolity. Vážou se na <strong>nukleofilní centra v bázích nukleových kyselin</strong> (zejména N7 a O6 guaninu) za vzniku <strong>aduktů DNA</strong>. Neopravený adukt se při replikaci stává zdrojem mutace.</p></div>
+    </div>
+    <div class="box amber mt"><div class="box-title">Dvě důležité výhrady</div><p><strong>Ne každá látka reagující s DNA je karcinogenní</strong> – záleží na tom, zda je zasažen kritický gen a zda buňka přežije. <strong>A naopak existuje významná skupina karcinogenů, které s DNA nereagují vůbec.</strong> K tomuto rozdělení se vrátíme, protože má zásadní důsledky pro stanovení limitů.</p></div>
+    <div class="abbr"><span class="lbl">POJMY</span><b>elektrofil</b> = částice s nedostatkem elektronů, vyhledávající centra s jejich přebytkem · <b>adukt DNA</b> = produkt kovalentní vazby cizorodé molekuly na bázi DNA</div>
+  </div>
+`);
+
+slide('stadia','Čtyři stadia', `
+  <div class="slide-inner">
+    <p class="eyebrow">5 · Karcinogeneze · vícestupňový proces</p>
+    <h2 class="headline">Karcinogeneze probíhá ve čtyřech stadiích</h2>
+    <div class="flow">
+      <div class="step s-red"><b>1 · Iniciace</b>Primární poškození DNA (léze), neopravené se fixuje replikací jako mutace. Děj je rychlý a nevratný</div>
+      <div class="arr">→</div>
+      <div class="step s-amber"><b>2 · Promoce</b>Pomnožení iniciované buňky. Děj je pozvolný a vratný, pokud promotor přestane působit</div>
+    </div>
+    <div class="flow mt">
+      <div class="step s-red"><b>3 · Progrese</b>Genetická nestabilita, narůstající malignita a invazivita. Od tohoto okamžiku je proces nevratný</div>
+      <div class="arr">→</div>
+      <div class="step s-red"><b>4 · Metastazování</b>Šíření nádorových buněk oběhovým a lymfatickým systémem do vzdálených tkání</div>
+    </div>
+    <div class="box green mt"><div class="box-title">Proč na tomto členění záleží</div><p>Jednotlivá stadia lze ovlivnit různými látkami a různými opatřeními. <strong>Iniciátor</strong> poškozuje DNA, <strong>promotor</strong> nikoli. Zásadní je, že promoce je vratná: ukončení expozice promotoru může zastavit rozvoj onemocnění i u buňky, která už byla iniciována. Na tom je založena část preventivních opatření.</p></div>
+    <div class="box blue mt"><p>Latence mezi expozicí a klinickým projevem bývá <strong>10 až 40 let</strong>. To je hlavní důvod, proč se karcinogenní účinek obtížně prokazuje epidemiologicky a proč se expoziční data (přednáška 5) musí uchovávat desítky let.</p></div>
+  </div>
+`);
+
+slide('iniciace','Iniciace', `
+  <div class="slide-inner">
+    <p class="eyebrow">5 · Karcinogeneze · stadium 1</p>
+    <h2 class="headline">Iniciace: typy primárního poškození DNA</h2>
+    <table class="data-table">
+      <tr><th>Typ léze</th><th>Vznik</th><th>Osud</th></tr>
+      <tr class="c1"><td><strong>Hydrolyticky labilní adukty</strong></td><td>alkylace báze, zpravidla na N7 guaninu</td><td>pozměněná báze se z řetězce odštěpí, vzniká <strong>apurinní místo</strong>, tedy úsek bez báze</td></tr>
+      <tr class="c2"><td><strong>Chemicky stálé adukty</strong></td><td>objemné adukty, např. diolepoxidů polycyklických uhlovodíků</td><td>mohou být odstraněny <strong>excizní reparací</strong>; jsou-li opraveny chybně, vzniká mutace</td></tr>
+      <tr class="c3"><td><strong>Křížové vazby</strong></td><td>bifunkční alkylační činidla (yperit) váží dvě místa současně</td><td>kovalentní propojení dvou míst téhož nebo obou vláken; blokuje replikaci</td></tr>
+      <tr class="c4"><td><strong>Oxidační poškození</strong></td><td>hydroxylový radikál a produkty peroxidace lipidů (ethenoadukty)</td><td>typickým produktem je <strong>8-oxoguanin</strong>; prokazatelný v tkáních, nádorových buňkách i v moči</td></tr>
+    </table>
+    <div class="box blue mt"><p><strong>Nechemické iniciátory:</strong> UV záření vyvolává fotochemickou dimerizaci sousedních thyminů, ionizující záření způsobuje jedno- i dvouvláknové zlomy. Mechanismus se liší, výsledek je týž.</p></div>
+    <div class="box amber mt"><div class="box-title">Jak se z léze stane mutace</div><p>Léze sama ještě není mutace. Pokud není opravena <strong>před replikací</strong>, naruší komplementaritu bází: polymeráza zařadí do nově syntetizovaného vlákna nesprávný nukleotid a změna se tím <strong>fixuje</strong>. Teprve tehdy jde o mutaci. Je-li zasažen kritický gen, je buňka iniciována.</p></div>
+  </div>
+`);
+
+slide('oprava','Opravné mechanismy', `
+  <div class="slide-inner">
+    <p class="eyebrow">5 · Karcinogeneze · obrana buňky</p>
+    <h2 class="headline">Proč nás tisíce lézí denně nezabijí</h2>
+    <div class="grid-2">
+      <div class="box green"><div class="box-title">Rozsah dějů</div><p>V savčí buňce vznikne <strong>několik tisíc poškození DNA za hodinu</strong>, z převážné části endogenního původu: spontánní hydrolýza vazeb, kyslíkové radikály z buněčného dýchání, endogenní methylační činidla.</p><p>Drtivá většina je opravena. Výsledkem je řádově <strong>2 až 3 trvalé mutace za rok</strong> na buňku.</p><p>Mutace je tedy přirozený jev a hybná síla evoluce; pro jednotlivou buňku je však zpravidla nevýhodná.</p></div>
+      <div class="box blue"><div class="box-title">Tři úrovně obrany</div><p><strong>1 · Oprava DNA</strong> – excizní reparace báze nebo nukleotidu, oprava chybného párování, oprava dvouvláknových zlomů.</p><p><strong>2 · Kontrolní body a apoptóza</strong> – bílkovina <strong>p53</strong>, kódovaná tumor supresorovým genem <em>TP53</em>, zastaví buněčný cyklus do doby opravy a při rozsáhlém poškození spustí řízenou buněčnou smrt.</p><p><strong>3 · Imunitní dohled</strong> – iniciovaná buňka může být rozpoznána a eliminována imunitním systémem.</p></div>
+    </div>
+    <div class="box red mt"><div class="box-title">Kde se obrana láme</div><p>Nejnebezpečnější jsou mutace v genech, které <strong>řídí samotnou obranu</strong>. Mutace <em>TP53</em> je přítomna ve více než polovině lidských nádorů; buňka tím ztrácí schopnost zastavit cyklus i spustit apoptózu, a hromadění dalších mutací se zrychluje. Připomeňme konkrétní příklad z přednášky 7: aflatoxin B1 vyvolává charakteristickou mutaci v <strong>kodonu 249</strong> genu <em>TP53</em>.</p></div>
+    <div class="abbr"><span class="lbl">POJMY</span><b>apoptóza</b> = programovaná buněčná smrt · <b>tumor supresorový gen</b> = gen, jehož produkt brzdí dělení buňky; jeho ztráta funkce dělení uvolňuje · <b>excizní reparace</b> = vyříznutí poškozeného úseku a jeho dosyntetizování podle druhého vlákna</div>
+  </div>
+`);
+
+slide('promoce','Promoce a progrese', `
+  <div class="slide-inner">
+    <p class="eyebrow">5 · Karcinogeneze · stadia 2 až 4</p>
+    <h2 class="headline">Promoce, progrese, metastazování</h2>
+    <div class="grid-2">
+      <div class="box amber"><div class="box-title">2 · Promoce</div><p><strong>Promotor je látka, která podporuje pomnožení iniciované buňky, aniž sama poškozuje DNA.</strong> Působí dvěma způsoby: urychluje dělení iniciovaných buněk a tlumí mechanismy, které nadměrné dělení potlačují.</p><p><strong>Endogenní promotory:</strong> růstové faktory, estrogeny a androgeny (nádory prsu, jater, prostaty).</p><p><strong>Exogenní promotory:</strong> chlorované uhlovodíky (DDT, TCDD), forbolestery, nadbytek tuků v potravě.</p><p><strong>Nepřímá promoce:</strong> cytotoxická látka usmrcuje buňky cílové tkáně, následná regenerační proliferace sama zvyšuje pravděpodobnost pomnožení iniciované buňky. Proto může být i čistě cytotoxická látka při dlouhodobé expozici karcinogenní.</p></div>
+      <div class="box red"><div class="box-title">3 · Progrese a 4 · metastazování</div><p>V progresi se genetická informace nádorových buněk stává <strong>nestabilní</strong>: narůstá počet chromozomových změn, buňky se stále citlivěji přizpůsobují růstovým signálům a ztrácejí zpětnovazebnou kontrolu. Roste rychlost růstu, invazivita i schopnost šíření. <strong>Od tohoto stadia je proces nevratný.</strong></p><p><strong>Progresor</strong> je látka podporující přechod z promoce do progrese: arsenité ionty, azbest, benzen, polychlorované bifenyly.</p><p><strong>Metastazování</strong> je konečné stadium: buňky pronikají do krevních a lymfatických cév a zakládají druhotná ložiska ve vzdálených tkáních.</p></div>
+    </div>
+    <div class="box green mt"><p><strong>Experimentální důkaz dvoustupňovosti:</strong> podá-li se pokusnému zvířeti jediná nízká dávka iniciátoru a poté opakovaně promotor, nádory vzniknou. V obráceném pořadí nikoli, a samotný promotor také ne. Iniciace tedy musí předcházet a její účinek přetrvává, kdežto promoce vyžaduje opakované působení.</p></div>
+  </div>
+`);
+
+slide('mutagen-karcinogen','Mutagenita a karcinogenita', `
+  <div class="slide-inner">
+    <p class="eyebrow">5 · Karcinogeneze · vztah pojmů</p>
+    <h2 class="headline">Mutagenita a karcinogenita nejsou totéž</h2>
+    <div class="grid-2">
+      <div class="box blue"><div class="box-title">Co z čeho plyne</div><p>Mutace jsou podstatné ve stadiu iniciace a progrese. Z toho plyne předpoklad, že <strong>mutagenní látka má karcinogenní potenciál</strong>.</p><p>Samotná iniciace však k rozvoji nádoru <strong>nestačí</strong>: bez promoce a progrese zůstane iniciovaná buňka bez klinického následku.</p><p>A obráceně: mutagenita <strong>není nutnou podmínkou</strong> karcinogenity, protože existuje skupina epigenetických karcinogenů.</p></div>
+      <div class="box green"><div class="box-title">Praktický rozdíl v měřitelnosti</div><p>Mutagenitu lze <strong>snadno, rychle a kvantitativně</strong> měřit a srovnávat: Amesův test a další testy in vitro (přednáška 6) poskytnou výsledek v řádu dnů.</p><p>Karcinogenitu lze přímo prokázat pouze dvouletou studií na hlodavcích nebo epidemiologicky, tedy s odstupem desetiletí.</p><p><strong>Proto se mutagenita používá jako prediktor karcinogenity</strong> – se všemi omezeními, která z nedokonalé shody obou vlastností plynou.</p></div>
+    </div>
+    <div class="box amber mt"><p>Vztah mezi oběma vlastnostmi je tedy silný, ale nikoli jednoznačný. Pozitivní Amesův test je důvodem k podezření a k dalšímu testování, nikoli důkazem karcinogenity; negativní výsledek karcinogenitu nevylučuje, protože epigenetické karcinogeny tímto testem neodhalíme.</p></div>
+  </div>
+`);
+
+slide('dve-skupiny','Genotoxické a epigenetické', `
+  <div class="slide-inner">
+    <p class="eyebrow">5 · Karcinogeneze · dva typy karcinogenů</p>
+    <h2 class="headline">Rozdělení, které rozhoduje o způsobu regulace</h2>
+    <div class="grid-2">
+      <div class="box red"><div class="box-title">Genotoxické (mutagenní) karcinogeny</div><p>Poškozují genetický materiál. Teoreticky může nádor iniciovat <strong>jediná neopravená mutace v kritickém genu</strong>, a proto <strong>nelze spolehlivě stanovit práh účinku</strong>.</p><p><strong>Příklady:</strong> benzo[a]pyren, aflatoxin B1, vinylchlorid, nitrosaminy, ethylenoxid, ionizující záření.</p><p><strong>Regulace:</strong> expozice se snižuje na nejnižší rozumně dosažitelnou úroveň. Místo bezpečné dávky se kvantifikuje <strong>pravděpodobnost</strong> nádoru při dané expozici.</p></div>
+      <div class="box green"><div class="box-title">Epigenetické karcinogeny</div><p>Genetický materiál nepoškozují, podporují růst již iniciovaných buněk. Účinek vyžaduje <strong>dlouhodobé působení nad určitou úrovní</strong>, takže <strong>práh existuje a lze jej stanovit</strong>.</p><p><strong>Příklady:</strong> fenobarbital, polychlorované dibenzo-<em>p</em>-dioxiny, DDT, estrogenní a androgenní hormony, endogenní růstové faktory.</p><p><strong>Regulace:</strong> standardní postup z přednášky 7, tedy odvození ADI nebo TDI z výchozího bodu dělením faktory nejistoty.</p></div>
+    </div>
+    <div class="box blue mt"><div class="box-title">Návaznost na přednášku 7</div><p>Právě zde se uplatní rozdíl mezi <strong>prahovou a bezprahovou závislostí dávka–odpověď</strong>. Rozhodnutí, do které skupiny látku zařadit, není formalitou: určuje, zda pro ni vůbec lze stanovit zdravotně bezpečnou dávku. U části látek je zařazení předmětem odborného sporu, protože mechanismus není dostatečně objasněn.</p></div>
+  </div>
+`);
+
+slide('kviz-prah','Kvíz: práh u karcinogenů', `
+  <div class="slide-inner">
+    <p class="eyebrow">Kontrolní kvíz · 1 minuta</p>
+    <h2 class="headline">Proč se pro genotoxické karcinogeny nestanovuje ADI?</h2>
+    <div class="quiz-card" id="q-prah">
+      <div class="quiz-q">Vyberte toxikologicky správné zdůvodnění.</div>
+      <button class="quiz-opt" data-correct="false">Protože jsou natolik toxické, že jakákoli jejich přítomnost v potravinách je zakázána.</button>
+      <button class="quiz-opt" data-correct="true">Protože se u nich nepředpokládá práh účinku: nelze vyloučit, že i velmi nízká dávka vyvolá mutaci, která iniciuje karcinogenezi.</button>
+      <button class="quiz-opt" data-correct="false">Protože u nich nejsou k dispozici dostatečná experimentální data pro odvození výchozího bodu.</button>
+      <div class="quiz-feedback" id="q-prah-fb"></div>
+    </div>
+  </div>
+`);
+
+slide('alkylacni','Alkylační činidla', `
+  <div class="slide-inner">
+    <p class="eyebrow">5 · Karcinogeneze · skupina 1</p>
+    <h2 class="headline">Alkylační činidla, aktivované olefiny a oxirany</h2>
+    <div class="grid-2">
+      <div class="box red"><div class="box-title">Alkylační činidla</div><p><strong>Jednoduchá</strong> (dimethylsulfát, methyljodid, diazomethan) alkylují DNA neselektivně.</p><p><strong>Bifunkční</strong> činidla nesou dvě reaktivní skupiny a vytvářejí <strong>křížové vazby</strong>: bis(chlormethyl)ether, yperit čili bis(2-chlorethyl)sulfid, dusíkaté yperity.</p><p>Právě tato mimořádná biologická aktivita vedla k <strong>využití odvozených látek v protinádorové léčbě</strong>: cytostatikum zasáhne nejsilněji buňky, které se nejrychleji dělí. Jde o dobře doloženou ukázku toho, že táž vlastnost může být jedem i lékem.</p></div>
+      <div class="box amber"><div class="box-title">Olefiny a oxirany</div><p>Alkeny se substituentem na koncové dvojné vazbě (halogen, karbonyl, ester, amid, nitril) se vážou na nukleofilní centra buď přímo, nebo <strong>po metabolické aktivaci cytochromem P450 na epoxid</strong>, tedy derivát oxiranu.</p><p><strong>Vinylchlorid</strong> – prokázaný lidský karcinogen; vyvolává vzácný <strong>hemangiosarkom jater</strong>. Jeho objev u dělníků v polymeraci PVC v 70. letech vedl k radikálnímu zpřísnění limitů.</p><p><strong>Akrylamid</strong> – neurotoxický, toxický pro reprodukci, podezřelý lidský karcinogen; vzniká <strong>při tepelné úpravě škrobnatých potravin</strong> nad 120 °C.</p><p><strong>Akrylonitril</strong> – podezřelý lidský karcinogen.</p></div>
+    </div>
+    <div class="box blue mt"><p><strong>Společný rys skupiny:</strong> reaktivita vůči nukleofilům není vůči DNA nijak specifická. Tytéž látky alkylují i bílkoviny, což se využívá analyticky: <strong>adukty s hemoglobinem</strong> slouží jako biomarkery expozice s dobou výpovědi odpovídající životnosti erytrocytu, tedy asi 120 dnů (přednáška 5).</p></div>
+  </div>
+`);
+
+slide('pau','Polycyklické aromatické uhlovodíky', `
+  <div class="slide-inner">
+    <p class="eyebrow">5 · Karcinogeneze · skupina 2</p>
+    <h2 class="headline">PAU: karcinogen, který vzniká z ničeho nebezpečného</h2>
+    <div class="grid-2">
+      <div>
+        <div class="box amber"><div class="box-title">Vznik a výskyt</div><p>PAU jsou běžným produktem <strong>nedokonalého spalování</strong> organických materiálů. Zdroji jsou lokální vytápění tuhými palivy, požáry, cigaretový kouř, výfukové plyny, grilované a připálené maso.</p><p>Jde o skupinu desítek látek; jako její <strong>indikátor</strong> se používá <strong>benzo[a]pyren</strong>, prokázaný lidský karcinogen.</p></div>
+        <div class="box red mt"><div class="box-title">Metabolická aktivace</div><p>Samotný benzo[a]pyren je chemicky netečný. Teprve cytochrom P450 (zejména CYP1A1) a epoxidhydroláza jej ve třech krocích převedou na <strong>diolepoxid</strong>, který se kovalentně váže na N2 guaninu.</p><p>Rozhodujícím strukturním rysem je přítomnost <strong>zátoky (bay region)</strong> v molekule: epoxid v této poloze je mimořádně reaktivní. Analogy bez zátoky jsou podstatně méně karcinogenní.</p></div>
+      </div>
+      <div class="diagram-box">
+        <svg viewBox="0 0 440 430" xmlns="http://www.w3.org/2000/svg" font-family="Helvetica, Arial, sans-serif">
+          <rect x="20" y="15" width="400" height="58" rx="12" fill="#EAF4EC" stroke="#86AE8D" stroke-width="2"/>
+          <text x="220" y="40" font-size="18" text-anchor="middle" font-weight="bold" fill="#2A3F2D">Benzo[a]pyren</text>
+          <text x="220" y="62" font-size="16" text-anchor="middle" fill="#5A5D51">netečný, lipofilní, sám o sobě nereaktivní</text>
+          <path d="M220 76 L220 104" stroke="#8A8C7E" stroke-width="2.5" marker-end="url(#arp)"/>
+          <defs><marker id="arp" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#8A8C7E"/></marker></defs>
+          <text x="232" y="96" font-size="15" fill="#5A5D51">CYP1A1</text>
+          <rect x="20" y="108" width="400" height="48" rx="12" fill="#FDF3E1" stroke="#D9AE62" stroke-width="2"/>
+          <text x="220" y="138" font-size="17" text-anchor="middle" fill="#8F5D14">7,8-epoxid</text>
+          <path d="M220 159 L220 187" stroke="#8A8C7E" stroke-width="2.5" marker-end="url(#arp)"/>
+          <text x="232" y="179" font-size="15" fill="#5A5D51">epoxidhydroláza</text>
+          <rect x="20" y="191" width="400" height="48" rx="12" fill="#FDF3E1" stroke="#D9AE62" stroke-width="2"/>
+          <text x="220" y="221" font-size="17" text-anchor="middle" fill="#8F5D14">7,8-dihydrodiol</text>
+          <path d="M220 242 L220 270" stroke="#8A8C7E" stroke-width="2.5" marker-end="url(#arp)"/>
+          <text x="232" y="262" font-size="15" fill="#5A5D51">CYP1A1</text>
+          <rect x="20" y="274" width="400" height="58" rx="12" fill="#FBECE9" stroke="#D9897B" stroke-width="2"/>
+          <text x="220" y="299" font-size="18" text-anchor="middle" font-weight="bold" fill="#9C3B2E">7,8-diol-9,10-epoxid</text>
+          <text x="220" y="321" font-size="16" text-anchor="middle" fill="#9C3B2E">silný elektrofil, epoxid v oblasti zátoky</text>
+          <path d="M220 335 L220 363" stroke="#9C3B2E" stroke-width="2.5" marker-end="url(#arr8)"/>
+          <defs><marker id="arr8" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#9C3B2E"/></marker></defs>
+          <rect x="20" y="367" width="400" height="52" rx="12" fill="#F1EDF9" stroke="#A797D2" stroke-width="2"/>
+          <text x="220" y="391" font-size="17" text-anchor="middle" font-weight="bold" fill="#6A55A8">Adukt s N2 guaninu</text>
+          <text x="220" y="411" font-size="16" text-anchor="middle" fill="#6A55A8">mutace, iniciace karcinogeneze</text>
+        </svg>
+      </div>
+    </div>
+    <div class="box blue mt"><p><strong>Paradox metabolismu:</strong> tentýž enzymový systém, který slouží k odstraňování lipofilních xenobiotik (přednáška 4), zde z netečné látky vytvoří karcinogen. Biotransformace není synonymem detoxikace.</p></div>
+  </div>
+`);
+
+slide('arylaminy','Arylaminy a nitroareny', `
+  <div class="slide-inner">
+    <p class="eyebrow">5 · Karcinogeneze · skupiny 3 a 4</p>
+    <h2 class="headline">Arylaminy a nitroareny: společný konečný metabolit</h2>
+    <div class="grid-2">
+      <div class="box violet"><div class="box-title">Arylaminy a heteroarylaminy</div><p>Aromatické aminy procházejí rozvětvenou sítí biotransformačních cest: N-oxidací, N-acetylací, glukuronidací a sulfatací. Jedna z nich vede přes N-hydroxyderivát a jeho ester ke <strong>arylnitreniovému iontu</strong>, elektrofilní částici tvořící adukty s DNA.</p><p><strong>Cílovým orgánem je typicky močový měchýř.</strong> N-glukuronid vzniklý v játrech je vyloučen do moči, v jejím kyselém prostředí se rozpadá zpět a výsledná reaktivní částice působí přímo na urotel, kde moč stojí. Jde o mimořádně názornou ukázku toho, že cílový orgán určuje <strong>místo uvolnění reaktivního metabolitu</strong>, nikoli místo jeho vzniku.</p><p><strong>Příklady:</strong> benzidin, 2-naftylamin, 4-aminobifenyl (barvářský průmysl, cigaretový kouř), heterocyklické aminy vznikající při smažení masa.</p></div>
+      <div class="box amber"><div class="box-title">Nitroareny</div><p>Aromatické nitrolátky ze <strong>výfukových plynů vznětových motorů</strong>, cigaretového kouře, spalovacích procesů a grilování.</p><p>Jsou netěkavé a <strong>adsorbují se na povrch prachových částic</strong>, s nimiž se dostávají až do alveolární oblasti (přednáška 7).</p><p>Metabolická aktivace probíhá <strong>redukcí</strong> nitroskupiny (na rozdíl od oxidace u arylaminů), výsledkem je však opět <strong>arylnitreniový iont</strong>. Byla nalezena korelace mezi mutagenitou nitroarenů a stabilitou odpovídajícího nitreniového iontu.</p></div>
+    </div>
+    <div class="box red mt"><div class="box-title">Mezidruhové rozdíly a lidská variabilita</div><p>U arylaminů jsou rozdíly mezi druhy mimořádně velké, protože zastoupení jednotlivých biotransformačních cest se druh od druhu liší; pes například prakticky postrádá N-acetyltransferázovou aktivitu. <strong>Extrapolace z pokusného zvířete na člověka je zde proto obzvlášť nejistá.</strong> I mezi lidmi existuje dobře doložený polymorfismus N-acetyltransferázy, který ovlivňuje individuální vnímavost.</p></div>
+  </div>
+`);
+
+slide('nitrosaminy','N-Nitrosaminy', `
+  <div class="slide-inner">
+    <p class="eyebrow">5 · Karcinogeneze · skupina 5</p>
+    <h2 class="headline">Nitrosaminy: karcinogen, který vzniká v nás</h2>
+    <div class="grid-2">
+      <div class="box red"><div class="box-title">Mechanismus</div><p>N-Nitrosaminy jsou <strong>genotoxické karcinogeny</strong>. Po hydroxylaci cytochromem P450 se rozpadají za vzniku <strong>silných methylačních činidel</strong>, která alkylují DNA, zejména na O6 guaninu. Právě O6-methylguanin je mimořádně mutagenní, protože se chybně páruje s thyminem.</p><p>Nejznámějším zástupcem je <strong>N-nitrosodimethylamin (NDMA)</strong>.</p></div>
+      <div class="box amber"><div class="box-title">Výskyt a souvislost s dusičnany</div><p>Nalezeny v <strong>uzeninách a dalších masných výrobcích</strong>, v pivu (dříve v podstatně vyšších koncentracích, než se změnila technologie sušení sladu), v nakládaných rybách.</p><p>Vznikají <strong>reakcí dusitanů se sekundárními aminy</strong>, a to jak při zpracování a tepelné úpravě, tak <strong>endogenně v kyselém prostředí žaludku</strong>. Právě proto spolu souvisí téma dusičnanů z přednášky 7 s tímto tématem: dusičnany se v ústní dutině redukují na dusitany a ty se mohou stát výchozí látkou pro nitrosaci.</p></div>
+    </div>
+    <div class="box green mt"><div class="box-title">Praktické důsledky</div><p>Z tohoto poznatku vycházejí konkrétní opatření: snížení přídavku dusitanových solicích směsí na technologicky nezbytné minimum, povinné přidávání <strong>kyseliny askorbové</strong>, která nitrosaci inhibuje, a doporučení omezovat spotřebu zpracovaného masa. IARC zařadila <strong>zpracované maso do skupiny 1</strong> a <strong>červené maso do skupiny 2A</strong> (2015). Ke správnému výkladu této klasifikace se dostaneme na konci přednášky.</p></div>
+    <div class="abbr"><span class="lbl">POJMY</span><b>nitrosace</b> = zavedení skupiny −N=O; zde reakce dusitanu se sekundárním aminem · <b>O6-methylguanin</b> = methylovaný guanin, který se při replikaci chybně páruje</div>
+  </div>
+`);
+
+slide('co-ovlivnuje','Co rozhoduje o potenciálu', `
+  <div class="slide-inner">
+    <p class="eyebrow">5 · Karcinogeneze · shrnutí mechanismů</p>
+    <h2 class="headline">Co určuje mutagenní a karcinogenní potenciál látky</h2>
+    <div class="grid-2">
+      <div class="box blue"><div class="box-title">Na straně látky a jejího metabolismu</div><p><strong>Charakter a rozsah metabolické aktivace</strong> – u většiny karcinogenů rozhoduje, zda a jak rychle vznikne reaktivní metabolit.</p><p><strong>Reaktivita vzniklého metabolitu</strong> – příliš nereaktivní nezasáhne DNA, příliš reaktivní zanikne dříve, než se k jádru dostane.</p><p><strong>Stabilita metabolitu</strong> – určuje, zda působí jen v místě vzniku, nebo i ve vzdálené tkáni.</p><p><strong>Poměr aktivačních a detoxikačních enzymů</strong> v dané tkáni.</p></div>
+      <div class="box green"><div class="box-title">Na straně organismu</div><p><strong>Genetický polymorfismus</strong> enzymů I. a II. fáze biotransformace a reparačních systémů.</p><p><strong>Věk</strong> – u plodu a v dětství je tkáň s rychlejším dělením citlivější.</p><p><strong>Pohlaví, hormonální stav, výživa.</strong></p><p><strong>Současná expozice dalším látkám</strong> – indukce či inhibice P450 může karcinogenitu zesílit i zeslabit (ethanol, složky potravy, léčiva).</p></div>
+    </div>
+    <div class="box amber mt"><p>Souhrnně: karcinogenita není prostou vlastností molekuly, nýbrž <strong>výsledkem interakce látky s konkrétním organismem</strong>. To je hlavní příčina obtíží při mezidruhové extrapolaci a při odvozování limitů, a zároveň důvod, proč se v hodnocení uplatňují faktory nejistoty z přednášky 7.</p></div>
+  </div>
+`);
+
+slide('parovani','Přiřaďte karcinogen', `
+  <div class="slide-inner">
+    <p class="eyebrow">Opakování · interaktivní · 4 minuty</p>
+    <h2 class="headline">Přiřaďte látku k mechanismu a cílové tkáni</h2>
+    <p class="body-text">Zvolte látku v levém sloupci a následně odpovídající charakteristiku v pravém sloupci.</p>
+    <div class="match-wrap">
+      <div><div class="match-col-title">LÁTKA</div><div id="mK-left"></div></div>
+      <div><div class="match-col-title">MECHANISMUS A CÍLOVÁ TKÁŇ</div><div id="mK-right"></div></div>
+    </div>
+    <div class="match-result" id="mK-result"></div>
+  </div>
+`);
+
+/* =====================================================================
+   6 · KVANTIFIKACE A KLASIFIKACE (≈ 20 min)
+   ===================================================================== */
+slide('ukolC','Úkol C – zadání', `
+  <div class="slide-inner">
+    <p class="eyebrow">Úkol C · výpočet · 10 minut · reálná data ČHMÚ</p>
+    <h2 class="headline">Kvantifikace bezprahového rizika: benzo[a]pyren</h2>
+    <p class="body-text">U látek bez prahu nelze stanovit bezpečnou dávku. Místo toho se odhaduje <strong>pravděpodobnost</strong>, s jakou celoživotní expozice dané koncentraci vyvolá nádorové onemocnění. Slouží k tomu <strong>jednotkové riziko</strong> (unit risk).</p>
+    <div class="box blue"><span class="big">riziko = jednotkové riziko × koncentrace ve vzduchu</span><p>Pro benzo[a]pyren jako indikátor směsi PAU uvádí WHO jednotkové riziko <strong>8,7 · 10⁻⁵</strong> na 1 ng·m⁻³ při celoživotní (70letá) inhalační expozici.</p></div>
+    <div class="task-box"><ol>
+      <li>Jaké celoživotní riziko plyne z expozice koncentraci rovné <strong>cílovému imisnímu limitu 1 ng·m⁻³</strong>? Vyjádřete jako počet případů na 100 000 obyvatel.</li>
+      <li>V roce 2024 byl roční imisní limit podle ČHMÚ překročen na <strong>21 z 59 stanic</strong>, na <strong>1,3 % plochy ČR</strong>, kde žije asi <strong>7,3 % obyvatel</strong>. Kolika osobám to při 10,9 milionu obyvatel odpovídá?</li>
+      <li>Předpokládejte, že tato skupina je celoživotně exponována koncentraci <strong>3 ng·m⁻³</strong>. Kolik dalších případů nad rámec situace při limitu to znamená?</li>
+      <li>Hlavním zdrojem emisí benzo[a]pyrenu v ČR je <strong>lokální vytápění domácností, a to z 96,6 %</strong>. Jaká opatření z toho logicky plynou a proč by zpřísnění limitů pro průmysl situaci nevyřešilo?</li>
+    </ol></div>
+    <div class="abbr"><span class="lbl">POJMY</span><b>jednotkové riziko</b> = přírůstek pravděpodobnosti nádoru při celoživotní expozici jednotkové koncentraci · <b>cílový imisní limit</b> = hodnota, které má být dosaženo, je-li to dosažitelné přiměřenými prostředky (směrnice 2004/107/ES, zákon č. 201/2012 Sb.)</div>
+  </div>
+`);
+
+slide('ukolC-res1','Úkol C – řešení (1–3)', `
+  <div class="slide-inner">
+    <p class="eyebrow">Úkol C · řešení</p>
+    <h2 class="headline">Výpočet</h2>
+    <div class="sol-box">
+      <div class="sol-label">1 · RIZIKO PŘI KONCENTRACI ROVNÉ LIMITU</div>
+      <div class="calc-step">8,7 · 10⁻⁵ × 1 = 8,7 · 10⁻⁵ → <span class="res">asi 9 případů na 100 000 osob</span></div>
+      <div class="sol-label mt">2 · POČET EXPONOVANÝCH OBYVATEL</div>
+      <div class="calc-step">10 900 000 × 0,073 = <span class="res">asi 800 000 osob</span></div>
+      <div class="sol-label mt">3 · PŘÍRŮSTEK PŘI 3 ng·m⁻³</div>
+      <div class="calc-step">riziko při 3 ng/m³: 8,7 · 10⁻⁵ × 3 = 2,61 · 10⁻⁴</div>
+      <div class="calc-step">přírůstek oproti limitu: 2,61 · 10⁻⁴ − 0,87 · 10⁻⁴ = 1,74 · 10⁻⁴</div>
+      <div class="calc-step">800 000 × 1,74 · 10⁻⁴ = <span class="bad">asi 140 případů navíc za celoživotní expozici</span></div>
+    </div>
+    <p class="hint">Výsledek je <strong>statistický odhad pro populaci</strong>, nikoli předpověď pro jednotlivce. Vyjadřuje počet případů, o které se předpokládaný výskyt zvýší nad obvyklé pozadí, a je zatížen značnou nejistotou: jednotkové riziko bylo odvozeno z dat o koksárenských dělnících a lineárně extrapolováno k nízkým dávkám.</p>
+  </div>
+`);
+
+slide('ukolC-res2','Úkol C – řešení (4)', `
+  <div class="slide-inner">
+    <p class="eyebrow">Úkol C · řešení a interpretace</p>
+    <h2 class="headline">Od čísla k opatření</h2>
+    <div class="grid-2">
+      <div class="box green"><div class="box-title">4 · Kam opatření musí mířit</div><p>Podílí-li se lokální vytápění domácností na emisích benzo[a]pyrenu z <strong>96,6 %</strong>, je zřejmé, že zpřísnění limitů pro průmyslové zdroje by na celkové emisi změnilo nejvýše jednotky procent. Účinná opatření musí směřovat na <strong>velký počet malých, rozptýlených a obtížně kontrolovatelných zdrojů</strong>: výměnu kotlů, zákaz spalování nekvalitního paliva a odpadu, kontrolu provozu spalovacích zdrojů, podporu náhradních způsobů vytápění.</p></div>
+      <div class="box amber"><div class="box-title">Proč je to obtížné</div><p>Na rozdíl od průmyslového zdroje se emise jednotlivé domácnosti neměří, zdroj je nízký, takže se znečištění nerozptýlí, a expozice je nejvyšší právě tam, kde lidé bydlí. Regulace navíc zasahuje do soukromí a má výrazný sociální rozměr: nejhůře spalují ti, kdo si nemohou dovolit lepší palivo ani nový kotel.</p></div>
+    </div>
+    <div class="box blue mt"><div class="box-title">Proč je limit právě 1 ng·m⁻³</div><p>Z výpočtu v bodě 1 plyne, že limitní koncentraci odpovídá riziko řádu <strong>10⁻⁴</strong>. Takto jsou limity pro bezprahové látky konstruovány: nevyjadřují bezpečnou koncentraci, nýbrž <strong>společensky přijatou úroveň rizika</strong>. Rozdíl oproti ADI z přednášky 7 je tedy zásadní – ADI má být bezpečná, imisní limit pro karcinogen bezpečný být nemůže.</p></div>
+    <div class="box red mt"><p><strong>Poznámka k nejistotě:</strong> hodnoty jednotkového rizika se mezi autoritami liší, protože se liší výchozí studie i model extrapolace. Číslo je nástrojem srovnání a rozhodování, nikoli přesnou předpovědí počtu onemocnění.</p></div>
+  </div>
+`);
+
+slide('iarc-clp','IARC a CLP', `
+  <div class="slide-inner">
+    <p class="eyebrow">6 · Klasifikace · dva různé systémy</p>
+    <h2 class="headline">Dvě klasifikace, které se často zaměňují</h2>
+    <div class="grid-2">
+      <div class="box violet"><div class="box-title">IARC · síla důkazu</div><p>Mezinárodní agentura pro výzkum rakoviny (součást WHO) hodnotí, <strong>jak silný je důkaz</strong>, že látka u člověka způsobuje nádory.</p><p><strong>Skupina 1</strong> – karcinogenní pro člověka<br><strong>Skupina 2A</strong> – pravděpodobně karcinogenní<br><strong>Skupina 2B</strong> – možná karcinogenní<br><strong>Skupina 3</strong> – nelze klasifikovat</p><p><strong>IARC nehodnotí potenci ani expozici.</strong> Skupina 1 tedy neříká, jak velké riziko látka za reálných podmínek představuje.</p></div>
+      <div class="box blue"><div class="box-title">CLP · právní klasifikace v EU</div><p>Nařízení (ES) č. 1272/2008 určuje, <strong>jak musí být látka označena</strong> na obalu a v bezpečnostním listu.</p><p><strong>Carc. 1A</strong> – prokázaný karcinogen podle dat u člověka<br><strong>Carc. 1B</strong> – prokázaný podle dat ze zvířat<br><strong>Carc. 2</strong> – podezřelý karcinogen</p><p>Standardní věty o nebezpečnosti: <strong>H350</strong> může vyvolat rakovinu, <strong>H351</strong> podezření na vyvolání rakoviny, <strong>H340</strong> může vyvolat genetické poškození, <strong>H341</strong> podezření na genetické poškození.</p></div>
+    </div>
+    <div class="box amber mt"><div class="box-title">Proč se závěry obou systémů mohou lišit</div><p>Liší se otázkou i postupem. IARC hodnotí <strong>veřejně dostupné publikace</strong> a klasifikuje podle síly důkazu; postačí přesvědčivý důkaz z omezeného počtu studií. Výbor RAC agentury ECHA posuzuje <strong>celkovou váhu důkazů</strong> včetně nepublikovaných studií předložených výrobci a rozhoduje podle kritérií CLP. Proto může IARC zařadit <strong>glyfosát</strong> do skupiny 2A (2015), zatímco RAC opakovaně, naposledy roku 2022, uzavřel, že klasifikace jako karcinogen není podle kritérií CLP odůvodněná.</p></div>
+  </div>
+`);
+
+slide('ukolD','Úkol D – zadání', `
+  <div class="slide-inner">
+    <p class="eyebrow">Úkol D · práce se zdroji · 8 minut</p>
+    <h2 class="headline">Táž látka, tři zdroje, tři odlišná sdělení</h2>
+    <p class="body-text">V červenci 2023 zařadila IARC <strong>aspartam</strong> do skupiny 2B. Ve stejném okamžiku potvrdil výbor JECFA jeho <strong>přijatelný denní přívod 40 mg/kg tělesné hmotnosti</strong>. Část médií to prezentovala jako rozpor.</p>
+    <div class="task-box"><ol>
+      <li>Vysvětlete, proč obě sdělení mohou platit současně. Která z nich se týká <strong>nebezpečnosti</strong> a která <strong>rizika</strong> (přednáška 7)?</li>
+      <li>Plechovka nápoje obsahuje asi <strong>200 mg aspartamu</strong>. Kolik plechovek by musela vypít osoba o hmotnosti 70 kg, aby ADI překročila?</li>
+      <li>Vyhledejte v databázi ECHA CHEM harmonizovanou klasifikaci <strong>benzenu</strong> a zaznamenejte příslušné třídy nebezpečnosti a H-věty. Porovnejte se zařazením benzenu v monografiích IARC.</li>
+      <li>Ve stejné skupině IARC jako aspartam jsou například výfukové plyny zážehových motorů nebo nakládaná zelenina po asijském způsobu. Co z toho plyne pro výklad sdělení <strong>„IARC zařadila látku mezi možné karcinogeny“</strong> ve zpravodajství?</li>
+    </ol></div>
+    <div class="abbr"><span class="lbl">ZDROJE</span><b>ECHA CHEM</b> chem.echa.europa.eu · <b>IARC Monographs</b> monographs.iarc.who.int · <b>JECFA</b> = Společný výbor expertů FAO/WHO pro potravinářská aditiva</div>
+  </div>
+`);
+
+slide('ukolD-res','Úkol D – řešení', `
+  <div class="slide-inner">
+    <p class="eyebrow">Úkol D · řešení</p>
+    <h2 class="headline">Rozbor</h2>
+    <div class="sol-box">
+      <div class="sol-label">2 · POČET PLECHOVEK DO VYČERPÁNÍ ADI</div>
+      <div class="calc-step">ADI pro 70 kg: 40 × 70 = 2 800 mg/den</div>
+      <div class="calc-step">2 800 ÷ 200 = <span class="res">14 plechovek denně, každý den po celý život</span></div>
+    </div>
+    <div class="grid-2 mt">
+      <div class="box blue"><div class="box-title">1 · Nebezpečnost a riziko</div><p>Zařazení IARC do skupiny 2B je výrok o <strong>nebezpečnosti</strong>, konkrétně o tom, že důkaz je omezený. ADI od JECFA je výrok o <strong>riziku</strong>: udává, jaká expozice je za celoživotního příjmu přijatelná. Obě tvrzení odpovídají na jinou otázku, proto si neodporují.</p></div>
+      <div class="box green"><div class="box-title">3 · Benzen</div><p>Harmonizovaná klasifikace: <strong>Carc. 1A</strong> (H350), <strong>Muta. 1B</strong> (H340), dále STOT RE 1, Asp. Tox. 1 a další. IARC jej řadí do <strong>skupiny 1</strong>. Zde se oba systémy shodují, protože důkazy u člověka jsou jednoznačné (leukemie, přednáška 7).</p></div>
+    </div>
+    <div class="box amber mt"><div class="box-title">4 · Jak sdělení číst</div><p>Skupina 2B znamená <strong>„důkaz je omezený a nelze vyloučit, že látka karcinogenní je“</strong>. Nevypovídá o tom, jak silný účinek látka má, ani při jaké expozici. Zpráva „látka byla zařazena mezi možné karcinogeny“ je proto bez uvedení expozice prakticky nezpravodajská. Při výkladu je nutné připojit tři údaje: <strong>sílu důkazu, očekávanou expozici a existenci limitní hodnoty</strong>. Pro samotného spotřebitele je podstatnější sdělení, že ADI se při obvyklé spotřebě nepřekračuje.</p></div>
+  </div>
+`);
+
+slide('diskuse','Diskusní otázky', `
+  <div class="slide-inner">
+    <p class="eyebrow">Závěr · diskuse</p>
+    <h2 class="headline">Diskusní otázky</h2>
+    <div id="discussion-list" style="display:grid;gap:10px;margin-top:10px;"></div>
+  </div>
+`);
+
+slide('shrnuti','Shrnutí', `
+  <div class="slide-inner">
+    <p class="eyebrow">Závěr</p>
+    <h2 class="headline">Shrnutí</h2>
+    <div class="grid-2">
+      <div class="box blue"><div class="box-title">Neurotoxicita</div><p>Neuron lze zasáhnout na pěti úrovních. Přímé poškození je nevratné, zásah do přenosu signálu zpravidla vratný. O tom, zda látka působí na CNS, rozhoduje průchod hematoencefalickou bariérou.</p></div>
+      <div class="box red"><div class="box-title">Inhibitory AChE</div><p>Karbamáty inhibují vratně, organofosfáty nevratně. O účinnosti léčby rozhoduje rychlost stárnutí enzymu. Atropin řeší muskarinovou složku, oxim obnovuje enzym, diazepam tlumí křeče.</p></div>
+      <div class="box amber"><div class="box-title">Karcinogeneze</div><p>Vícestupňový proces: iniciace, promoce, progrese, metastazování. Většina chemických karcinogenů vyžaduje metabolickou aktivaci na elektrofilní metabolit.</p></div>
+      <div class="box green"><div class="box-title">Regulace</div><p>Genotoxický karcinogen se reguluje pravděpodobnostně (jednotkové riziko), epigenetický prahově (ADI). IARC hodnotí sílu důkazu, CLP určuje právní označení.</p></div>
+    </div>
+    <p class="footer-note">Přednáška 9: jedy v chemických laboratořích a případové studie průmyslových havárií.</p>
+  </div>
+`);
+
+slide('zdroje','Zdroje', `
+  <div class="slide-inner">
+    <p class="eyebrow">Závěr</p>
+    <h2 class="headline">Zdroje</h2>
+    <div class="sources">
+      <h4>LITERATURA</h4>
+      <p>Charejoo A., Arabfard M., Jafari A., Nourian Y. H. (2023): A complete, evidence-based review on novichok poisoning based on epidemiological aspects and clinical management. <em>Frontiers in Toxicology</em> 4:1004705.</p>
+      <p>WHO (2000): Air Quality Guidelines for Europe, 2. vydání, kapitola 5.9 Polycyclic aromatic hydrocarbons – jednotkové riziko benzo[a]pyrenu.</p>
+      <p>EFSA (2012): Scientific Opinion on the risk for public health related to the presence of mercury and methylmercury in food – TWI pro methylrtuť.</p>
+      <p>IARC Monographs, sv. 134 (2023): Aspartame. IARC Monographs, sv. 112 (2015): Glyphosate. IARC Monographs, sv. 114 (2015): Red meat and processed meat.</p>
+      <p>ECHA, Výbor pro posuzování rizik (RAC): stanovisko ke klasifikaci glyfosátu, 2022.</p>
+      <h4>DATA A PRÁVNÍ PŘEDPISY</h4>
+      <p>ČHMÚ: Znečištění ovzduší na území České republiky v roce 2024 (grafická ročenka) – překročení imisního limitu benzo[a]pyrenu a podíl lokálního vytápění na emisích.</p>
+      <p>Směrnice 2004/107/ES a zákon č. 201/2012 Sb., o ochraně ovzduší – cílový imisní limit pro benzo[a]pyren.</p>
+      <p>Nařízení (ES) č. 1272/2008 (CLP) – třídy nebezpečnosti a standardní věty o nebezpečnosti.</p>
+      <p>Úmluva o zákazu chemických zbraní (1993); Minamatská úmluva o rtuti (2013).</p>
+      <h4>DATABÁZE</h4>
+      <p>PubChem: pubchem.ncbi.nlm.nih.gov · ECHA CHEM: chem.echa.europa.eu · IARC Monographs: monographs.iarc.who.int · ČHMÚ: info.chmi.cz</p>
+      <h4>OBRÁZKY</h4>
+      <p>Strukturní vzorce bojových látek: PubChem (veřejná doména). Metabolická aktivace hexanu: převzato z tištěné učebnice, doplnit úplnou citaci. Muzeum nemoci Minamata: fotografie poskytnutá vyučující. Ostatní schémata: vlastní zpracování podle uvedených zdrojů.</p>
+    </div>
+  </div>
+`);
+
+
+const deck = document.getElementById('deck');
+slides.forEach((s,i)=>{
+  const el = document.createElement('div');
+  el.className='slide'; el.id='slide-'+i; el.innerHTML=s.html;
+  deck.appendChild(el);
+});
+const overlayList = document.getElementById('overlay-list');
+slides.forEach((s,i)=>{
+  const li = document.createElement('li');
+  li.innerHTML = '<span>'+String(i+1).padStart(2,'0')+'</span>'+s.title;
+  li.onclick = ()=>{ goTo(i); toggleOverlay(false); };
+  overlayList.appendChild(li);
+});
+
+let current = 0;
+function render(){
+  document.querySelectorAll('.slide').forEach((el,i)=> el.classList.toggle('active', i===current));
+  document.getElementById('progress-fill').style.width = ((current+1)/slides.length*100)+'%';
+  document.getElementById('counter').textContent = (current+1)+' / '+slides.length;
+  document.getElementById('prevBtn').disabled = current===0;
+  document.getElementById('nextBtn').disabled = current===slides.length-1;
+  initSlideWidgets(current);
+  renderNotes();
+}
+function goTo(i){ current = Math.max(0, Math.min(slides.length-1, i)); render(); }
+function nextSlide(){ goTo(current+1); }
+function prevSlide(){ goTo(current-1); }
+document.addEventListener('keydown', (e)=>{
+  if(document.getElementById('lightbox').classList.contains('show')){ if(e.key==='Escape') closeLightbox(); return; }
+  if(document.getElementById('overlay').classList.contains('show')){ if(e.key==='Escape') toggleOverlay(false); return; }
+  if(e.key==='ArrowRight' || e.key===' ') nextSlide();
+  if(e.key==='ArrowLeft') prevSlide();
+  if(e.key==='Escape') toggleOverlay(false);
+  if(e.key==='n' || e.key==='N'){ document.getElementById('notes').classList.toggle('show'); renderNotes(); }
+});
+function toggleOverlay(show){ document.getElementById('overlay').classList.toggle('show', show); }
+
+/* ---- poznámky vyučujícího: obsah jen z lokálního souboru Lektor_poznamky_P8.js (klávesa N) ---- */
+function renderNotes(){
+  const box = document.getElementById('notes');
+  if(!box.classList.contains('show')) return;
+  const N = window.LEKTOR_NOTES || null;
+  const id = slides[current].id;
+  if(!N){ box.innerHTML = '<div class="nh">POZNÁMKY VYUČUJÍCÍHO</div>Soubor Lektor_poznamky_P8.js nebyl nalezen.'; return; }
+  box.innerHTML = '<div class="nh">POZNÁMKY VYUČUJÍCÍHO · '+(current+1)+' / '+slides.length+' · '+slides[current].title+' · (N = skrýt)</div>' + (N[id] || '<em>K tomuto slidu nejsou poznámky.</em>');
+}
+
+/* ---- lightbox ---- */
+deck.addEventListener('click', (e)=>{
+  const img = e.target.closest('.scheme-img');
+  if(img){ openLightbox('<img src="'+img.getAttribute('src')+'" alt="'+(img.getAttribute('alt')||'')+'">'); return; }
+  const svg = e.target.closest('.diagram-box svg');
+  if(svg){ openLightbox(svg.outerHTML); return; }
+});
+function openLightbox(html){ document.getElementById('lightbox-inner').innerHTML = html; document.getElementById('lightbox').classList.add('show'); }
+function closeLightbox(){ document.getElementById('lightbox').classList.remove('show'); document.getElementById('lightbox-inner').innerHTML = ''; }
+
+
+/* ================= WIDGETS ================= */
+const initialized = {};
+function initSlideWidgets(i){
+  const id = slides[i].id;
+  if(initialized[id]) return;
+  initialized[id] = true;
+  const Q = {
+    'kviz-rtut':[['q-rtut','q-rtut-fb','Správně. Rozhoduje dostupnost cílové struktury. Methylrtuť je lipofilní a jako komplex s cysteinem je navíc přenášena transportérem LAT1, takže se na rozdíl od Hg²⁺ dostane v dostatečném množství do mozku.','Nesprávně. Afinita k sulfanylové skupině je u obou forem vysoká a methylrtuť se na elementární rtuť nerozkládá. Rozhodující je průchod hematoencefalickou bariérou.']],
+    'kviz-prah':[['q-prah','q-prah-fb','Správně. U genotoxických karcinogenů se nepředpokládá práh, protože jediná neopravená mutace v kritickém genu může karcinogenezi iniciovat. Proto se místo bezpečné dávky kvantifikuje pravděpodobnost účinku.','Nesprávně. Důvodem není ani zákaz, ani nedostatek dat, nýbrž předpokládaná bezprahovost závislosti dávka–odpověď.']]
+  };
+  if(Q[id]) initSimpleQuizzes(Q[id]);
+  if(id==='parovani') initMatching('mK', [
+    {left:'Benzo[a]pyren', right:'diolepoxid po aktivaci CYP1A1 · plíce'},
+    {left:'2-Naftylamin', right:'arylnitreniový iont uvolněný v moči · močový měchýř'},
+    {left:'Vinylchlorid', right:'epoxid po aktivaci P450 · hemangiosarkom jater'},
+    {left:'N-Nitrosodimethylamin', right:'methylace O6 guaninu · trávicí trakt'},
+    {left:'Yperit', right:'bifunkční alkylace, křížové vazby v DNA · dýchací cesty'},
+    {left:'TCDD', right:'epigenetický mechanismus s prahem, promoce · více tkání'}
+  ], 'Správně, všech šest dvojic je přiřazeno.');
+  if(id==='diskuse') initDiscussion();
+}
+
+function initSimpleQuizzes(list){
+  list.forEach(([cardId, fbId, correctMsg, wrongMsg])=>{
+    const card = document.getElementById(cardId);
+    const opts = card.querySelectorAll('.quiz-opt');
+    opts.forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const isCorrect = btn.dataset.correct==='true';
+        opts.forEach(o=>o.disabled=true);
+        btn.classList.add(isCorrect?'correct':'wrong');
+        if(!isCorrect){ opts.forEach(o=>{ if(o.dataset.correct==='true') o.classList.add('correct'); }); }
+        const fb = document.getElementById(fbId);
+        fb.textContent = isCorrect? correctMsg: wrongMsg;
+        fb.classList.add('show');
+      });
+    });
+  });
+}
+
+function initDiscussion(){
+  const qa = [
+    {q:'Botulotoxin je nejtoxičtější známou látkou a zároveň běžně používaným léčivem. Není to rozpor?',
+     a:'Není. Toxicita se vyjadřuje vztaženě k dávce a cestě podání. Terapeuticky se aplikuje řádově v nanogramech přímo do cílového svalu, takže systémová koncentrace zůstává zanedbatelná, zatímco místní účinek je plně využit. Jde o důsledné uplatnění Paracelsova principu i o ukázku toho, že riziko je funkcí nebezpečnosti a expozice: vysoce nebezpečná látka může být za řízených podmínek bezpečně použitelná.'},
+    {q:'Proč se u nervově paralytických látek podává nejprve atropin, a nikoli oxim, když právě oxim obnovuje zasažený enzym?',
+     a:'Protože o přežití rozhoduje dýchání. Atropin během minut vysuší sekret v dýchacích cestách a uvolní bronchospasmus, tedy odstraní bezprostřední příčinu smrti. Oxim působí kauzálně, ale pomaleji, nepomůže proti centrální složce a po zestárnutí enzymu je neúčinný. Pořadí tedy neodráží, který zásah je mechanisticky důležitější, nýbrž co ohrožuje pacienta dříve. Obecné pravidlo zní: nejprve se stabilizují vitální funkce, teprve poté se řeší příčina.'},
+    {q:'Lze říci, že látka zařazená IARC do skupiny 1 je nebezpečnější než látka ve skupině 2B?',
+     a:'Nikoli v tom smyslu, v jakém se to obvykle chápe. Skupiny IARC vyjadřují sílu důkazu, nikoli potenci látky ani velikost rizika. Ve skupině 1 jsou vedle sebe látky s velmi odlišnou potencí a s velmi odlišnou obvyklou expozicí. Srovnání nebezpečnosti vyžaduje údaj o dávkové závislosti a srovnání rizika navíc údaj o expozici. Zařazení do skupiny 1 tedy znamená, že o karcinogenitě není pochyb, nikoli že je látka nejnebezpečnější.'},
+    {q:'U benzo[a]pyrenu jsme spočítali riziko řádu 10⁻⁴ při koncentraci rovné imisnímu limitu. Je přijatelné stanovit limit na úrovni, která sama o sobě není bezpečná?',
+     a:'U bezprahové látky jiná možnost neexistuje: jediná koncentrace s nulovým rizikem je nulová, a té nelze dosáhnout. Limit je proto výsledkem rozhodnutí, jakou úroveň rizika společnost přijímá, při zohlednění technické a ekonomické dosažitelnosti. Odborná analýza poskytuje kvantifikaci rizika, volba přijatelné úrovně je však rozhodnutím politickým. Je proto legitimní a žádoucí se ptát, kdo tuto hranici stanovuje a zda je stejná pro všechny skupiny obyvatel.'}
+  ];
+  const wrap = document.getElementById('discussion-list');
+  qa.forEach((item,i)=>{
+    const div = document.createElement('div');
+    div.className='tl-item';
+    div.innerHTML = '<div class="tl-year">Otázka '+(i+1)+' · klikněte pro možnou odpověď</div><div class="tl-title">'+item.q+'</div><div class="tl-detail">'+item.a+'</div>';
+    div.onclick = ()=> div.classList.toggle('open');
+    wrap.appendChild(div);
+  });
+}
+
+function initMatching(prefix, pairs, doneMsg){
+  const leftItems = pairs.map((p,i)=>({text:p.left, idx:i}));
+  const rightItems = pairs.map((p,i)=>({text:p.right, idx:i}));
+  for(let i=rightItems.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [rightItems[i],rightItems[j]]=[rightItems[j],rightItems[i]]; }
+  const leftEl = document.getElementById(prefix+'-left');
+  const rightEl = document.getElementById(prefix+'-right');
+  let selectedLeft = null, solved = 0;
+  leftItems.forEach(item=>{
+    const div = document.createElement('div');
+    div.className='match-item'; div.textContent = item.text; div.dataset.idx = item.idx;
+    div.onclick = ()=>{
+      if(div.classList.contains('correct')) return;
+      leftEl.querySelectorAll('.match-item').forEach(x=>x.classList.remove('selected'));
+      div.classList.add('selected'); selectedLeft = div;
+    };
+    leftEl.appendChild(div);
+  });
+  rightItems.forEach(item=>{
+    const div = document.createElement('div');
+    div.className='match-item'; div.textContent = item.text; div.dataset.idx = item.idx;
+    div.onclick = ()=>{
+      if(!selectedLeft || div.classList.contains('correct')) return;
+      if(selectedLeft.dataset.idx === div.dataset.idx){
+        selectedLeft.classList.remove('selected'); selectedLeft.classList.add('correct');
+        div.classList.add('correct'); solved++; selectedLeft = null;
+        if(solved===pairs.length) document.getElementById(prefix+'-result').textContent = doneMsg;
+      } else {
+        div.classList.add('wrong'); setTimeout(()=>div.classList.remove('wrong'), 500);
+      }
+    };
+    rightEl.appendChild(div);
+  });
+}
+
+render();
+</script>
+<script src="Lektor_poznamky_P8.js"></script>
+</body>
+</html>
